@@ -1,6 +1,6 @@
 # Ticket 002: Orquestador del Agente de Viajes IA y Memoria Persistente
 
-- **Estado**: ready-for-agent
+- **Estado**: completed (merged)
 - **Dependencias**: Ticket 001
 - **Criterio de Aceptación**:
   - Implementación del ciclo de decisión agéntico (`observe -> reason -> act -> verify`).

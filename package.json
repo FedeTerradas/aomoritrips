@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test",
+    "test": "tsx --test tests/**/*.test.ts",
     "db:seed": "tsx prisma/seed.ts",
     "format": "prettier --write .",
     "prepare": "husky"
