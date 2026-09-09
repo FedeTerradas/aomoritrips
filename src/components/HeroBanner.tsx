@@ -31,24 +31,25 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       <div className="container" style={styles.container}>
         {/* Etiqueta de Destino */}
         <div style={styles.regionTag}>
-          <span>東北地方 · Región de Tohoku, Japón</span>
+          <span>東北地方 · Expediciones al Japón Oculto e Inexplorado</span>
         </div>
 
         {/* Titular Principal */}
         <h1 style={styles.title}>
-          El Japón auténtico que sueñas conocer,{" "}
+          Rutas secretas y rincones remotos de Japón,{" "}
           <span style={styles.highlightText}>
-            sin barreras ni costos ocultos
+            imposibles de descubrir sin un Sensei local
           </span>
         </h1>
 
         {/* Descripción de confianza */}
         <p style={styles.subtitle}>
-          Planificar el norte de Japón suele ser complejo por la dispersión de
-          trenes, ryokans y el idioma. Centralizamos paquetes cerrados todo
-          incluido: vuelos, <strong>Shinkansen JR Pass</strong>, estancia con
-          tatami y aguas termales <strong>onsen</strong>, y acompañamiento
-          personalizado antes y durante tu viaje.
+          Viajar a Tokio o Kioto lo hace cualquiera con un mapa. Pero adentrarse
+          en los <strong>volcanes sagrados de Osorezan</strong>, cruzar los
+          bosques primarios vírgenes de <strong>Shirakami-Sanchi</strong> o
+          sumergirse en <strong>termas secretas (Hitō)</strong> bajo 4 metros de
+          nieve requiere guía experto, logística privada en 4x4 y salvoconductos
+          culturales que no encontrarás en internet.
         </p>
 
         {/* Buscador Estilo Unidad 4 */}

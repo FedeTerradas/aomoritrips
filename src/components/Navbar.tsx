@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span style={{ color: "var(--color-sun-orange)" }}>Trips</span>
             </div>
             <div style={styles.brandTagline}>
-              Viajes Auténticos al Norte de Japón
+              Rutas Secretas del Japón Inexplorado
             </div>
           </div>
         </div>

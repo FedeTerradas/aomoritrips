@@ -95,12 +95,13 @@ export default function HomePage() {
                 </span>
                 <h2 style={styles.sectionTitle}>
                   {selectedSeason === "all"
-                    ? "Paquetes de Viaje Exclusivos a Aomori"
-                    : `Experiencias de Temporada: ${selectedSeason.toUpperCase()}`}
+                    ? "Expediciones a Rincones Secretos e Inexplorados"
+                    : `Expediciones de Temporada: ${selectedSeason.toUpperCase()}`}
                 </h2>
                 <p style={styles.sectionSubtitle}>
-                  Tarifas transparentes con todo incluido: vuelos, Shinkansen
-                  Gran Class, estancia en ryokan tradicional y guía bilingüe.
+                  Acceso exclusivo a zonas rurales sin transporte masivo,
+                  posadas termales secretas (Hitō) y templos aislados con
+                  acompañamiento del Sensei.
                 </p>
               </div>
 

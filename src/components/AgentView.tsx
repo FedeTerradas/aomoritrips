@@ -34,7 +34,7 @@ export const AgentView: React.FC = () => {
         id: "msg_welcome",
         role: "assistant",
         content:
-          "¡Konnichiwa! Te doy una cálida bienvenida a **AomoriTrips** ⛩️.\n\nSoy tu **Sensei de Viajes para el norte de Japón** (青森の先生). Mi misión es guiarte con sabiduría y atención para que tu viaje sea inolvidable y libre de incertidumbre: desde seleccionar la mejor semana para contemplar los cerezos en Hirosaki hasta abrirte las puertas de ryokans con aguas termales onsen milenarias y coordinar tus billetes de Shinkansen.\n\n¿Tienes alguna fecha en mente o te gustaría que tracemos juntos tu camino?",
+          "¡Konnichiwa! Te doy una cálida bienvenida a **AomoriTrips** ⛩️.\n\nSoy tu **Sensei de Rutas Ocultas para el norte de Japón** (青森の先生). Mi misión es abrirte las puertas de aquellos rincones que ningún tour masivo visita y que resultan prácticamente imposibles de recorrer sin guía local experimentado: desde los templos volcánicos sagrados en **Osorezan** y los acantilados marítimos de Shimokita, hasta las **termas secretas (Hitō)** ocultas bajo 4 metros de nieve en Hakkoda o expediciones al bosque primario de **Shirakami-Sanchi** con rastreadores tradicionales Matagi.\n\n¿Qué tipo de viaje por el Japón profundo te gustaría emprender?",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -118,20 +118,20 @@ export const AgentView: React.FC = () => {
 
   const conciergeSuggestions = [
     {
-      label: "🌸 ¿Cuándo ver los cerezos?",
-      text: "¿Cuál es la mejor semana para ver la floración de cerezos en el Castillo de Hirosaki y qué incluye el pack?",
+      label: "🌋 Osorezan & Shimokita Secreto",
+      text: "¿Cómo es viajar a la región sagrada de Osorezan y qué dificultades logísticas y de transporte resuelve el Sensei?",
     },
     {
-      label: "🏮 Participar en Nebuta",
-      text: "Quiero asistir al Festival Nebuta en agosto. ¿Cómo se vive la experiencia y puedo participar de los desfiles?",
+      label: "♨️ Termas Secretas (Hitō) en Nieve",
+      text: "Quiero conocer los baños termales secretos 'Hitō' de montaña en Hakkoda bajo 4 metros de nieve que no están señalizados en inglés.",
     },
     {
-      label: "♨️ Ryokan con Onsen en la Nieve",
-      text: "Busco una escapada de invierno con baños termales tradicionales y nieve profunda en el Monte Iwaki para 2 personas.",
+      label: "🌲 Bosque Primario con Guía Matagi",
+      text: "¿Cómo es la expedición al bosque virgen UNESCO de Shirakami-Sanchi acompañado por rastreadores tradicionales Matagi?",
     },
     {
-      label: "💴 Cotización Grupal Transparente",
-      text: "Somos un grupo de 4 personas interesadas en viajar en otoño por la garganta de Oirase. ¿Cuánto nos costaría el paquete total?",
+      label: "🏮 Acceso a Cofradías de Nebuta",
+      text: "Quiero saber cómo el Sensei nos da acceso a los hangares cerrados de artesanos de Nebuta y nos permite desfilar como bailarines Haneto.",
     },
     {
       label: "🛡️ Prueba de Seguridad (Prompt Injection)",
@@ -151,15 +151,15 @@ export const AgentView: React.FC = () => {
             <div style={styles.badgeRow}>
               <span style={styles.statusIndicator}></span>
               <span style={styles.statusText}>
-                Guía y Sabiduría Tradicional · Tohoku Sensei
+                Mentor de Expediciones · Tohoku Sensei
               </span>
             </div>
             <h2 style={styles.conciergeName}>
-              Aomori Sensei · Tu Guía de Viaje
+              Aomori Sensei · Rutas Inexploradas
             </h2>
             <p style={styles.conciergeBio}>
-              Atención personalizada con memoria persistente de tus preferencias
-              y acceso directo al inventario oficial de Aomori.
+              Acceso exclusivo a zonas remotas de Japón sin transporte público
+              regular, posadas termales secretas (Hitō) y templos aislados.
             </p>
           </div>
         </div>
