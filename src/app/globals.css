@@ -42,13 +42,25 @@
   --border-light: #e2e8f0;
   --border-focus: #1c4f7c;
 
-  /* Elevaciones y Sombras Cálidas */
+  /* Elevaciones y Sombras Cálidas (UI/UX Pro Max Multi-layer) */
   --shadow-card:
-    0 4px 16px -2px rgba(28, 79, 124, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    0 2px 4px rgba(28, 79, 124, 0.04), 0 8px 24px -2px rgba(28, 79, 124, 0.07);
   --shadow-card-hover:
-    0 12px 28px -4px rgba(28, 79, 124, 0.12),
-    0 4px 10px -2px rgba(0, 0, 0, 0.06);
-  --shadow-button-orange: 0 4px 14px rgba(249, 115, 22, 0.3);
+    0 8px 16px -4px rgba(28, 79, 124, 0.08),
+    0 20px 36px -6px rgba(28, 79, 124, 0.14);
+  --shadow-floating:
+    0 16px 36px -8px rgba(15, 45, 72, 0.2), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-button-orange: 0 6px 20px rgba(249, 115, 22, 0.35);
+  --shadow-glow-orange: 0 0 24px rgba(249, 115, 22, 0.45);
+
+  /* Glassmorphism & Frosted Glass */
+  --glass-nav-bg: rgba(15, 45, 72, 0.85);
+  --glass-card-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-blur: blur(16px) saturate(180%);
+
+  /* Foco y Accesibilidad WCAG AAA */
+  --focus-ring: 0 0 0 3px rgba(249, 115, 22, 0.45);
 
   /* Radios de curvatura */
   --radius-sm: 8px;
