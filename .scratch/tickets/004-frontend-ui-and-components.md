@@ -1,6 +1,6 @@
 # Ticket 004: Frontend React / Next.js con Diseño AomoriTrips
 
-- **Estado**: ready-for-agent
+- **Estado**: completed (merged)
 - **Dependencias**: Ticket 003
 - **Criterio de Aceptación**:
   - Implementación visual basada en los wireframes de la Unidad 4:
