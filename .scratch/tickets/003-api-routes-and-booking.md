@@ -1,6 +1,6 @@
 # Ticket 003: Rutas API, Checkout y Generación de Vouchers QR
 
-- **Estado**: ready-for-agent
+- **Estado**: completed (merged)
 - **Dependencias**: Ticket 001, Ticket 002
 - **Criterio de Aceptación**:
   - `GET /api/packs`: Obtener catálogo completo o filtrado.
