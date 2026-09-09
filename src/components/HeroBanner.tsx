@@ -7,7 +7,7 @@ interface HeroBannerProps {
   setSelectedSeason: (season: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onOpenAgent: () => void;
+  onOpenConcierge: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -15,74 +15,75 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   setSelectedSeason,
   searchQuery,
   setSearchQuery,
-  onOpenAgent,
+  onOpenConcierge,
 }) => {
   const seasons = [
-    { id: "all", label: "✨ Todas las Temporadas" },
-    { id: "sakura", label: "🌸 Cerezos (Primavera)" },
-    { id: "nebuta", label: "🏮 Festival Nebuta (Verano)" },
-    { id: "koyo", label: "🍁 Follaje Koyo (Otoño)" },
-    { id: "snow", label: "❄️ Nieve & Onsen (Invierno)" },
+    { id: "all", label: "Todos los Destinos", icon: "🗾" },
+    { id: "sakura", label: "Cerezos en Flor (Sakura)", icon: "🌸" },
+    { id: "nebuta", label: "Festival Nebuta Matsuri", icon: "🏮" },
+    { id: "koyo", label: "Follaje de Otoño (Koyo)", icon: "🍁" },
+    { id: "snow", label: "Nieve & Onsen Tradicional", icon: "❄️" },
   ];
 
   return (
     <section style={styles.heroSection}>
-      <div className="container" style={styles.heroContainer}>
-        {/* Etiqueta Superior */}
-        <div style={styles.topBadge}>
-          <span>⛩️ Tohoku Explorer · Prefectura de Aomori</span>
+      {/* Contenido Central */}
+      <div className="container" style={styles.container}>
+        {/* Etiqueta de Destino */}
+        <div style={styles.regionTag}>
+          <span>東北地方 · Región de Tohoku, Japón</span>
         </div>
 
         {/* Titular Principal */}
         <h1 style={styles.title}>
-          Japón Auténtico, Sin Complicaciones{" "}
-          <span style={{ color: "var(--sun-orange)" }}>Ni Costos Ocultos</span>
+          El Japón auténtico que sueñas conocer,{" "}
+          <span style={styles.highlightText}>
+            sin barreras ni costos ocultos
+          </span>
         </h1>
 
-        {/* Subtítulo de Valor */}
+        {/* Descripción de confianza */}
         <p style={styles.subtitle}>
-          Eliminamos la barrera idiomática y la fragmentación logística.
-          Paquetes cerrados con{" "}
-          <strong>
-            vuelo internacional, estancia en Ryokan tradicional, Shinkansen JR
-            Pass
-          </strong>{" "}
-          y excursiones exclusivas en el norte nipón, con un{" "}
-          <strong>Agente IA</strong> que personaliza tu viaje en 1 clic.
+          Planificar el norte de Japón suele ser complejo por la dispersión de
+          trenes, ryokans y el idioma. Centralizamos paquetes cerrados todo
+          incluido: vuelos, <strong>Shinkansen JR Pass</strong>, estancia con
+          tatami y aguas termales <strong>onsen</strong>, y acompañamiento
+          personalizado antes y durante tu viaje.
         </p>
 
-        {/* Barra de Búsqueda y CTA */}
-        <div style={styles.searchBarWrapper}>
+        {/* Buscador Estilo Unidad 4 */}
+        <div style={styles.searchContainer}>
           <div style={styles.searchBox}>
-            <span style={styles.searchIcon}>🔍</span>
+            <span style={styles.searchIcon}>📍</span>
             <input
               type="text"
-              placeholder="¿Qué experiencia buscas? Ej. Cerezos, Onsen, Nebuta Matsuri..."
+              placeholder="¿A dónde en Japón te gustaría viajar? (ej. Hirosaki, Onsen, Nebuta...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={styles.searchInput}
             />
           </div>
 
-          <button style={styles.askAgentBtn} onClick={onOpenAgent}>
-            <span>🤖 Asesorar con IA</span>
+          <button style={styles.conciergeBtn} onClick={onOpenConcierge}>
+            <span>🏮 Consultar al Concierge</span>
           </button>
         </div>
 
-        {/* Filtros Estacionales */}
-        <div style={styles.seasonFilters}>
+        {/* Selector de Categorías Estacionales */}
+        <div style={styles.seasonRow}>
           {seasons.map((s) => {
             const isActive = selectedSeason === s.id;
             return (
               <button
                 key={s.id}
                 style={{
-                  ...styles.seasonBtn,
-                  ...(isActive ? styles.seasonBtnActive : {}),
+                  ...styles.seasonPill,
+                  ...(isActive ? styles.seasonPillActive : {}),
                 }}
                 onClick={() => setSelectedSeason(s.id)}
               >
-                {s.label}
+                <span>{s.icon}</span>
+                <span>{s.label}</span>
               </button>
             );
           })}
@@ -94,48 +95,57 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   heroSection: {
-    background:
-      "linear-gradient(180deg, #1C4F7C 0%, #173E61 45%, #FDF8F2 100%)",
-    padding: "48px 0 40px",
+    backgroundColor: "var(--color-aomori-blue)",
+    backgroundImage:
+      "radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.12) 0%, transparent 45%), linear-gradient(180deg, #1C4F7C 0%, #133959 100%)",
     color: "#FFFFFF",
+    padding: "54px 0 46px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
   },
-  heroContainer: {
+  container: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
   },
-  topBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
-    padding: "6px 16px",
-    borderRadius: "var(--radius-full)",
+  regionTag: {
+    fontFamily: "'Noto Sans JP', sans-serif",
     fontSize: "0.82rem",
     fontWeight: 600,
-    marginBottom: "16px",
     color: "#BAE6FD",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    padding: "4px 14px",
+    borderRadius: "var(--radius-pill)",
+    marginBottom: "16px",
+    letterSpacing: "0.3px",
   },
   title: {
-    fontSize: "clamp(2rem, 4vw, 3rem)",
+    fontSize: "clamp(2rem, 3.8vw, 3.1rem)",
     fontWeight: 800,
-    lineHeight: 1.15,
-    maxWidth: "850px",
-    marginBottom: "16px",
+    lineHeight: 1.18,
+    maxWidth: "880px",
+    marginBottom: "18px",
     letterSpacing: "-0.5px",
   },
-  subtitle: {
-    fontSize: "clamp(0.95rem, 1.8vw, 1.12rem)",
-    color: "#E0F2FE",
-    maxWidth: "750px",
-    lineHeight: 1.6,
-    marginBottom: "32px",
+  highlightText: {
+    color: "var(--color-sun-orange)",
+    display: "inline-block",
   },
-  searchBarWrapper: {
+  subtitle: {
+    fontSize: "clamp(0.95rem, 1.6vw, 1.08rem)",
+    color: "#E2E8F0",
+    maxWidth: "760px",
+    lineHeight: 1.65,
+    marginBottom: "32px",
+    fontWeight: 400,
+  },
+  searchContainer: {
     display: "flex",
     gap: "12px",
     width: "100%",
     maxWidth: "680px",
-    marginBottom: "24px",
+    marginBottom: "28px",
     flexWrap: "wrap",
   },
   searchBox: {
@@ -144,54 +154,56 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: "var(--radius-full)",
-    padding: "6px 18px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+    borderRadius: "var(--radius-pill)",
+    padding: "6px 20px",
+    boxShadow: "0 6px 20px rgba(0, 0, 0, 0.18)",
   },
   searchIcon: {
     fontSize: "1.1rem",
     marginRight: "10px",
-    color: "var(--text-muted)",
   },
   searchInput: {
     width: "100%",
     border: "none",
     outline: "none",
     fontSize: "0.95rem",
-    color: "var(--text-primary)",
+    color: "var(--color-text-title)",
     backgroundColor: "transparent",
   },
-  askAgentBtn: {
-    backgroundColor: "var(--sun-orange)",
+  conciergeBtn: {
+    backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
     padding: "14px 26px",
-    borderRadius: "var(--radius-full)",
+    borderRadius: "var(--radius-pill)",
     fontWeight: 700,
-    fontSize: "0.95rem",
-    boxShadow: "var(--shadow-orange)",
-    transition: "transform var(--transition-fast)",
+    fontSize: "0.92rem",
+    boxShadow: "var(--shadow-button-orange)",
+    transition: "background-color 200ms ease",
+    whiteSpace: "nowrap",
   },
-  seasonFilters: {
+  seasonRow: {
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "center",
     gap: "8px",
-    marginTop: "8px",
   },
-  seasonBtn: {
+  seasonPill: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
     padding: "8px 16px",
-    borderRadius: "var(--radius-full)",
+    borderRadius: "var(--radius-pill)",
     fontSize: "0.82rem",
     fontWeight: 600,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     color: "#FFFFFF",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
-    transition: "all var(--transition-fast)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    transition: "all 150ms ease",
   },
-  seasonBtnActive: {
+  seasonPillActive: {
     backgroundColor: "#FFFFFF",
-    color: "var(--aomori-blue)",
+    color: "var(--color-aomori-blue)",
     borderColor: "#FFFFFF",
-    boxShadow: "var(--shadow-md)",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
   },
 };

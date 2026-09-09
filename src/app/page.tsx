@@ -7,6 +7,7 @@ import { PackCard, TravelPackData } from "@/components/PackCard";
 import { BookingModal } from "@/components/BookingModal";
 import { AgentView } from "@/components/AgentView";
 import { WalletView } from "@/components/WalletView";
+import { AuditModal } from "@/components/AuditModal";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"explore" | "agent" | "wallet">(
@@ -18,8 +19,8 @@ export default function HomePage() {
   const [selectedPack, setSelectedPack] = useState<TravelPackData | null>(null);
   const [bookingsCount, setBookingsCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
 
-  // Cargar paquetes desde el endpoint /api/packs
   const fetchPacks = async () => {
     setIsLoading(true);
     try {
@@ -39,7 +40,6 @@ export default function HomePage() {
     }
   };
 
-  // Consultar conteo de reservas para el badge de la Navbar
   const fetchBookingsCount = async () => {
     try {
       const res = await fetch("/api/bookings");
@@ -68,14 +68,15 @@ export default function HomePage() {
 
   return (
     <div style={styles.appWrapper}>
-      {/* Barra de Navegación Principal */}
+      {/* Navegación Principal */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         bookingsCount={bookingsCount}
+        onOpenAuditModal={() => setIsAuditModalOpen(true)}
       />
 
-      {/* VISTA 1: Explorador de Paquetes */}
+      {/* VISTA 1: Catálogo Principal & Exploración */}
       {activeTab === "explore" && (
         <main>
           <HeroBanner
@@ -83,27 +84,30 @@ export default function HomePage() {
             setSelectedSeason={setSelectedSeason}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            onOpenAgent={() => setActiveTab("agent")}
+            onOpenConcierge={() => setActiveTab("agent")}
           />
 
           <section className="container" style={styles.catalogSection}>
             <div style={styles.catalogHeader}>
               <div>
+                <span style={styles.sectionSubtitleJP}>
+                  旅のハイライト · Selección Curada
+                </span>
                 <h2 style={styles.sectionTitle}>
                   {selectedSeason === "all"
-                    ? "Paquetes Destacados en Aomori"
+                    ? "Paquetes de Viaje Exclusivos a Aomori"
                     : `Experiencias de Temporada: ${selectedSeason.toUpperCase()}`}
                 </h2>
                 <p style={styles.sectionSubtitle}>
-                  Tarifas cerradas garantizadas: Shinkansen + Ryokan tradicional
-                  + Guía oficial
+                  Tarifas transparentes con todo incluido: vuelos, Shinkansen
+                  Gran Class, estancia en ryokan tradicional y guía bilingüe.
                 </p>
               </div>
 
               <div style={styles.countBadge}>
                 {packs.length}{" "}
                 {packs.length === 1
-                  ? "experiencia disponible"
+                  ? "experiencia"
                   : "experiencias disponibles"}
               </div>
             </div>
@@ -111,7 +115,7 @@ export default function HomePage() {
             {isLoading ? (
               <div style={styles.loadingBox}>
                 <div style={styles.spinner}></div>
-                <span>Cargando experiencias de Aomori...</span>
+                <span>Cargando experiencias del norte de Japón...</span>
               </div>
             ) : packs.length === 0 ? (
               <div style={styles.noResultsBox}>
@@ -141,67 +145,81 @@ export default function HomePage() {
         </main>
       )}
 
-      {/* VISTA 2: Asistente Agéntico de IA */}
+      {/* VISTA 2: Concierge de Viajes IA */}
       {activeTab === "agent" && <AgentView />}
 
-      {/* VISTA 3: Billetera de Viajes y Vouchers QR Offline */}
+      {/* VISTA 3: Billetera de Viajes & Vouchers QR */}
       {activeTab === "wallet" && (
         <WalletView onGoToExplore={() => setActiveTab("explore")} />
       )}
 
-      {/* Modal de Detalle y Cotización / Reserva */}
+      {/* Modal de Detalle y Checkout */}
       <BookingModal
         pack={selectedPack}
         onClose={() => setSelectedPack(null)}
         onBookingSuccess={handleBookingSuccess}
       />
 
-      {/* Footer Académico e Institucional UTN.BA */}
+      {/* Modal Académico UTN.BA */}
+      <AuditModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+      />
+
+      {/* Footer Institucional y Elegante */}
       <footer style={styles.footer}>
         <div className="container" style={styles.footerContainer}>
           <div style={styles.footerCol}>
-            <div style={styles.footerBrand}>⛩️ AomoriTrips</div>
+            <div style={styles.footerBrand}>
+              <span style={styles.brandKanji}>青森</span> AomoriTrips
+            </div>
             <p style={styles.footerText}>
-              Plataforma integral de turismo hacia el norte de Japón con
-              Inteligencia Artificial agéntica, persistencia de memoria y
-              vouchers QR offline.
+              Plataforma especializada en viajes auténticos a la prefectura de
+              Aomori y la región de Tohoku. Eliminamos riesgos logísticos e
+              idiomáticos mediante paquetes cerrados y asistencia personalizada.
             </p>
             <div style={styles.academicNote}>
-              🎓 <strong>Universidad Tecnológica Nacional (UTN.BA)</strong>
+              🎓 Proyecto Final de Ciclo ·{" "}
+              <strong>Universidad Tecnológica Nacional (UTN.BA)</strong>
               <br />
-              Centro de e-Learning · Curso de Inteligencia Artificial para
-              Programadores
-              <br />
-              Entrega Final de Proyecto · Federico Terradas
+              Curso de Inteligencia Artificial para Programadores · Federico
+              Terradas
             </div>
           </div>
 
           <div style={styles.footerCol}>
-            <h4 style={styles.footerTitle}>Arquitectura & Tecnologías</h4>
-            <ul style={styles.techList}>
-              <li>Next.js 15 (React 19) + Vanilla CSS System</li>
-              <li>Prisma ORM + SQLite / PostgreSQL Relacional</li>
-              <li>Orquestador Agéntico (Observe → Reason → Tool → Act)</li>
-              <li>Guardrails anti Prompt Injection (OWASP LLM01)</li>
-              <li>Generación de Vouchers QR dinámicos offline</li>
+            <h4 style={styles.footerTitle}>Destinos Curados</h4>
+            <ul style={styles.footerList}>
+              <li>Castillo de Hirosaki y Cerezos Centenarios</li>
+              <li>Festival de Gigantes de Fuego Nebuta Matsuri</li>
+              <li>Garganta de Oirase y Lago Towada</li>
+              <li>Sukayu Onsen y Nieve en Monte Iwaki</li>
             </ul>
           </div>
 
           <div style={styles.footerCol}>
-            <h4 style={styles.footerTitle}>Destinos en Aomori</h4>
-            <ul style={styles.techList}>
-              <li>Castillo de Hirosaki y Túnel de Cerezos</li>
-              <li>Festival de Gigantes de Fuego Nebuta Matsuri</li>
-              <li>Garganta de Oirase y Cráter del Lago Towada</li>
-              <li>Monte Iwaki, Sukayu Onsen y Nieve en Polvo</li>
+            <h4 style={styles.footerTitle}>Garantías al Viajero</h4>
+            <ul style={styles.footerList}>
+              <li>🛡️ Precios garantizados sin costos ocultos</li>
+              <li>🚄 JR East Pass Shinkansen ilimitado</li>
+              <li>♨️ Ryokans seleccionados con onsen tradicional</li>
+              <li>📶 Vouchers digitales con validación QR offline</li>
             </ul>
           </div>
         </div>
 
         <div style={styles.copyrightBar}>
           <div className="container" style={styles.copyrightContainer}>
-            <span>© 2026 AomoriTrips · Todos los derechos reservados</span>
-            <span>Versión 1.0.0-prod · Desplegado para Evaluación UTN.BA</span>
+            <span>
+              © 2026 AomoriTrips. Diseñado con identidad visual regional de
+              Aomori.
+            </span>
+            <button
+              style={styles.footerAuditBtn}
+              onClick={() => setIsAuditModalOpen(true)}
+            >
+              Ver Memoria Técnica de IA (UTN.BA)
+            </button>
           </div>
         </div>
       </footer>
@@ -216,40 +234,49 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
   },
   catalogSection: {
-    padding: "40px 20px 80px",
+    padding: "48px 24px 80px",
   },
   catalogHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginBottom: "32px",
+    marginBottom: "36px",
     flexWrap: "wrap",
     gap: "16px",
   },
+  sectionSubtitleJP: {
+    fontFamily: "'Noto Sans JP', sans-serif",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    color: "var(--color-aomori-light)",
+    display: "block",
+    marginBottom: "4px",
+  },
   sectionTitle: {
-    fontSize: "1.7rem",
+    fontSize: "1.75rem",
     fontWeight: 800,
-    color: "var(--aomori-blue)",
-    letterSpacing: "-0.5px",
+    color: "var(--color-text-title)",
+    letterSpacing: "-0.4px",
   },
   sectionSubtitle: {
     fontSize: "0.92rem",
-    color: "var(--text-muted)",
-    marginTop: "4px",
+    color: "var(--color-text-muted)",
+    marginTop: "6px",
+    maxWidth: "650px",
   },
   countBadge: {
-    backgroundColor: "var(--surface-white)",
-    border: "1px solid var(--border-subtle)",
+    backgroundColor: "var(--color-surface-pure)",
+    border: "1px solid var(--border-light)",
     padding: "6px 14px",
-    borderRadius: "var(--radius-full)",
+    borderRadius: "var(--radius-pill)",
     fontSize: "0.82rem",
     fontWeight: 700,
-    color: "var(--text-secondary)",
+    color: "var(--color-text-body)",
   },
   packsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-    gap: "28px",
+    gap: "30px",
   },
   loadingBox: {
     display: "flex",
@@ -258,44 +285,45 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     padding: "60px 0",
     gap: "12px",
-    color: "var(--text-muted)",
+    color: "var(--color-text-muted)",
   },
   spinner: {
     width: "32px",
     height: "32px",
     border: "3px solid #CBD5E1",
-    borderTopColor: "var(--sun-orange)",
+    borderTopColor: "var(--color-sun-orange)",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
   },
   noResultsBox: {
-    backgroundColor: "var(--surface-white)",
+    backgroundColor: "var(--color-surface-pure)",
     borderRadius: "var(--radius-lg)",
     padding: "40px",
     textAlign: "center",
-    border: "1px solid var(--border-subtle)",
-    color: "var(--text-muted)",
+    border: "1px solid var(--border-light)",
+    color: "var(--color-text-muted)",
   },
   resetFiltersBtn: {
     marginTop: "12px",
-    backgroundColor: "var(--aomori-blue)",
+    backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    padding: "8px 18px",
-    borderRadius: "var(--radius-full)",
+    padding: "8px 20px",
+    borderRadius: "var(--radius-pill)",
     fontSize: "0.85rem",
     fontWeight: 600,
   },
   footer: {
     marginTop: "auto",
-    backgroundColor: "var(--aomori-blue-dark)",
+    backgroundColor: "var(--color-aomori-dark)",
     color: "#FFFFFF",
-    paddingTop: "48px",
+    paddingTop: "54px",
+    borderTop: "1px solid rgba(255, 255, 255, 0.08)",
   },
   footerContainer: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "36px",
-    paddingBottom: "40px",
+    gap: "40px",
+    paddingBottom: "46px",
   },
   footerCol: {
     display: "flex",
@@ -305,6 +333,14 @@ const styles: Record<string, React.CSSProperties> = {
   footerBrand: {
     fontSize: "1.4rem",
     fontWeight: 800,
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  brandKanji: {
+    fontSize: "1.1rem",
+    color: "var(--color-sun-orange)",
+    fontFamily: "'Noto Sans JP', sans-serif",
   },
   footerText: {
     fontSize: "0.86rem",
@@ -312,13 +348,14 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.6,
   },
   academicNote: {
-    fontSize: "0.78rem",
+    fontSize: "0.76rem",
     color: "#E0F2FE",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
     padding: "10px 14px",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-sm)",
     marginTop: "6px",
     lineHeight: 1.5,
+    border: "1px solid rgba(255, 255, 255, 0.1)",
   },
   footerTitle: {
     fontSize: "0.95rem",
@@ -326,7 +363,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#FFFFFF",
     marginBottom: "4px",
   },
-  techList: {
+  footerList: {
     listStyle: "none",
     display: "flex",
     flexDirection: "column",
@@ -335,15 +372,22 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#BAE6FD",
   },
   copyrightBar: {
-    borderTop: "1px solid rgba(255, 255, 255, 0.12)",
-    padding: "16px 0",
+    borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+    padding: "18px 0",
     fontSize: "0.78rem",
     color: "rgba(255, 255, 255, 0.6)",
   },
   copyrightContainer: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center",
     flexWrap: "wrap",
-    gap: "8px",
+    gap: "10px",
+  },
+  footerAuditBtn: {
+    color: "#BAE6FD",
+    textDecoration: "underline",
+    fontSize: "0.78rem",
+    cursor: "pointer",
   },
 };

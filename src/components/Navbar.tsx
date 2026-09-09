@@ -6,67 +6,74 @@ interface NavbarProps {
   activeTab: "explore" | "agent" | "wallet";
   setActiveTab: (tab: "explore" | "agent" | "wallet") => void;
   bookingsCount: number;
+  onOpenAuditModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   bookingsCount,
+  onOpenAuditModal,
 }) => {
   return (
     <header style={styles.header}>
-      <div className="container" style={styles.headerContainer}>
-        {/* Marca / Logo */}
+      <div className="container" style={styles.container}>
+        {/* Logotipo AomoriTrips */}
         <div style={styles.brand} onClick={() => setActiveTab("explore")}>
-          <div style={styles.logoIcon}>⛩️</div>
+          <span style={styles.kanjiMark}>青森</span>
           <div>
-            <div style={styles.logoTitle}>
-              Aomori<span style={{ color: "var(--sun-orange)" }}>Trips</span>
+            <div style={styles.brandName}>
+              Aomori
+              <span style={{ color: "var(--color-sun-orange)" }}>Trips</span>
             </div>
-            <div style={styles.logoSubtitle}>
-              青森トリップス · IA TravelTech
+            <div style={styles.brandTagline}>
+              Viajes Auténticos al Norte de Japón
             </div>
           </div>
         </div>
 
-        {/* Navegación por Pestañas */}
+        {/* Menú de Navegación */}
         <nav style={styles.nav}>
           <button
             style={{
-              ...styles.navBtn,
-              ...(activeTab === "explore" ? styles.navBtnActive : {}),
+              ...styles.navLink,
+              ...(activeTab === "explore" ? styles.navLinkActive : {}),
             }}
             onClick={() => setActiveTab("explore")}
           >
-            🌸 Explorar Packs
+            Packs & Experiencias
           </button>
+
           <button
             style={{
-              ...styles.navBtn,
-              ...(activeTab === "agent" ? styles.navBtnActive : {}),
+              ...styles.navLink,
+              ...(activeTab === "agent" ? styles.navLinkActive : {}),
             }}
             onClick={() => setActiveTab("agent")}
           >
-            🤖 Asistente IA <span style={styles.agentTag}>Agéntico</span>
+            Concierge de Viajes
           </button>
+
           <button
             style={{
-              ...styles.navBtn,
-              ...(activeTab === "wallet" ? styles.navBtnActive : {}),
+              ...styles.navLink,
+              ...(activeTab === "wallet" ? styles.navLinkActive : {}),
             }}
             onClick={() => setActiveTab("wallet")}
           >
-            🎫 Mis Viajes & QR
+            Mis Billetes & QR
             {bookingsCount > 0 && (
               <span style={styles.badgeCount}>{bookingsCount}</span>
             )}
           </button>
         </nav>
 
-        {/* Badge Institucional UTN */}
-        <div style={styles.academicBadge}>
-          <span style={styles.utnDot}></span>
-          <span>UTN.BA · Proyecto Final IA</span>
+        {/* Acceso a Información Técnica / Rúbrica UTN */}
+        <div style={styles.rightActions}>
+          <button style={styles.auditButton} onClick={onOpenAuditModal}>
+            <span style={styles.utnDot}></span>
+            <span>Memoria Técnica IA</span>
+          </button>
         </div>
       </div>
     </header>
@@ -75,18 +82,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   header: {
-    backgroundColor: "var(--aomori-blue)",
+    backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
     position: "sticky",
     top: 0,
     zIndex: 100,
-    boxShadow: "0 2px 10px rgba(17, 52, 84, 0.15)",
+    boxShadow: "0 2px 12px rgba(15, 45, 72, 0.12)",
   },
-  headerContainer: {
+  container: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    height: "72px",
+    height: "76px",
   },
   brand: {
     display: "flex",
@@ -94,78 +101,81 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "12px",
     cursor: "pointer",
   },
-  logoIcon: {
-    fontSize: "2rem",
-    background: "rgba(255, 255, 255, 0.12)",
-    padding: "6px 10px",
-    borderRadius: "12px",
+  kanjiMark: {
+    fontFamily: "'Noto Sans JP', sans-serif",
+    fontSize: "1.2rem",
+    fontWeight: 700,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    color: "#FFFFFF",
+    padding: "6px 12px",
+    borderRadius: "var(--radius-sm)",
+    letterSpacing: "1px",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
   },
-  logoTitle: {
-    fontSize: "1.35rem",
+  brandName: {
+    fontSize: "1.45rem",
     fontWeight: 800,
-    letterSpacing: "-0.5px",
+    letterSpacing: "-0.4px",
+    lineHeight: 1.1,
   },
-  logoSubtitle: {
+  brandTagline: {
     fontSize: "0.72rem",
     color: "#BAE6FD",
-    fontWeight: 500,
+    letterSpacing: "0.2px",
   },
   nav: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "6px",
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     padding: "4px",
-    borderRadius: "var(--radius-full)",
+    borderRadius: "var(--radius-pill)",
   },
-  navBtn: {
-    padding: "8px 18px",
-    borderRadius: "var(--radius-full)",
-    color: "#E0F2FE",
+  navLink: {
+    padding: "8px 20px",
+    borderRadius: "var(--radius-pill)",
+    color: "#E2E8F0",
     fontSize: "0.88rem",
     fontWeight: 600,
-    transition: "all var(--transition-fast)",
+    transition: "all 200ms ease",
     display: "flex",
     alignItems: "center",
     gap: "6px",
   },
-  navBtnActive: {
+  navLinkActive: {
     backgroundColor: "#FFFFFF",
-    color: "var(--aomori-blue)",
-    boxShadow: "var(--shadow-sm)",
-  },
-  agentTag: {
-    fontSize: "0.68rem",
-    backgroundColor: "var(--sun-orange)",
-    color: "#FFFFFF",
-    padding: "2px 6px",
-    borderRadius: "6px",
-    fontWeight: 700,
+    color: "var(--color-aomori-blue)",
+    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
   },
   badgeCount: {
-    backgroundColor: "var(--sun-orange)",
+    backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
     fontSize: "0.72rem",
     borderRadius: "10px",
     padding: "2px 7px",
     fontWeight: 700,
   },
-  academicBadge: {
+  rightActions: {
+    display: "flex",
+    alignItems: "center",
+  },
+  auditButton: {
     display: "flex",
     alignItems: "center",
     gap: "8px",
     backgroundColor: "rgba(255, 255, 255, 0.12)",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    padding: "6px 12px",
-    borderRadius: "var(--radius-full)",
-    fontSize: "0.75rem",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    padding: "6px 14px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "0.78rem",
     fontWeight: 600,
     color: "#F0F9FF",
+    transition: "background-color 200ms ease",
   },
   utnDot: {
-    width: "8px",
-    height: "8px",
+    width: "7px",
+    height: "7px",
     borderRadius: "50%",
-    backgroundColor: "#10B981",
+    backgroundColor: "#34D399",
   },
 };

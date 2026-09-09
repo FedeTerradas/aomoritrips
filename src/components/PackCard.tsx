@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 export interface TravelPackData {
   id: string;
@@ -25,81 +25,102 @@ interface PackCardProps {
 }
 
 export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
-  const getBadgeClass = (tag: string) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const getSeasonClass = (tag: string) => {
     switch (tag.toLowerCase()) {
       case "sakura":
-        return "badge-sakura";
+        return "season-sakura";
       case "nebuta":
-        return "badge-nebuta";
+        return "season-nebuta";
       case "koyo":
-        return "badge-koyo";
+        return "season-koyo";
       case "snow":
-        return "badge-snow";
+        return "season-snow";
       default:
-        return "badge-sakura";
+        return "season-sakura";
     }
   };
 
   return (
-    <article style={styles.card} className="animate-fade-in">
-      {/* Contenedor de Imagen con Overlay */}
-      <div style={styles.imageWrapper}>
+    <article style={styles.card}>
+      {/* Contenedor de Fotografía y Badges */}
+      <div style={styles.imageContainer}>
         <img
           src={pack.heroImage}
           alt={pack.title}
           style={styles.image}
           loading="lazy"
         />
-        <div style={styles.badgeContainer}>
-          <span className={`badge ${getBadgeClass(pack.seasonTag)}`}>
+
+        {/* Badge Flotante de Temporada */}
+        <div style={styles.topBadgeRow}>
+          <span className={`season-badge ${getSeasonClass(pack.seasonTag)}`}>
             {pack.seasonLabel}
           </span>
-          <span style={styles.daysBadge}>⏳ {pack.durationDays} Días</span>
+
+          <button
+            style={{
+              ...styles.favoriteBtn,
+              ...(isFavorite ? styles.favoriteBtnActive : {}),
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsFavorite(!isFavorite);
+            }}
+            title="Guardar en favoritos"
+            aria-label="Guardar en favoritos"
+          >
+            {isFavorite ? "❤️" : "🤍"}
+          </button>
+        </div>
+
+        {/* Badge de Duración */}
+        <div style={styles.durationBadge}>
+          <span>
+            ⏳ {pack.durationDays} Días / {pack.durationDays - 1} Noches
+          </span>
         </div>
       </div>
 
-      {/* Contenido de la Card */}
-      <div style={styles.content}>
-        <div style={styles.ratingRow}>
-          <span style={styles.stars}>★ {pack.rating}</span>
-          <span style={styles.reviews}>
-            ({pack.reviewsCount} reseñas verificadas)
-          </span>
+      {/* Cuerpo de la Tarjeta */}
+      <div style={styles.cardBody}>
+        <div style={styles.ratingAndOrigin}>
+          <span style={styles.japaneseTitle}>{pack.japaneseTitle}</span>
+          <div style={styles.ratingRow}>
+            <span style={styles.stars}>★ {pack.rating}</span>
+            <span style={styles.reviewsCount}>({pack.reviewsCount})</span>
+          </div>
         </div>
 
-        <div style={styles.jpTitle}>{pack.japaneseTitle}</div>
         <h3 style={styles.title}>{pack.title}</h3>
         <p style={styles.description}>{pack.description}</p>
 
-        {/* Highlights / Puntos Clave */}
-        <div style={styles.highlightsBox}>
-          <div style={styles.highlightsHeader}>
-            ✨ Paquete 100% Cerrado Incluye:
-          </div>
-          <ul style={styles.highlightsList}>
+        {/* Inclusiones Clave */}
+        <div style={styles.inclusionsSection}>
+          <div style={styles.inclusionsTitle}>INCLUYE EN PAQUETE CERRADO:</div>
+          <div style={styles.inclusionsChips}>
             {pack.highlights.slice(0, 3).map((h, i) => (
-              <li key={i} style={styles.highlightItem}>
-                <span style={{ color: "var(--sun-orange)" }}>✓</span> {h}
-              </li>
+              <span key={i} style={styles.chip}>
+                ✓ {h}
+              </span>
             ))}
-          </ul>
+          </div>
         </div>
 
-        {/* Footer con Precio y Botón */}
-        <div style={styles.footer}>
-          <div style={styles.priceBlock}>
-            <div style={styles.priceSubtext}>Desde (Vuelo + Ryokan + Tren)</div>
-            <div style={styles.priceAmount}>
+        {/* Pie de Tarjeta con Precio Transparente y Acción */}
+        <div style={styles.cardFooter}>
+          <div style={styles.priceContainer}>
+            <span style={styles.priceLabel}>Precio por persona (Final):</span>
+            <div style={styles.priceValue}>
               ${pack.priceBaseUsd.toLocaleString()}{" "}
               <span style={styles.currency}>USD</span>
             </div>
-            <div style={styles.guaranteeTag}>
-              🛡️ Garantía sin costos ocultos
-            </div>
+            <span style={styles.noHiddenFees}>Garantía sin costos ocultos</span>
           </div>
 
           <button style={styles.actionBtn} onClick={() => onSelectPack(pack)}>
-            Ver Pack & Cotizar →
+            Ver Pack & Cotizar
           </button>
         </div>
       </div>
@@ -109,28 +130,28 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    backgroundColor: "var(--surface-white)",
+    backgroundColor: "var(--color-surface-pure)",
     borderRadius: "var(--radius-lg)",
+    border: "1px solid var(--border-light)",
     overflow: "hidden",
-    boxShadow: "var(--shadow-md)",
-    border: "1px solid var(--border-subtle)",
+    boxShadow: "var(--shadow-card)",
     display: "flex",
     flexDirection: "column",
-    transition:
-      "transform var(--transition-fast), box-shadow var(--transition-fast)",
+    transition: "box-shadow 200ms ease, transform 200ms ease",
   },
-  imageWrapper: {
+  imageContainer: {
     position: "relative",
     width: "100%",
-    height: "220px",
-    backgroundColor: "#E2E8F0",
+    height: "230px",
+    backgroundColor: "#F1F5F9",
+    overflow: "hidden",
   },
   image: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
-  badgeContainer: {
+  topBadgeRow: {
     position: "absolute",
     top: "14px",
     left: "14px",
@@ -139,125 +160,146 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
   },
-  daysBadge: {
-    backgroundColor: "rgba(15, 23, 42, 0.75)",
-    color: "#FFFFFF",
-    fontSize: "0.78rem",
-    fontWeight: 600,
-    padding: "4px 10px",
-    borderRadius: "var(--radius-full)",
+  favoriteBtn: {
+    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    border: "none",
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
     backdropFilter: "blur(4px)",
   },
-  content: {
-    padding: "20px",
+  favoriteBtnActive: {
+    backgroundColor: "#FFFFFF",
+  },
+  durationBadge: {
+    position: "absolute",
+    bottom: "12px",
+    left: "14px",
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    color: "#FFFFFF",
+    padding: "4px 10px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    backdropFilter: "blur(4px)",
+  },
+  cardBody: {
+    padding: "20px 22px",
     display: "flex",
     flexDirection: "column",
     flex: 1,
   },
+  ratingAndOrigin: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "8px",
+  },
+  japaneseTitle: {
+    fontFamily: "'Noto Sans JP', sans-serif",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    color: "var(--color-aomori-light)",
+  },
   ratingRow: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
-    marginBottom: "6px",
+    gap: "4px",
   },
   stars: {
     color: "#F59E0B",
+    fontSize: "0.82rem",
     fontWeight: 700,
-    fontSize: "0.85rem",
   },
-  reviews: {
-    color: "var(--text-muted)",
+  reviewsCount: {
+    color: "var(--color-text-muted)",
     fontSize: "0.75rem",
   },
-  jpTitle: {
-    fontSize: "0.8rem",
-    color: "var(--aomori-blue-light)",
-    fontWeight: 600,
-    marginBottom: "4px",
-  },
   title: {
-    fontSize: "1.2rem",
-    fontWeight: 700,
-    color: "var(--text-primary)",
+    fontSize: "1.22rem",
+    fontWeight: 800,
+    color: "var(--color-text-title)",
     lineHeight: 1.3,
-    marginBottom: "10px",
+    marginBottom: "8px",
   },
   description: {
     fontSize: "0.88rem",
-    color: "var(--text-secondary)",
-    lineHeight: 1.5,
+    color: "var(--color-text-body)",
+    lineHeight: 1.55,
     marginBottom: "16px",
   },
-  highlightsBox: {
-    backgroundColor: "var(--sky-accent)",
-    border: "1px solid var(--sky-border)",
-    padding: "12px",
+  inclusionsSection: {
+    backgroundColor: "var(--color-washi-cream)",
+    border: "1px solid #F1E9DF",
     borderRadius: "var(--radius-md)",
+    padding: "12px",
     marginBottom: "20px",
   },
-  highlightsHeader: {
-    fontSize: "0.76rem",
-    fontWeight: 700,
-    color: "var(--aomori-blue)",
+  inclusionsTitle: {
+    fontSize: "0.68rem",
+    fontWeight: 800,
+    color: "var(--color-aomori-blue)",
+    letterSpacing: "0.5px",
     marginBottom: "6px",
-    textTransform: "uppercase",
-    letterSpacing: "0.3px",
   },
-  highlightsList: {
-    listStyle: "none",
+  inclusionsChips: {
     display: "flex",
     flexDirection: "column",
     gap: "4px",
   },
-  highlightItem: {
-    fontSize: "0.8rem",
-    color: "var(--text-secondary)",
-    lineHeight: 1.3,
+  chip: {
+    fontSize: "0.78rem",
+    color: "var(--color-text-body)",
+    lineHeight: 1.35,
   },
-  footer: {
+  cardFooter: {
     marginTop: "auto",
     paddingTop: "16px",
-    borderTop: "1px solid var(--border-subtle)",
+    borderTop: "1px solid var(--border-light)",
     display: "flex",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     gap: "12px",
     flexWrap: "wrap",
   },
-  priceBlock: {
+  priceContainer: {
     display: "flex",
     flexDirection: "column",
   },
-  priceSubtext: {
-    fontSize: "0.7rem",
-    color: "var(--text-muted)",
+  priceLabel: {
+    fontSize: "0.68rem",
+    color: "var(--color-text-muted)",
     fontWeight: 500,
   },
-  priceAmount: {
-    fontSize: "1.4rem",
+  priceValue: {
+    fontSize: "1.45rem",
     fontWeight: 800,
-    color: "var(--aomori-blue)",
+    color: "var(--color-aomori-blue)",
     lineHeight: 1.1,
   },
   currency: {
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
+    color: "var(--color-text-muted)",
     fontWeight: 600,
-    color: "var(--text-secondary)",
   },
-  guaranteeTag: {
-    fontSize: "0.68rem",
+  noHiddenFees: {
+    fontSize: "0.7rem",
     color: "#059669",
     fontWeight: 600,
     marginTop: "2px",
   },
   actionBtn: {
-    backgroundColor: "var(--sun-orange)",
+    backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
-    padding: "10px 18px",
-    borderRadius: "var(--radius-full)",
+    padding: "11px 20px",
+    borderRadius: "var(--radius-pill)",
     fontWeight: 700,
     fontSize: "0.88rem",
-    boxShadow: "var(--shadow-sm)",
-    transition: "background-color var(--transition-fast)",
+    boxShadow: "var(--shadow-button-orange)",
+    transition: "background-color 150ms ease",
   },
 };

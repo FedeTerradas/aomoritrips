@@ -1,46 +1,58 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap");
 
 :root {
-  /* Paleta Oficial AomoriTrips (Unidad 4) */
-  --aomori-blue: #1c4f7c;
-  --aomori-blue-dark: #113454;
-  --aomori-blue-light: #2b6da7;
-  --sun-orange: #f97316;
-  --sun-orange-hover: #ea580c;
-  --cream-bg: #fdf8f2;
-  --sky-accent: #f0f9ff;
-  --sky-badge: #e0f2fe;
-  --sky-border: #bae6fd;
-  --surface-white: #ffffff;
-  --surface-card: #ffffff;
+  /* ==========================================================================
+     PALETA OFICIAL AOMORITRIPS (Unidad 4 - Figma Make & Leonardo.ai)
+     ========================================================================== */
 
-  /* Tipografía y Escalas de Gris Accesibles (WCAG AA) */
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --border-subtle: #e2e8f0;
-  --border-hover: #cbd5e1;
+  /* Azules de Aomori: Mar de Japón, Montañas Hakkoda e índigo traditional Aizome */
+  --color-aomori-blue: #1c4f7c;
+  --color-aomori-dark: #0f2d48;
+  --color-aomori-light: #2a689f;
+  --color-aomori-subtle: #edf5fa;
 
-  /* Sombras y Elevaciones */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md:
-    0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg:
-    0 10px 15px -3px rgba(28, 79, 124, 0.08),
-    0 4px 6px -4px rgba(28, 79, 124, 0.04);
-  --shadow-orange: 0 8px 20px -4px rgba(249, 115, 22, 0.35);
+  /* Naranja Sol Naciente: Amanecer, linternas Nebuta Matsuri y follaje Koyo */
+  --color-sun-orange: #f97316;
+  --color-sun-orange-dark: #ea580c;
+  --color-sun-orange-light: #ffedd5;
 
-  /* Radios */
+  /* Fondos Washi & Light Mode */
+  --color-washi-cream: #fdf8f2;
+  --color-surface-pure: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-subtle: #f8fafc;
+
+  /* Aguas del Lago Towada / Nieve Hakkoda */
+  --color-ice-blue: #e0f2fe;
+  --color-ice-border: #bae6fd;
+  --color-ice-text: #0369a1;
+
+  /* Tipografía y Textos - Contraste WCAG AA */
+  --color-text-title: #0f172a;
+  --color-text-body: #334155;
+  --color-text-muted: #64748b;
+  --color-text-light: #94a3b8;
+
+  /* Bordes sutiles y divisores */
+  --border-light: #e2e8f0;
+  --border-focus: #1c4f7c;
+
+  /* Elevaciones y Sombras Cálidas */
+  --shadow-card:
+    0 4px 16px -2px rgba(28, 79, 124, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover:
+    0 12px 28px -4px rgba(28, 79, 124, 0.12),
+    0 4px 10px -2px rgba(0, 0, 0, 0.06);
+  --shadow-button-orange: 0 4px 14px rgba(249, 115, 22, 0.3);
+
+  /* Radios de curvatura */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  --radius-full: 9999px;
-
-  /* Transiciones */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --radius-pill: 9999px;
 }
 
+/* Reset y Base */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -51,18 +63,18 @@ html,
 body {
   max-width: 100vw;
   min-height: 100vh;
-  background-color: var(--cream-bg);
-  color: var(--text-primary);
+  background-color: var(--color-washi-cream);
+  color: var(--color-text-body);
   font-family:
     "Plus Jakarta Sans",
     "Noto Sans JP",
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
-    Roboto,
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
 
 a {
@@ -81,62 +93,49 @@ input,
 select,
 textarea {
   font-family: inherit;
+  color: inherit;
 }
 
-/* Utilitarios Globales */
+/* Layout Util */
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
-.badge {
+/* Badges de Temporadas Japonesas */
+.season-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  font-weight: 600;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
-.badge-sakura {
+.season-sakura {
   background-color: #fdf2f8;
   color: #be185d;
   border: 1px solid #fbcfe8;
 }
 
-.badge-nebuta {
+.season-nebuta {
   background-color: #fffbeb;
   color: #b45309;
   border: 1px solid #fde68a;
 }
 
-.badge-koyo {
+.season-koyo {
   background-color: #fff7ed;
   color: #c2410c;
   border: 1px solid #fed7aa;
 }
 
-.badge-snow {
+.season-snow {
   background-color: #f0f9ff;
   color: #0369a1;
   border: 1px solid #bae6fd;
-}
-
-/* Animaciones sutiles */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn var(--transition-normal) forwards;
 }
