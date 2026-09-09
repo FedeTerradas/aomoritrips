@@ -51,7 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("agent")}
           >
-            Concierge de Viajes
+            Sensei de Viajes
           </button>
 
           <button

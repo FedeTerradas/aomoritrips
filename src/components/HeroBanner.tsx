@@ -7,7 +7,7 @@ interface HeroBannerProps {
   setSelectedSeason: (season: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onOpenConcierge: () => void;
+  onOpenSensei: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -15,7 +15,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   setSelectedSeason,
   searchQuery,
   setSearchQuery,
-  onOpenConcierge,
+  onOpenSensei,
 }) => {
   const seasons = [
     { id: "all", label: "Todos los Destinos", icon: "🗾" },
@@ -64,8 +64,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             />
           </div>
 
-          <button style={styles.conciergeBtn} onClick={onOpenConcierge}>
-            <span>🏮 Consultar al Concierge</span>
+          <button style={styles.conciergeBtn} onClick={onOpenSensei}>
+            <span>⛩️ Consultar al Sensei</span>
           </button>
         </div>
 

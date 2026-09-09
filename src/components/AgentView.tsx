@@ -34,7 +34,7 @@ export const AgentView: React.FC = () => {
         id: "msg_welcome",
         role: "assistant",
         content:
-          "¡Konnichiwa! Te doy una cálida bienvenida a **AomoriTrips** ⛩️.\n\nSoy tu **Concierge local para el norte de Japón**. Mi función es guiarte para que tu experiencia sea inolvidable y sin estrés: desde elegir la mejor semana para ver los cerezos en Hirosaki hasta recomendarte ryokans con aguas termales centenarias y coordinar tus billetes de Shinkansen.\n\n¿Tienes alguna fecha pensada o te gustaría que diseñemos un plan desde cero?",
+          "¡Konnichiwa! Te doy una cálida bienvenida a **AomoriTrips** ⛩️.\n\nSoy tu **Sensei de Viajes para el norte de Japón** (青森の先生). Mi misión es guiarte con sabiduría y atención para que tu viaje sea inolvidable y libre de incertidumbre: desde seleccionar la mejor semana para contemplar los cerezos en Hirosaki hasta abrirte las puertas de ryokans con aguas termales onsen milenarias y coordinar tus billetes de Shinkansen.\n\n¿Tienes alguna fecha en mente o te gustaría que tracemos juntos tu camino?",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -77,7 +77,7 @@ export const AgentView: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "No pudimos conectar con el Concierge.");
+        throw new Error(data.error || "No pudimos conectar con el Sensei.");
       }
 
       const agentData = data.data;
@@ -151,10 +151,12 @@ export const AgentView: React.FC = () => {
             <div style={styles.badgeRow}>
               <span style={styles.statusIndicator}></span>
               <span style={styles.statusText}>
-                Asesoría Activa · Tohoku Concierge
+                Guía y Sabiduría Tradicional · Tohoku Sensei
               </span>
             </div>
-            <h2 style={styles.conciergeName}>Asistente Personal de Viaje</h2>
+            <h2 style={styles.conciergeName}>
+              Aomori Sensei · Tu Guía de Viaje
+            </h2>
             <p style={styles.conciergeBio}>
               Atención personalizada con memoria persistente de tus preferencias
               y acceso directo al inventario oficial de Aomori.
@@ -210,7 +212,7 @@ export const AgentView: React.FC = () => {
                   >
                     <div style={styles.msgHeader}>
                       <span style={styles.senderTitle}>
-                        {isUser ? "Tú" : "Concierge AomoriTrips"}
+                        {isUser ? "Tú" : "Aomori Sensei"}
                       </span>
                       <span style={styles.timestamp}>{m.timestamp}</span>
                     </div>
@@ -246,8 +248,8 @@ export const AgentView: React.FC = () => {
                 <div style={styles.loadingBubble}>
                   <div style={styles.miniSpinner}></div>
                   <span>
-                    El Concierge está consultando la disponibilidad y redactando
-                    tu respuesta...
+                    El Sensei está consultando el catálogo y preparando tu
+                    recomendación...
                   </span>
                 </div>
               </div>

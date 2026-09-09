@@ -84,7 +84,7 @@ export default function HomePage() {
             setSelectedSeason={setSelectedSeason}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            onOpenConcierge={() => setActiveTab("agent")}
+            onOpenSensei={() => setActiveTab("agent")}
           />
 
           <section className="container" style={styles.catalogSection}>

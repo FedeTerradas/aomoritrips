@@ -255,7 +255,7 @@ export async function executeTravelAgent(
     // Respuesta general de asesoría y bienvenida
     const topPack = suggestedPacks[0] as
       { title: string; priceBaseUsd: number; seasonLabel: string } | undefined;
-    responseText = `¡Konnichiwa! Soy tu asesor inteligente de **AomoriTrips** ⛩️.\n\nTe ayudo a descubrir el norte auténtico de Japón sin barreras idiomáticas ni complicaciones logísticas. En base a nuestra base de datos, te recomiendo explorar **${topPack?.title || "Hirosaki Sakura Dream"}** (${topPack?.seasonLabel || "Temporada especial"}), desde **$${topPack?.priceBaseUsd || 2890} USD** todo incluido.\n\n¿Te gustaría que personalicemos un itinerario, simulemos los costos para tu grupo o te brinde recomendaciones sobre la mejor época para viajar?`;
+    responseText = `¡Konnichiwa! Soy tu **Sensei de viajes de AomoriTrips** (青森の先生) ⛩️.\n\nTe guiaré con sabiduría local para descubrir el norte auténtico de Japón sin barreras idiomáticas ni complicaciones logísticas. En base a nuestros registros, te recomiendo explorar **${topPack?.title || "Hirosaki Sakura Dream"}** (${topPack?.seasonLabel || "Temporada especial"}), desde **$${topPack?.priceBaseUsd || 2890} USD** todo incluido.\n\n¿Te gustaría que diseñemos un itinerario a tu medida, calculemos tarifas para tu grupo o te brinde recomendaciones sobre la mejor época para viajar?`;
   }
 
   // 5. Actualizar la Memoria Persistente en DB (Preferencias y Mensaje del Asistente)
