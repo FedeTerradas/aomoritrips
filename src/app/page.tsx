@@ -8,6 +8,7 @@ import { BookingModal } from "@/components/BookingModal";
 import { AgentView } from "@/components/AgentView";
 import { WalletView } from "@/components/WalletView";
 import { AuditModal } from "@/components/AuditModal";
+import { BottomNav } from "@/components/BottomNav";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"explore" | "agent" | "wallet">(
@@ -67,7 +68,7 @@ export default function HomePage() {
   };
 
   return (
-    <div style={styles.appWrapper}>
+    <div style={styles.appWrapper} className="app-main-wrapper">
       {/* Navegación Principal */}
       <Navbar
         activeTab={activeTab}
@@ -132,7 +133,7 @@ export default function HomePage() {
                 </button>
               </div>
             ) : (
-              <div style={styles.packsGrid}>
+              <div style={styles.packsGrid} className="catalog-grid-responsive">
                 {packs.map((pack) => (
                   <PackCard
                     key={pack.id}
@@ -224,6 +225,14 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Navegación Inferior Fija para Mobile (Estilo App Nativa Mockup) */}
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        bookingsCount={bookingsCount}
+        onOpenAuditModal={() => setIsAuditModalOpen(true)}
+      />
     </div>
   );
 }

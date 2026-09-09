@@ -32,8 +32,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Menú de Navegación */}
-        <nav style={styles.nav}>
+        {/* Menú de Navegación de Escritorio */}
+        <nav style={styles.nav} className="desktop-nav-links">
           <button
             style={{
               ...styles.navLink,
@@ -70,9 +70,22 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Acceso a Información Técnica / Rúbrica UTN */}
         <div style={styles.rightActions}>
-          <button style={styles.auditButton} onClick={onOpenAuditModal}>
+          <button
+            style={styles.auditButton}
+            className="desktop-audit-btn"
+            onClick={onOpenAuditModal}
+          >
             <span style={styles.utnDot}></span>
             <span>Memoria Técnica IA</span>
+          </button>
+
+          <button
+            className="mobile-audit-btn"
+            onClick={onOpenAuditModal}
+            aria-label="Ver Memoria Técnica UTN"
+          >
+            <span>🎓</span>
+            <span>UTN</span>
           </button>
         </div>
       </div>

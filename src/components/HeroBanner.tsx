@@ -28,10 +28,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   return (
     <section style={styles.heroSection}>
       {/* Contenido Central */}
-      <div className="container" style={styles.container}>
-        {/* Etiqueta de Destino */}
-        <div style={styles.regionTag}>
-          <span>東北地方 · Expediciones al Japón Oculto e Inexplorado</span>
+      <div className="container hero-container" style={styles.container}>
+        {/* Etiqueta de Destino y Temporada */}
+        <div style={styles.badgeGroup}>
+          <div style={styles.regionTag}>
+            <span>東北地方 · Expediciones al Japón Oculto e Inexplorado</span>
+          </div>
+          <div style={styles.seasonHeroBadge}>
+            <span>🍁 Monte Hakkoda & Iwaki · Temporada Koyo & Nieve</span>
+          </div>
         </div>
 
         {/* Titular Principal */}
@@ -53,8 +58,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         </p>
 
         {/* Buscador Estilo Unidad 4 */}
-        <div style={styles.searchContainer}>
-          <div style={styles.searchBox}>
+        <div style={styles.searchContainer} className="hero-search-container">
+          <div style={styles.searchBox} className="hero-search-box">
             <span style={styles.searchIcon}>📍</span>
             <input
               type="text"
@@ -65,13 +70,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             />
           </div>
 
-          <button style={styles.conciergeBtn} onClick={onOpenSensei}>
+          <button
+            style={styles.conciergeBtn}
+            className="hero-concierge-btn"
+            onClick={onOpenSensei}
+          >
             <span>⛩️ Consultar al Sensei</span>
           </button>
         </div>
 
         {/* Selector de Categorías Estacionales */}
-        <div style={styles.seasonRow}>
+        <div style={styles.seasonRow} className="season-row-scroll">
           {seasons.map((s) => {
             const isActive = selectedSeason === s.id;
             return (
@@ -96,9 +105,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   heroSection: {
+    position: "relative",
     backgroundColor: "var(--color-aomori-blue)",
     backgroundImage:
-      "radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.12) 0%, transparent 45%), linear-gradient(180deg, #1C4F7C 0%, #133959 100%)",
+      "linear-gradient(180deg, rgba(15, 37, 60, 0.72) 0%, rgba(20, 56, 88, 0.82) 45%, rgba(15, 45, 72, 0.96) 100%), url('/aomori_montanas.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center 30%",
+    backgroundRepeat: "no-repeat",
     color: "#FFFFFF",
     padding: "54px 0 46px",
     borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
@@ -108,6 +121,25 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
+  },
+  badgeGroup: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginBottom: "16px",
+  },
+  seasonHeroBadge: {
+    fontFamily: "'Noto Sans JP', sans-serif",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    color: "#FFFFFF",
+    backgroundColor: "rgba(249, 115, 22, 0.25)",
+    border: "1px solid rgba(249, 115, 22, 0.5)",
+    padding: "4px 14px",
+    borderRadius: "var(--radius-pill)",
+    backdropFilter: "blur(6px)",
   },
   regionTag: {
     fontFamily: "'Noto Sans JP', sans-serif",

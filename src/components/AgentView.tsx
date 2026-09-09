@@ -179,7 +179,7 @@ export const AgentView: React.FC = () => {
         {/* Ventana de Conversación */}
         <div style={styles.chatWindow}>
           {/* Sugerencias Rápidas */}
-          <div style={styles.suggestionsBar}>
+          <div style={styles.suggestionsBar} className="no-scrollbar">
             <span style={styles.suggestionsLabel}>Consultas habituales:</span>
             {conciergeSuggestions.map((s, i) => (
               <button
