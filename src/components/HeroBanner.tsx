@@ -29,17 +29,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
     <section style={styles.heroSection}>
       {/* Contenido Central */}
       <div className="container hero-container" style={styles.container}>
-        {/* Etiqueta de Destino y Temporada */}
-        <div style={styles.badgeGroup}>
-          <div style={styles.regionTag}>
-            <span>東北地方 · Expediciones al Japón Oculto e Inexplorado</span>
-          </div>
-          <div style={styles.seasonHeroBadge}>
-            <span>🍁 Monte Hakkoda & Iwaki · Temporada Koyo & Nieve</span>
-          </div>
+        {/* Ceja única con identidad regional */}
+        <div style={styles.regionTag}>
+          <span>東北地方 · Expediciones Ocultas en Monte Hakkoda & Iwaki</span>
         </div>
 
-        {/* Titular Principal */}
+        {/* Titular Principal (Máximo 2 líneas) */}
         <h1 style={styles.title}>
           Rutas secretas y rincones remotos de Japón,{" "}
           <span style={styles.highlightText}>
@@ -47,14 +42,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           </span>
         </h1>
 
-        {/* Descripción de confianza */}
+        {/* Subtexto conciso (< 20 palabras, impacto directo) */}
         <p style={styles.subtitle}>
-          Viajar a Tokio o Kioto lo hace cualquiera con un mapa. Pero adentrarse
-          en los <strong>volcanes sagrados de Osorezan</strong>, cruzar los
-          bosques primarios vírgenes de <strong>Shirakami-Sanchi</strong> o
-          sumergirse en <strong>termas secretas (Hitō)</strong> bajo 4 metros de
-          nieve requiere guía experto, logística privada en 4x4 y salvoconductos
-          culturales que no encontrarás en internet.
+          Expediciones privadas a templos sagrados, termas ocultas bajo la nieve
+          y bosques vírgenes inaccesibles sin un guía local experto.
         </p>
 
         {/* Buscador Estilo Unidad 4 */}
@@ -122,27 +113,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     textAlign: "center",
   },
-  badgeGroup: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    flexWrap: "wrap",
-    marginBottom: "16px",
-  },
-  seasonHeroBadge: {
-    fontFamily: "'Noto Sans JP', sans-serif",
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    color: "#FFFFFF",
-    backgroundColor: "rgba(249, 115, 22, 0.25)",
-    border: "1px solid rgba(249, 115, 22, 0.5)",
-    padding: "4px 14px",
-    borderRadius: "var(--radius-pill)",
-    backdropFilter: "blur(6px)",
-  },
   regionTag: {
-    fontFamily: "'Noto Sans JP', sans-serif",
+    fontFamily: "var(--font-japanese)",
     fontSize: "0.82rem",
     fontWeight: 600,
     color: "#BAE6FD",

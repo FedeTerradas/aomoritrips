@@ -255,7 +255,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "16px",
   },
   sectionSubtitleJP: {
-    fontFamily: "'Noto Sans JP', sans-serif",
+    fontFamily: "var(--font-japanese)",
     fontSize: "0.8rem",
     fontWeight: 600,
     color: "var(--color-aomori-light)",

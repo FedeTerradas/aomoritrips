@@ -115,7 +115,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   kanjiMark: {
-    fontFamily: "'Noto Sans JP', sans-serif",
+    fontFamily: "var(--font-japanese)",
     fontSize: "1.2rem",
     fontWeight: 700,
     backgroundColor: "rgba(255, 255, 255, 0.12)",

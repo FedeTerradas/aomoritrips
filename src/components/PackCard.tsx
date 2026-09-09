@@ -43,9 +43,13 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
   };
 
   return (
-    <article style={styles.card}>
+    <article
+      style={styles.card}
+      className="pack-card-mobile"
+      onClick={() => onSelectPack(pack)}
+    >
       {/* Contenedor de Fotografía y Badges */}
-      <div style={styles.imageContainer}>
+      <div style={styles.imageContainer} className="pack-img-container-mobile">
         <img
           src={pack.heroImage}
           alt={pack.title}
@@ -55,8 +59,22 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
 
         {/* Badge Flotante de Temporada */}
         <div style={styles.topBadgeRow}>
-          <span className={`season-badge ${getSeasonClass(pack.seasonTag)}`}>
-            {pack.seasonLabel}
+          <span
+            className={`season-badge ${getSeasonClass(pack.seasonTag)}`}
+            title={pack.seasonLabel}
+          >
+            <span className="season-label-desktop">{pack.seasonLabel}</span>
+            <span className="season-label-mobile">
+              {pack.seasonTag === "sakura"
+                ? "🌸 Primavera"
+                : pack.seasonTag === "nebuta"
+                  ? "🏮 Festival"
+                  : pack.seasonTag === "snow"
+                    ? "❄️ Nieve"
+                    : pack.seasonTag === "koyo"
+                      ? "🍁 Otoño"
+                      : "⛩️ Sagrado"}
+            </span>
           </span>
 
           <button
@@ -84,7 +102,7 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
       </div>
 
       {/* Cuerpo de la Tarjeta */}
-      <div style={styles.cardBody}>
+      <div style={styles.cardBody} className="pack-body-mobile">
         <div style={styles.ratingAndOrigin}>
           <span style={styles.japaneseTitle}>{pack.japaneseTitle}</span>
           <div style={styles.ratingRow}>
@@ -93,11 +111,18 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
           </div>
         </div>
 
-        <h3 style={styles.title}>{pack.title}</h3>
-        <p style={styles.description}>{pack.description}</p>
+        <h3 style={styles.title} className="pack-title-mobile">
+          {pack.title}
+        </h3>
+        <p style={styles.description} className="pack-desc-mobile">
+          {pack.description}
+        </p>
 
         {/* Inclusiones Clave */}
-        <div style={styles.inclusionsSection}>
+        <div
+          style={styles.inclusionsSection}
+          className="pack-inclusions-mobile"
+        >
           <div style={styles.inclusionsTitle}>INCLUYE EN PAQUETE CERRADO:</div>
           <div style={styles.inclusionsChips}>
             {pack.highlights.slice(0, 3).map((h, i) => (
@@ -109,18 +134,25 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
         </div>
 
         {/* Pie de Tarjeta con Precio Transparente y Acción */}
-        <div style={styles.cardFooter}>
+        <div style={styles.cardFooter} className="pack-footer-mobile">
           <div style={styles.priceContainer}>
             <span style={styles.priceLabel}>Precio por persona (Final):</span>
-            <div style={styles.priceValue}>
+            <div style={styles.priceValue} className="pack-price-val-mobile">
               ${pack.priceBaseUsd.toLocaleString()}{" "}
               <span style={styles.currency}>USD</span>
             </div>
             <span style={styles.noHiddenFees}>Garantía sin costos ocultos</span>
           </div>
 
-          <button style={styles.actionBtn} onClick={() => onSelectPack(pack)}>
-            Ver Pack & Cotizar
+          <button
+            style={styles.actionBtn}
+            className="pack-btn-mobile"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectPack(pack);
+            }}
+          >
+            Ver Pack
           </button>
         </div>
       </div>
@@ -200,7 +232,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: "8px",
   },
   japaneseTitle: {
-    fontFamily: "'Noto Sans JP', sans-serif",
+    fontFamily: "var(--font-japanese)",
     fontSize: "0.8rem",
     fontWeight: 600,
     color: "var(--color-aomori-light)",

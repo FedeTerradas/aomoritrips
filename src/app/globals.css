@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Huninn&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap");
 
 :root {
   /* ==========================================================================
@@ -28,6 +28,11 @@
   --color-ice-text: #0369a1;
 
   /* Tipografía y Textos - Contraste WCAG AA */
+  --font-japanese: "Huninn", "Noto Sans JP", sans-serif;
+  --font-sans:
+    "Outfit", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+
   --color-text-title: #0f172a;
   --color-text-body: #334155;
   --color-text-muted: #64748b;
@@ -65,13 +70,7 @@ body {
   min-height: 100vh;
   background-color: var(--color-washi-cream);
   color: var(--color-text-body);
-  font-family:
-    "Plus Jakarta Sans",
-    "Noto Sans JP",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
@@ -140,6 +139,10 @@ textarea {
   border: 1px solid #bae6fd;
 }
 
+.season-label-mobile {
+  display: none;
+}
+
 /* ==========================================================================
    NAVEGACIÓN MÓVIL ESTILO APP NATIVA (MOCKUP UNIDAD 4)
    ========================================================================== */
@@ -161,6 +164,13 @@ textarea {
 }
 
 @media (max-width: 768px) {
+  .season-label-desktop {
+    display: none !important;
+  }
+  .season-label-mobile {
+    display: inline !important;
+  }
+
   .container {
     padding: 0 16px;
   }
@@ -297,8 +307,64 @@ textarea {
     white-space: nowrap !important;
   }
 
+  /* Grilla de 2 Columnas Estética para Mobile (Figma Mockup) */
   .catalog-grid-responsive {
-    grid-template-columns: 1fr !important;
-    gap: 20px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .pack-card-mobile {
+    cursor: pointer;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .pack-img-container-mobile {
+    height: 125px !important;
+  }
+
+  .pack-body-mobile {
+    padding: 10px 10px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .pack-title-mobile {
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    margin-bottom: 4px !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--color-text-title);
+  }
+
+  .pack-desc-mobile {
+    display: none !important;
+  }
+
+  .pack-inclusions-mobile {
+    display: none !important;
+  }
+
+  .pack-footer-mobile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    padding-top: 8px !important;
+    margin-top: auto !important;
+  }
+
+  .pack-price-val-mobile {
+    font-size: 1.15rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .pack-btn-mobile {
+    width: 100% !important;
+    padding: 7px 10px !important;
+    font-size: 0.76rem !important;
+    text-align: center !important;
   }
 }
