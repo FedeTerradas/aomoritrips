@@ -1,0 +1,80 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model TravelPack {
+  id               String   @id @default(uuid())
+  slug             String   @unique
+  title            String
+  japaneseTitle    String
+  description      String
+  heroImage        String
+  priceBaseUsd     Float
+  seasonTag        String   // sakura, nebuta, koyo, snow
+  seasonLabel      String   // "🌸 Cerezos en Flor", "🏮 Festival Nebuta", "🍁 Follaje de Otoño", "❄️ Nieve & Onsen"
+  durationDays     Int
+  rating           Float    @default(4.9)
+  reviewsCount     Int      @default(120)
+  highlights       String   // JSON array de puntos clave incluidos
+  itinerarySummary String   // Resumen día por día
+  isFeatured       Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  bookings         BookingOrder[]
+}
+
+model BookingOrder {
+  id             String      @id @default(uuid())
+  bookingCode    String      @unique // ej. AOM-2026-X982
+  packId         String
+  packTitle      String
+  travelerName   String
+  travelerEmail  String
+  travelersCount Int
+  travelDate     String
+  seasonSelected String
+  totalPriceUsd  Float
+  status         String      @default("CONFIRMED") // CONFIRMED, PENDING, CANCELLED
+  qrData         String      // Payload JSON/Base64 para validación offline del voucher
+  createdAt      DateTime    @default(now())
+
+  pack           TravelPack  @relation(fields: [packId], references: [id])
+}
+
+model AgentSession {
+  id           String               @id @default(uuid())
+  sessionToken String               @unique
+  startedAt    DateTime             @default(now())
+  lastActiveAt DateTime             @updatedAt
+
+  messages     AgentMessage[]
+  preferences  TravelerPreference?
+}
+
+model AgentMessage {
+  id        String       @id @default(uuid())
+  sessionId String
+  role      String       // user, assistant, system, tool
+  content   String
+  toolCalls String?      // JSON opcional de herramientas invocadas
+  createdAt DateTime     @default(now())
+
+  session   AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model TravelerPreference {
+  id              String       @id @default(uuid())
+  sessionId       String       @unique
+  budgetTier      String?      // budget, medium, luxury
+  preferredSeason String?      // sakura, nebuta, koyo, snow
+  interests       String?      // JSON array: ["onsen", "gastronomia", "historia"]
+  groupSize       Int?
+  updatedAt       DateTime     @updatedAt
+
+  session         AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

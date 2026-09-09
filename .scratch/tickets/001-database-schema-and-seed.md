@@ -1,6 +1,6 @@
 # Ticket 001: Modelado de Base de Datos y Seed de Catálogo Aomori
 
-- **Estado**: ready-for-agent
+- **Estado**: completed (merged)
 - **Dependencias**: Ninguna
 - **Criterio de Aceptación**:
   - Prisma configurado con SQLite para desarrollo ágil y compatible con PostgreSQL.
