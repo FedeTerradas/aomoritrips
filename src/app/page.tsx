@@ -9,6 +9,8 @@ import { AgentView } from "@/components/AgentView";
 import { WalletView } from "@/components/WalletView";
 import { AuditModal } from "@/components/AuditModal";
 import { BottomNav } from "@/components/BottomNav";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
+import { FaqSection } from "@/components/FaqSection";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"explore" | "agent" | "wallet">(
@@ -144,6 +146,12 @@ export default function HomePage() {
               </div>
             )}
           </section>
+
+          {/* Social Proof & Testimonios (UI/UX Pro Max) */}
+          <TestimonialsSection />
+
+          {/* Dudas Frecuentes & Acordeón Interactivo (UI/UX Pro Max) */}
+          <FaqSection onOpenSensei={() => setActiveTab("agent")} />
         </main>
       )}
 
