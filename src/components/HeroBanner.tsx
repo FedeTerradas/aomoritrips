@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { CharacterDisplay } from "./CharacterDisplay";
 
 interface HeroBannerProps {
   selectedSeason: string;
@@ -8,6 +9,7 @@ interface HeroBannerProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onOpenSensei: () => void;
+  favoritesCount?: number;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -16,9 +18,19 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   searchQuery,
   setSearchQuery,
   onOpenSensei,
+  favoritesCount = 0,
 }) => {
   const seasons = [
     { id: "all", label: "Todos los Destinos", icon: "🗾" },
+    ...(favoritesCount > 0
+      ? [
+          {
+            id: "favorites",
+            label: `Mis Favoritos (${favoritesCount})`,
+            icon: "❤️",
+          },
+        ]
+      : []),
     { id: "sakura", label: "Cerezos en Flor (Sakura)", icon: "🌸" },
     { id: "nebuta", label: "Festival Nebuta Matsuri", icon: "🏮" },
     { id: "koyo", label: "Follaje de Otoño (Koyo)", icon: "🍁" },
@@ -27,8 +39,24 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
   return (
     <section style={styles.heroSection}>
+      <style>
+        {`
+          @media (max-width: 992px) {
+            .sakura-desktop { display: none !important; }
+          }
+        `}
+      </style>
       {/* Contenido Central */}
       <div className="container hero-container" style={styles.container}>
+        {/* Sakura decorativa */}
+        <div style={styles.sakuraWrapper} className="sakura-desktop">
+          <CharacterDisplay
+            character="sakura"
+            size="lg"
+            quote="¡Bienvenido a Aomori! 🌸"
+          />
+        </div>
+
         {/* Ceja única con identidad regional */}
         <div style={styles.regionTag}>
           <span>東北地方 · Expediciones Ocultas en Monte Hakkoda & Iwaki</span>
@@ -226,5 +254,12 @@ const styles: Record<string, React.CSSProperties> = {
     borderColor: "#FFFFFF",
     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
     transform: "translateY(-1px)",
+  },
+  sakuraWrapper: {
+    position: "absolute",
+    right: "8%",
+    top: "15%",
+    zIndex: 10,
+    pointerEvents: "none",
   },
 };

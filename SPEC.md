@@ -12,6 +12,8 @@ Construir y desplegar una plataforma web funcional de TravelTech focalizada en v
 
 ## 2. Requerimientos Funcionales (RF)
 
+### Capa 3 — Viajero (MVP Original)
+
 - **RF-01: Catálogo Curado de Experiencias**:
   - Exploración de paquetes cerrados (Monte Iwaki & Onsen, Festival de Fuego Nebuta Matsuri, Ruta de los Cerezos en Hirosaki, Aventura Invernal Hakkoda).
   - Etiquetas estacionales dinámicas (`🌸 Sakura`, `🏮 Nebuta`, `🍁 Koyo`, `❄️ Snow`).
@@ -27,6 +29,44 @@ Construir y desplegar una plataforma web funcional de TravelTech focalizada en v
   - Confirmación de reserva y generación de código de reserva único.
   - Generación de código QR dinámico para validación offline.
   - Vista de "Mis Viajes" accesible con los vouchers guardados.
+
+### Capa 1 — Soñador / Fan de Cultura Japonesa _(nuevo — Revisión 2)_
+
+- **RF-05: Personajes Guía Originales (`CulturalGuideCharacter`)**:
+  - Dos personajes en estilo anime: **Sakura** (primavera/cerezos) y **Haruto** (verano/festival).
+  - Ilustraciones generadas con IA, 100% originales, sin referencia a franquicias existentes.
+  - Presencia decorativa en: landing page hero, sección quiz, pantalla de resultado del quiz, y zonas de entrada al agente IA.
+  - Imágenes en formato WebP optimizado; fuente: royalty-free / generación propia hasta incorporar assets finales.
+- **RF-06: Quiz Interactivo "¿Cuál es tu Japón?" (`QuizSession` → `QuizResult`)**:
+  - Requiere autenticación de usuario (login requerido antes de iniciar).
+  - 7 preguntas de perfil cultural sobre preferencias de anime, comida, clima, ritmo de viaje y tipo de experiencia.
+  - Al completar, el Agente IA llama a `generate_quiz_recommendation(quiz_answers)` para producir un `QuizResult`.
+  - El resultado incluye: región recomendada, temporada ideal, estilo de viaje inferido y carta de presentación personalizada.
+  - El resultado es **compartible**: se genera una imagen/card OG compartible en redes sociales (og:image dinámica).
+  - El `QuizResult` alimenta el `TravelerProfile` del usuario para futuras recomendaciones del agente.
+- **RF-07: Bucket List "Sueños de Japón" (`BucketListItem`)**:
+  - Usuario autenticado puede guardar destinos, packs o experiencias en su lista de deseos.
+  - Accesible desde perfil del usuario en "Mis Sueños".
+- **RF-08: Guías Culturales (`CulturalGuide`)**:
+  - Secciones de contenido: gastronomía japonesa, etiqueta onsen, vocabulario básico, festivales por temporada.
+  - Accesibles sin autenticación.
+  - El Agente IA responde preguntas culturales mediante la herramienta `answer_cultural_question(topic)`.
+
+### Capa 2 — Planificador Activo _(nuevo — Revisión 2)_
+
+- **RF-09: Armador de Itinerario Grupal con IA (`DraftItinerary`)**:
+  - El usuario define un `GroupProfile`: tamaño (1–12 personas), tipo de grupo (`solo | couple | friends | family`), días, presupuesto por persona, temporada, restricciones alimentarias.
+  - El Agente llama a `generate_group_itinerary(group_profile)` y retorna un `DraftItinerary` con estructura día a día.
+  - Cada día incluye: actividades (`Activity[]`), sugerencias gastronómicas (`MealSuggestion[]`) con indicadores de restricciones dietarias, y alojamiento sugerido.
+  - El itinerario existe **solo en la sesión activa** (no persiste en DB).
+  - Al confirmar el `DraftItinerary`, se crea un **`CustomPack`** persistido y disponible para reserva (flujo Capa 3).
+- **RF-10: Calculadora de Presupuesto DIY (`BudgetBreakdown`)**:
+  - Herramienta libre no atada a packs prearmados.
+  - Componentes seleccionables: vuelo estimado, tipo de hospedaje, días de JR Pass, actividades opcionales.
+  - Desglose en tiempo real por persona y por grupo total.
+- **RF-11: Comparador de Temporadas**:
+  - Visualización interactiva mes a mes: clima, eventos, precio estimado, nivel de turismo.
+  - Usa datos de `get_seasonal_forecast(month)`.
 
 ---
 
@@ -44,11 +84,20 @@ Construir y desplegar una plataforma web funcional de TravelTech focalizada en v
 
 ## 4. Estructura de Datos (Prisma / Base de Datos Relacional)
 
+### Tablas originales (Capa 3)
+
 - **`TravelPack`**: `id`, `slug`, `title`, `description`, `heroImage`, `priceBaseUsd`, `seasonTag`, `durationDays`, `includedHighlights` (JSON).
 - **`BookingOrder`**: `id`, `packId`, `travelerName`, `travelerEmail`, `travelersCount`, `travelDate`, `totalPriceUsd`, `status`, `qrCodeData`, `createdAt`.
 - **`AgentSession`**: `id`, `userId`, `startedAt`, `lastActiveAt`.
 - **`AgentMessage`**: `id`, `sessionId`, `role` (`user` | `assistant` | `system` | `tool`), `content`, `toolCalls` (JSON), `createdAt`.
 - **`TravelerPreference`**: `id`, `sessionId`, `budgetTier`, `interests` (JSON), `seasonPreference`.
+
+### Tablas nuevas — Revisión 2
+
+- **`QuizSession`**: `id`, `userId`, `answers` (JSON), `completedAt`, `createdAt`.
+- **`QuizResult`**: `id`, `sessionId`, `region`, `season`, `travelStyle` (`relaxed | adventurous | cultural | gastronomic`), `personalizedCard` (Text), `createdAt`.
+- **`BucketListItem`**: `id`, `userId`, `type` (`pack | experience | destination`), `refId` (nullable), `title`, `imageUrl` (nullable), `notes` (nullable), `createdAt`.
+- **`CustomPack`**: `id`, `userId`, `title`, `groupSize` (1–12), `groupType` (`solo | couple | friends | family`), `durationDays`, `season`, `itineraryJson` (JSON), `budgetPerPersonUsd`, `status` (`draft | confirmed`), `createdAt`.
 
 ---
 

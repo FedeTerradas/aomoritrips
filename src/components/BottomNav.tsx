@@ -3,8 +3,10 @@
 import React from "react";
 
 interface BottomNavProps {
-  activeTab: "explore" | "agent" | "wallet";
-  setActiveTab: (tab: "explore" | "agent" | "wallet") => void;
+  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz";
+  setActiveTab: (
+    tab: "explore" | "agent" | "wallet" | "profile" | "quiz"
+  ) => void;
   bookingsCount: number;
   onOpenAuditModal: () => void;
 }
@@ -15,7 +17,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   bookingsCount,
   onOpenAuditModal,
 }) => {
-  const handleTabChange = (tab: "explore" | "agent" | "wallet") => {
+  const handleTabChange = (tab: "explore" | "agent" | "wallet" | "profile") => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -57,7 +59,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         <span className="bottom-nav-label">Mis Viajes</span>
       </button>
 
-      {/* 4. Memoria Técnica UTN */}
+      {/* 4. Perfil & Ajustes (Figma Mockup) */}
+      <button
+        className={`bottom-nav-item ${activeTab === "profile" ? "active" : ""}`}
+        onClick={() => handleTabChange("profile")}
+        aria-label="Perfil y Configuración"
+      >
+        <span className="bottom-nav-icon">👤</span>
+        <span className="bottom-nav-label">Perfil</span>
+      </button>
+
+      {/* 5. Memoria Técnica UTN */}
       <button
         className="bottom-nav-item"
         onClick={onOpenAuditModal}

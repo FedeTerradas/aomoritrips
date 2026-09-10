@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TravelPackData } from "./PackCard";
 import { toolCalculatePricing } from "@/lib/agent/tools";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useProfile } from "@/hooks/useProfile";
 
 interface BookingModalProps {
   pack: TravelPackData | null;
@@ -15,12 +17,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onClose,
   onBookingSuccess,
 }) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { profile } = useProfile();
   const [travelersCount, setTravelersCount] = useState(2);
   const [travelDate, setTravelDate] = useState("2026-10-15");
   const [travelerName, setTravelerName] = useState("");
   const [travelerEmail, setTravelerEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (profile?.name && !travelerName) {
+      setTravelerName(profile.name);
+    }
+  }, [profile]);
 
   if (!pack) return null;
 
@@ -81,9 +91,30 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <span style={styles.jpBadge}>{pack.japaneseTitle}</span>
             <h2 style={styles.modalTitle}>{pack.title}</h2>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>
-            ✕
-          </button>
+          <div style={styles.headerRightGroup}>
+            <button
+              style={{
+                ...styles.modalFavBtn,
+                ...(isFavorite(pack.id) ? styles.modalFavBtnActive : {}),
+              }}
+              onClick={() => toggleFavorite(pack.id)}
+              title={
+                isFavorite(pack.id)
+                  ? "Quitar de favoritos"
+                  : "Guardar en favoritos"
+              }
+              aria-label="Guardar en favoritos"
+            >
+              {isFavorite(pack.id) ? "❤️" : "🤍"}
+            </button>
+            <button
+              style={styles.closeBtn}
+              onClick={onClose}
+              aria-label="Cerrar modal"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div style={styles.body}>
@@ -256,28 +287,31 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.65)",
-    backdropFilter: "blur(4px)",
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1000,
+    zIndex: 2000,
     padding: "20px",
   },
   modal: {
-    backgroundColor: "var(--surface-white)",
+    backgroundColor: "#FFFFFF",
     borderRadius: "var(--radius-lg)",
     width: "100%",
     maxWidth: "960px",
     maxHeight: "90vh",
     overflowY: "auto",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
     display: "flex",
     flexDirection: "column",
+    border: "1px solid var(--border-light)",
+    position: "relative",
   },
   header: {
     padding: "20px 24px",
-    borderBottom: "1px solid var(--border-subtle)",
+    borderBottom: "1px solid var(--border-light)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
@@ -288,27 +322,55 @@ const styles: Record<string, React.CSSProperties> = {
   },
   jpBadge: {
     fontSize: "0.8rem",
-    color: "var(--aomori-blue-light)",
+    color: "var(--color-aomori-light)",
     fontWeight: 600,
+    fontFamily: "var(--font-japanese)",
   },
   modalTitle: {
     fontSize: "1.4rem",
     fontWeight: 800,
-    color: "var(--aomori-blue)",
+    color: "var(--color-aomori-blue)",
     marginTop: "2px",
+  },
+  headerRightGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  modalFavBtn: {
+    backgroundColor: "#F1F5F9",
+    border: "1px solid #E2E8F0",
+    borderRadius: "50%",
+    width: "36px",
+    height: "36px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    fontSize: "1.05rem",
+    transition: "all 150ms ease",
+  },
+  modalFavBtnActive: {
+    backgroundColor: "#FEE2E2",
+    borderColor: "#FECACA",
+    boxShadow: "0 2px 8px rgba(239, 68, 68, 0.25)",
   },
   closeBtn: {
     fontSize: "1.2rem",
-    color: "var(--text-muted)",
-    padding: "6px 10px",
+    color: "var(--color-text-muted)",
+    padding: "6px 12px",
     borderRadius: "8px",
     backgroundColor: "#F1F5F9",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: 700,
   },
   body: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
     gap: "24px",
     padding: "24px",
+    backgroundColor: "#FFFFFF",
   },
   leftCol: {
     display: "flex",
@@ -317,19 +379,20 @@ const styles: Record<string, React.CSSProperties> = {
   },
   heroImg: {
     width: "100%",
-    height: "220px",
+    height: "230px",
     objectFit: "cover",
     borderRadius: "var(--radius-md)",
+    border: "1px solid var(--border-light)",
   },
   description: {
     fontSize: "0.92rem",
-    color: "var(--text-secondary)",
+    color: "var(--color-text-body)",
     lineHeight: 1.6,
   },
   sectionHeader: {
     fontSize: "1rem",
     fontWeight: 700,
-    color: "var(--text-primary)",
+    color: "var(--color-text-title)",
     marginTop: "8px",
   },
   itineraryList: {
@@ -341,15 +404,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "8px 12px",
-    backgroundColor: "var(--cream-bg)",
+    padding: "10px 14px",
+    backgroundColor: "var(--color-washi-cream)",
     borderRadius: "var(--radius-sm)",
-    border: "1px solid #E2E8F0",
+    border: "1px solid #F1E9DF",
   },
   dayNumber: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    backgroundColor: "var(--aomori-blue)",
+    backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
     padding: "3px 8px",
     borderRadius: "6px",
@@ -357,7 +420,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dayTitle: {
     fontSize: "0.85rem",
-    color: "var(--text-primary)",
+    color: "var(--color-text-title)",
     fontWeight: 500,
   },
   inclusionsGrid: {
@@ -367,26 +430,28 @@ const styles: Record<string, React.CSSProperties> = {
   },
   inclusionBadge: {
     fontSize: "0.82rem",
-    color: "var(--text-secondary)",
+    color: "#065F46",
     backgroundColor: "#F0FDF4",
     border: "1px solid #BBF7D0",
-    padding: "6px 12px",
+    padding: "8px 12px",
     borderRadius: "8px",
+    fontWeight: 500,
   },
   rightCol: {
     display: "flex",
     flexDirection: "column",
   },
   quoteCard: {
-    backgroundColor: "var(--sky-accent)",
-    border: "1px solid var(--sky-border)",
-    padding: "20px",
+    backgroundColor: "#F8FAFC",
+    border: "1px solid var(--border-light)",
+    padding: "22px",
     borderRadius: "var(--radius-md)",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
   },
   quoteHeader: {
     fontSize: "1.1rem",
     fontWeight: 800,
-    color: "var(--aomori-blue)",
+    color: "var(--color-aomori-blue)",
     marginBottom: "16px",
   },
   formGroup: {
@@ -398,7 +463,7 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     fontSize: "0.82rem",
     fontWeight: 700,
-    color: "var(--text-secondary)",
+    color: "var(--color-text-title)",
   },
   counterRow: {
     display: "flex",
@@ -407,34 +472,38 @@ const styles: Record<string, React.CSSProperties> = {
   },
   counterBtn: {
     flex: 1,
-    padding: "6px",
+    padding: "8px 6px",
     borderRadius: "8px",
-    border: "1px solid var(--border-subtle)",
+    border: "1px solid var(--border-light)",
     backgroundColor: "#FFFFFF",
     fontSize: "0.8rem",
     fontWeight: 600,
-    color: "var(--text-secondary)",
+    color: "var(--color-text-body)",
+    cursor: "pointer",
+    transition: "all 150ms ease",
   },
   counterBtnActive: {
-    backgroundColor: "var(--aomori-blue)",
+    backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    borderColor: "var(--aomori-blue)",
+    borderColor: "var(--color-aomori-blue)",
+    boxShadow: "0 2px 6px rgba(28, 79, 124, 0.3)",
   },
   input: {
     padding: "10px 14px",
     borderRadius: "8px",
-    border: "1px solid var(--border-subtle)",
+    border: "1px solid var(--border-light)",
     fontSize: "0.9rem",
     backgroundColor: "#FFFFFF",
+    color: "var(--color-text-title)",
     outline: "none",
   },
   helpText: {
     fontSize: "0.74rem",
-    color: "var(--text-muted)",
+    color: "var(--color-text-muted)",
   },
   breakdownBox: {
     backgroundColor: "#FFFFFF",
-    border: "1px solid var(--border-subtle)",
+    border: "1px solid var(--border-light)",
     borderRadius: "var(--radius-sm)",
     padding: "14px",
     margin: "14px 0",
@@ -446,7 +515,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     justifyContent: "space-between",
     fontSize: "0.82rem",
-    color: "var(--text-secondary)",
+    color: "var(--color-text-body)",
   },
   breakdownRowDiscount: {
     display: "flex",
@@ -459,16 +528,17 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    borderTop: "2px dashed var(--border-subtle)",
+    borderTop: "2px dashed var(--border-light)",
     paddingTop: "10px",
     marginTop: "4px",
     fontWeight: 800,
     fontSize: "0.95rem",
-    color: "var(--text-primary)",
+    color: "var(--color-text-title)",
   },
   grandTotal: {
-    fontSize: "1.4rem",
-    color: "var(--sun-orange)",
+    fontSize: "1.45rem",
+    color: "var(--color-sun-orange)",
+    fontWeight: 800,
   },
   guaranteeNote: {
     fontSize: "0.72rem",
@@ -483,7 +553,7 @@ const styles: Record<string, React.CSSProperties> = {
   formSubheader: {
     fontSize: "0.92rem",
     fontWeight: 700,
-    color: "var(--text-primary)",
+    color: "var(--color-text-title)",
     marginBottom: "12px",
   },
   errorAlert: {
@@ -497,13 +567,16 @@ const styles: Record<string, React.CSSProperties> = {
   },
   submitBtn: {
     width: "100%",
-    backgroundColor: "var(--sun-orange)",
+    backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
-    padding: "12px",
-    borderRadius: "var(--radius-full)",
+    padding: "13px",
+    borderRadius: "var(--radius-pill)",
     fontWeight: 800,
     fontSize: "0.95rem",
-    boxShadow: "var(--shadow-orange)",
+    boxShadow: "var(--shadow-button-orange)",
     marginTop: "6px",
+    border: "none",
+    cursor: "pointer",
+    transition: "transform 150ms ease",
   },
 };

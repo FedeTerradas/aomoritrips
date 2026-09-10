@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { AgentDecisionStep } from "@/lib/agent/types";
+import { CharacterDisplay } from "./CharacterDisplay";
 
 interface ChatMessage {
   id: string;
@@ -144,8 +145,8 @@ export const AgentView: React.FC = () => {
       {/* Header del Concierge */}
       <div style={styles.conciergeHeader}>
         <div style={styles.profileBox}>
-          <div style={styles.avatarFrame}>
-            <span style={styles.avatarIcon}>🍵</span>
+          <div style={styles.harutoAvatarWrapper}>
+            <CharacterDisplay character="haruto" size="sm" />
           </div>
           <div>
             <div style={styles.badgeRow}>
@@ -359,18 +360,11 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: "16px",
   },
-  avatarFrame: {
-    width: "56px",
-    height: "56px",
-    borderRadius: "var(--radius-md)",
-    backgroundColor: "var(--color-washi-cream)",
-    border: "1px solid #EADDCF",
+  harutoAvatarWrapper: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-  },
-  avatarIcon: {
-    fontSize: "1.8rem",
+    marginRight: "8px",
   },
   badgeRow: {
     display: "flex",

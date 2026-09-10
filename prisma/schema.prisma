@@ -78,3 +78,83 @@ model TravelerPreference {
 
   session         AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
+
+model TravelerProfile {
+  id                   String               @id @default(uuid())
+  sessionToken         String               @unique
+  fullName             String               @default("Hana Yamamoto")
+  passportNumberMasked String               @default("ES · A4829311")
+  passportExpiry       String               @default("Jun 2030")
+  nationality          String               @default("España")
+  preferredCurrency    String               @default("USD") // USD, JPY, EUR, ARS
+  preferredLanguage    String               @default("ES")  // ES, EN, JA
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  paymentMethods       PaymentMethodToken[]
+}
+
+model PaymentMethodToken {
+  id           String          @id @default(uuid())
+  profileId    String
+  vaultToken   String          @unique // Token opaco no reversible (Bóveda PCI-DSS). NUNCA se almacena el PAN ni CVV.
+  cardBrand    String          // Visa, Mastercard, AMEX
+  last4        String          // Solo los últimos 4 dígitos visibles (PCI-DSS Req 3.3)
+  billingCycle String          @default("Mensual") // Mensual, Por Reserva
+  isDefault    Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+
+  profile      TravelerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+// ─── Capa 1: Soñadores ──────────────────────────────────────────────────────
+
+model QuizSession {
+  id           String     @id @default(uuid())
+  sessionToken String     @unique
+  answers      String     // JSON: { q1: string, q2: string, ... q7: string }
+  completedAt  DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+
+  result       QuizResult?
+}
+
+model QuizResult {
+  id               String      @id @default(uuid())
+  sessionId        String      @unique
+  region           String      // "Hirosaki" | "Aomori City" | "Hakkoda" | "Towada"
+  season           String      // "sakura" | "nebuta" | "koyo" | "snow"
+  travelStyle      String      // "relaxed" | "adventurous" | "cultural" | "gastronomic"
+  personalizedCard String      // Texto generado por el agente IA
+  createdAt        DateTime    @default(now())
+
+  session          QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model BucketListItem {
+  id           String   @id @default(uuid())
+  sessionToken String   // Asociado al sessionToken del usuario
+  itemType     String   // "pack" | "experience" | "destination"
+  refId        String?  // ID de TravelPack u otra entidad referenciada
+  title        String
+  imageUrl     String?
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+// ─── Capa 2: Planificadores ─────────────────────────────────────────────────
+
+model CustomPack {
+  id                 String   @id @default(uuid())
+  sessionToken       String
+  title              String
+  groupSize          Int      // 1–12
+  groupType          String   // "solo" | "couple" | "friends" | "family"
+  durationDays       Int
+  season             String
+  itineraryJson      String   // JSON serializado del DraftItinerary
+  budgetPerPersonUsd Float
+  totalBudgetUsd     Float
+  status             String   @default("draft") // "draft" | "confirmed"
+  createdAt          DateTime @default(now())
+}

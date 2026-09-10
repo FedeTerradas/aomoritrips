@@ -7,15 +7,18 @@ import { PackCard, TravelPackData } from "@/components/PackCard";
 import { BookingModal } from "@/components/BookingModal";
 import { AgentView } from "@/components/AgentView";
 import { WalletView } from "@/components/WalletView";
+import { ProfileView } from "@/components/ProfileView";
 import { AuditModal } from "@/components/AuditModal";
 import { BottomNav } from "@/components/BottomNav";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { FaqSection } from "@/components/FaqSection";
+import { useFavorites } from "@/hooks/useFavorites";
+import { CharacterDisplay } from "@/components/CharacterDisplay";
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<"explore" | "agent" | "wallet">(
-    "explore"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "explore" | "agent" | "wallet" | "profile" | "quiz"
+  >("explore");
   const [packs, setPacks] = useState<TravelPackData[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -24,11 +27,15 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
 
+  const { favorites, favoritesCount } = useFavorites();
+
   const fetchPacks = async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedSeason !== "all") params.set("season", selectedSeason);
+      if (selectedSeason !== "all" && selectedSeason !== "favorites") {
+        params.set("season", selectedSeason);
+      }
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
 
       const res = await fetch(`/api/packs?${params.toString()}`);
@@ -69,13 +76,26 @@ export default function HomePage() {
     setActiveTab("wallet");
   };
 
+  const handleGoToFavorites = () => {
+    setActiveTab("explore");
+    setSelectedSeason("favorites");
+    window.scrollTo({ top: 400, behavior: "smooth" });
+  };
+
+  const displayedPacks =
+    selectedSeason === "favorites"
+      ? packs.filter((p) => favorites.includes(p.id))
+      : packs;
+
   return (
     <div style={styles.appWrapper} className="app-main-wrapper">
-      {/* Navegación Principal */}
+      {/* Navegación Principal con Perfil y Favoritos */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         bookingsCount={bookingsCount}
+        favoritesCount={favoritesCount}
+        onGoToFavorites={handleGoToFavorites}
         onOpenAuditModal={() => setIsAuditModalOpen(true)}
       />
 
@@ -88,6 +108,7 @@ export default function HomePage() {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             onOpenSensei={() => setActiveTab("agent")}
+            favoritesCount={favoritesCount}
           />
 
           <section className="container" style={styles.catalogSection}>
@@ -99,18 +120,20 @@ export default function HomePage() {
                 <h2 style={styles.sectionTitle}>
                   {selectedSeason === "all"
                     ? "Expediciones a Rincones Secretos e Inexplorados"
-                    : `Expediciones de Temporada: ${selectedSeason.toUpperCase()}`}
+                    : selectedSeason === "favorites"
+                      ? "❤️ Mis Expediciones Guardadas en Favoritos"
+                      : `Expediciones de Temporada: ${selectedSeason.toUpperCase()}`}
                 </h2>
                 <p style={styles.sectionSubtitle}>
-                  Acceso exclusivo a zonas rurales sin transporte masivo,
-                  posadas termales secretas (Hitō) y templos aislados con
-                  acompañamiento del Sensei.
+                  {selectedSeason === "favorites"
+                    ? "Tus paquetes seleccionados guardados localmente. Puedes abrirlos, consultar al Sensei o cotizar cuando lo desees."
+                    : "Acceso exclusivo a zonas rurales sin transporte masivo, posadas termales secretas (Hitō) y templos aislados con acompañamiento del Sensei."}
                 </p>
               </div>
 
               <div style={styles.countBadge}>
-                {packs.length}{" "}
-                {packs.length === 1
+                {displayedPacks.length}{" "}
+                {displayedPacks.length === 1
                   ? "experiencia"
                   : "experiencias disponibles"}
               </div>
@@ -121,22 +144,56 @@ export default function HomePage() {
                 <div style={styles.spinner}></div>
                 <span>Cargando experiencias del norte de Japón...</span>
               </div>
-            ) : packs.length === 0 ? (
+            ) : displayedPacks.length === 0 ? (
               <div style={styles.noResultsBox}>
-                <p>No encontramos paquetes para el filtro seleccionado.</p>
-                <button
-                  style={styles.resetFiltersBtn}
-                  onClick={() => {
-                    setSelectedSeason("all");
-                    setSearchQuery("");
-                  }}
-                >
-                  Restablecer filtros
-                </button>
+                {selectedSeason === "favorites" ? (
+                  <>
+                    <p
+                      style={{
+                        fontSize: "1.1rem",
+                        fontWeight: 700,
+                        color: "var(--color-aomori-blue)",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      ⛩️ Aún no tienes paquetes en favoritos
+                    </p>
+                    <p
+                      style={{
+                        maxWidth: "460px",
+                        margin: "0 auto 16px",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      Haz clic en el corazón 🤍 de cualquiera de nuestras
+                      expediciones para guardarla en tu lista personal y tenerla
+                      siempre a mano.
+                    </p>
+                    <button
+                      style={styles.resetFiltersBtn}
+                      onClick={() => setSelectedSeason("all")}
+                    >
+                      Explorar Catálogo Completo
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p>No encontramos paquetes para el filtro seleccionado.</p>
+                    <button
+                      style={styles.resetFiltersBtn}
+                      onClick={() => {
+                        setSelectedSeason("all");
+                        setSearchQuery("");
+                      }}
+                    >
+                      Restablecer filtros
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div style={styles.packsGrid} className="catalog-grid-responsive">
-                {packs.map((pack) => (
+                {displayedPacks.map((pack) => (
                   <PackCard
                     key={pack.id}
                     pack={pack}
@@ -147,10 +204,44 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* Social Proof & Testimonios (UI/UX Pro Max) */}
+          {/* Sección CTA de Quiz */}
+          <section style={styles.quizSection} className="container">
+            <style>
+              {`
+                @media (max-width: 768px) {
+                  .hide-on-mobile-quiz { display: none !important; }
+                  .quiz-flex { flex-direction: column; text-align: center; }
+                }
+              `}
+            </style>
+            <div style={styles.quizHaruto}>
+              <CharacterDisplay
+                character="haruto"
+                size="lg"
+                quote="¡Descubrí tu destino ideal!"
+              />
+            </div>
+            <div style={styles.quizContent} className="quiz-flex">
+              <h2 style={styles.quizTitle}>¿Cuál es tu Japón?</h2>
+              <p style={styles.quizSubtitle}>
+                Encuentra el viaje perfecto según tu estilo y preferencias.
+              </p>
+              <button
+                style={styles.quizBtn}
+                onClick={() => setActiveTab("quiz")}
+              >
+                Hacer el test
+              </button>
+            </div>
+            <div style={styles.quizSakura} className="hide-on-mobile-quiz">
+              <CharacterDisplay character="sakura" size="md" />
+            </div>
+          </section>
+
+          {/* Social Proof & Testimonios */}
           <TestimonialsSection />
 
-          {/* Dudas Frecuentes & Acordeón Interactivo (UI/UX Pro Max) */}
+          {/* Dudas Frecuentes & Acordeón Interactivo */}
           <FaqSection onOpenSensei={() => setActiveTab("agent")} />
         </main>
       )}
@@ -160,7 +251,19 @@ export default function HomePage() {
 
       {/* VISTA 3: Billetera de Viajes & Vouchers QR */}
       {activeTab === "wallet" && (
-        <WalletView onGoToExplore={() => setActiveTab("explore")} />
+        <WalletView
+          onGoToExplore={() => setActiveTab("explore")}
+          onGoToProfile={() => setActiveTab("profile")}
+        />
+      )}
+
+      {/* VISTA 4: Perfil & Configuración de la App (Figma Mockup) */}
+      {activeTab === "profile" && (
+        <ProfileView
+          onGoToWallet={() => setActiveTab("wallet")}
+          onGoToExploreFavorites={handleGoToFavorites}
+          bookingsCount={bookingsCount}
+        />
       )}
 
       {/* Modal de Detalle y Checkout */}
@@ -293,8 +396,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   packsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-    gap: "30px",
+    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+    gap: "24px",
   },
   loadingBox: {
     display: "flex",
@@ -329,6 +432,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "var(--radius-pill)",
     fontSize: "0.85rem",
     fontWeight: 600,
+    cursor: "pointer",
   },
   footer: {
     marginTop: "auto",
@@ -407,5 +511,60 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: "underline",
     fontSize: "0.78rem",
     cursor: "pointer",
+  },
+  quizSection: {
+    backgroundColor: "var(--color-washi-cream)",
+    borderRadius: "var(--radius-lg)",
+    padding: "48px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "48px",
+    gap: "24px",
+    flexWrap: "wrap",
+    border: "1px solid #EADDCF",
+    position: "relative",
+    overflow: "hidden",
+  },
+  quizContent: {
+    flex: 1,
+    minWidth: "250px",
+    textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  quizTitle: {
+    fontSize: "2rem",
+    fontWeight: 800,
+    color: "var(--color-aomori-blue)",
+    marginBottom: "12px",
+  },
+  quizSubtitle: {
+    fontSize: "1.1rem",
+    color: "var(--color-text-body)",
+    marginBottom: "24px",
+  },
+  quizBtn: {
+    backgroundColor: "var(--color-sun-orange)",
+    color: "#fff",
+    padding: "14px 32px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "1.05rem",
+    fontWeight: 700,
+    border: "none",
+    cursor: "pointer",
+    boxShadow: "0 6px 16px rgba(249, 115, 22, 0.3)",
+    transition: "all 200ms ease",
+  },
+  quizHaruto: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quizSakura: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 };

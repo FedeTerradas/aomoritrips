@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useProfile } from "@/hooks/useProfile";
 
 export interface BookingData {
   id: string;
@@ -20,9 +21,14 @@ export interface BookingData {
 
 interface WalletViewProps {
   onGoToExplore: () => void;
+  onGoToProfile?: () => void;
 }
 
-export const WalletView: React.FC<WalletViewProps> = ({ onGoToExplore }) => {
+export const WalletView: React.FC<WalletViewProps> = ({
+  onGoToExplore,
+  onGoToProfile,
+}) => {
+  const { profile } = useProfile();
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,166 +55,358 @@ export const WalletView: React.FC<WalletViewProps> = ({ onGoToExplore }) => {
     window.print();
   };
 
+  const totalTrips = bookings.length > 0 ? bookings.length : profile.tripsCount;
+
   return (
-    <section style={styles.section} className="container animate-fade-in">
-      <div style={styles.header}>
-        <div>
-          <h2 style={styles.title}>
-            🎫 Billetera de Viajes & Vouchers Offline
-          </h2>
-          <p style={styles.subtitle}>
-            Tus billetes Shinkansen, pases JR East y reservas de Ryokan
-            accesibles sin conexión a internet con código QR de alta fidelidad.
-          </p>
-        </div>
+    <div style={styles.viewWrapper} className="animate-fade-in">
+      {/* CABECERA AZUL AOMORI (Idéntica a Figma Mockup aomoritrips_mis_viajes.png) */}
+      <section style={styles.headerSection}>
+        <div className="container" style={styles.headerContainer}>
+          <div style={styles.userRow}>
+            <div style={styles.avatarCircle} title="Avatar de Viajero">
+              <span style={styles.avatarKanji}>{profile.avatarKanji}</span>
+            </div>
 
-        <button style={styles.printBtn} onClick={handlePrint}>
-          🖨️ Imprimir / Guardar en PDF
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div style={styles.loadingBox}>
-          <span>Cargando tus vouchers de viaje seguros...</span>
-        </div>
-      ) : bookings.length === 0 ? (
-        <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>⛩️</div>
-          <h3 style={styles.emptyTitle}>Aún no tienes vouchers emitidos</h3>
-          <p style={styles.emptyText}>
-            Explora nuestros paquetes turísticos curados o solicita a nuestro
-            Agente IA que te prepare un itinerario a medida para emitir tu
-            primer voucher con QR.
-          </p>
-          <button style={styles.exploreBtn} onClick={onGoToExplore}>
-            Ver Catálogo de Packs en Aomori →
-          </button>
-        </div>
-      ) : (
-        <div style={styles.vouchersGrid}>
-          {bookings.map((b) => (
-            <div key={b.id} style={styles.ticketCard}>
-              {/* Encabezado del Ticket */}
-              <div style={styles.ticketTop}>
-                <div style={styles.ticketBrand}>
-                  <span style={styles.torii}>⛩️</span>
-                  <div>
-                    <div style={styles.ticketBrandTitle}>AomoriTrips Pass</div>
-                    <div style={styles.ticketBrandJp}>
-                      青森トラベルバウチャー
-                    </div>
-                  </div>
-                </div>
-
-                <div style={styles.statusPill}>
-                  <span style={styles.greenDot}></span>
-                  <span>{b.status} · PAGO CONFIRMADO</span>
-                </div>
-              </div>
-
-              {/* Cuerpo del Ticket */}
-              <div style={styles.ticketBody}>
-                <div style={styles.ticketDetails}>
-                  <div style={styles.packTitleBig}>{b.packTitle}</div>
-                  <div style={styles.seasonTagline}>🌿 {b.seasonSelected}</div>
-
-                  <div style={styles.metaGrid}>
-                    <div style={styles.metaItem}>
-                      <span style={styles.metaLabel}>TITULAR DEL VIAJE:</span>
-                      <strong style={styles.metaVal}>{b.travelerName}</strong>
-                    </div>
-
-                    <div style={styles.metaItem}>
-                      <span style={styles.metaLabel}>CÓDIGO DE RESERVA:</span>
-                      <code style={styles.codeVal}>{b.bookingCode}</code>
-                    </div>
-
-                    <div style={styles.metaItem}>
-                      <span style={styles.metaLabel}>FECHA DE SALIDA:</span>
-                      <strong style={styles.metaVal}>{b.travelDate}</strong>
-                    </div>
-
-                    <div style={styles.metaItem}>
-                      <span style={styles.metaLabel}>PASAJEROS:</span>
-                      <strong style={styles.metaVal}>
-                        {b.travelersCount} persona(s)
-                      </strong>
-                    </div>
-
-                    <div style={styles.metaItem}>
-                      <span style={styles.metaLabel}>TOTAL ABONADO:</span>
-                      <strong style={styles.priceVal}>
-                        ${b.totalPriceUsd.toLocaleString()} USD
-                      </strong>
-                    </div>
-
-                    <div style={styles.metaItem}>
-                      <span style={styles.metaLabel}>INCLUSIONES CLAVE:</span>
-                      <span style={styles.inclusionsText}>
-                        Shinkansen JR Pass + Ryokan Onsen + Seguro
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sección del Código QR Offline */}
-                <div style={styles.qrSection}>
-                  <div style={styles.qrFrame}>
-                    <img
-                      src={b.qrData}
-                      alt={`Voucher QR ${b.bookingCode}`}
-                      style={styles.qrImg}
-                    />
-                  </div>
-                  <span style={styles.qrHelp}>
-                    Escaneable en torniquetes JR East y recepción de Ryokan
-                  </span>
-                  <span style={styles.offlineGuaranteed}>
-                    📶 100% Funcional sin conexión
-                  </span>
-                </div>
-              </div>
-
-              {/* Pie de Página del Ticket */}
-              <div style={styles.ticketFooter}>
-                <span>
-                  🛡️ Asistencia bilingüe 24/7 en Japón: +81 (0)17-700-AOMORI
-                </span>
-                <span>ID Sistema: {b.id.slice(0, 8)}...</span>
+            <div style={styles.userInfo}>
+              <h1 style={styles.userName}>{profile.name}</h1>
+              <div style={styles.badgeRow}>
+                <span style={styles.statusBadge}>{profile.statusLevel}</span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
 
-      {/* Guía Rápida para el Viajero en Japón */}
-      <div style={styles.travelTipsCard}>
-        <h3 style={styles.tipsTitle}>
-          💡 Recomendaciones para tu viaje a Aomori
-        </h3>
-        <div style={styles.tipsGrid}>
-          <div style={styles.tipItem}>
-            <strong>🚄 Uso del JR Pass:</strong> Presenta este código QR o
-            canjea tu billete físico en las máquinas automáticas de JR East en
-            Narita o Shin-Aomori.
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{totalTrips}</div>
+              <div style={styles.statLabel}>Viajes</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{profile.countriesCount}</div>
+              <div style={styles.statLabel}>Países</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{profile.kilometersCount}</div>
+              <div style={styles.statLabel}>km</div>
+            </div>
           </div>
-          <div style={styles.tipItem}>
-            <strong>♨️ Etiqueta de Onsen:</strong> Dúchate completamente con
-            jabón antes de entrar al agua termal. No se permite ropa ni
-            bañadores en los baños tradicionales.
-          </div>
-          <div style={styles.tipItem}>
-            <strong>🍎 Gastronomía Tsugaru:</strong> No dejes de probar el
-            pastel de manzana de Aomori, el Nokkedon en el Mercado Furukawa y la
-            sidra artesanal de Tsugaru.
-          </div>
+        </div>
+      </section>
+
+      {/* BARRA DE SUB-PESTAÑAS (Figma: [ Mis Viajes | Perfil ]) */}
+      <div style={styles.subTabBar}>
+        <div className="container" style={styles.subTabContainer}>
+          <button style={styles.subTabActive}>
+            Mis Viajes
+            <span style={styles.activeTabIndicator}></span>
+          </button>
+          <button style={styles.subTabInactive} onClick={onGoToProfile}>
+            Perfil
+          </button>
         </div>
       </div>
-    </section>
+
+      <section style={styles.section} className="container">
+        <div style={styles.header}>
+          <div>
+            <h2 style={styles.title}>
+              🎫 Billetera de Viajes & Vouchers Offline
+            </h2>
+            <p style={styles.subtitle}>
+              Tus billetes Shinkansen, pases JR East y reservas de Ryokan
+              accesibles sin conexión a internet con código QR de alta
+              fidelidad.
+            </p>
+          </div>
+
+          <button style={styles.printBtn} onClick={handlePrint}>
+            🖨️ Imprimir / Guardar en PDF
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div style={styles.loadingBox}>
+            <span>Cargando tus vouchers de viaje seguros...</span>
+          </div>
+        ) : bookings.length === 0 ? (
+          <div style={styles.emptyState}>
+            <div style={styles.emptyIcon}>⛩️</div>
+            <h3 style={styles.emptyTitle}>Aún no tienes vouchers emitidos</h3>
+            <p style={styles.emptyText}>
+              Explora nuestros paquetes turísticos curados o solicita a nuestro
+              Agente IA que te prepare un itinerario a medida para emitir tu
+              primer voucher con QR.
+            </p>
+            <button style={styles.exploreBtn} onClick={onGoToExplore}>
+              Ver Catálogo de Packs en Aomori →
+            </button>
+          </div>
+        ) : (
+          <div style={styles.vouchersGrid}>
+            {bookings.map((b) => (
+              <div key={b.id} style={styles.ticketCard}>
+                {/* Encabezado del Ticket */}
+                <div style={styles.ticketTop}>
+                  <div style={styles.ticketBrand}>
+                    <span style={styles.torii}>⛩️</span>
+                    <div>
+                      <div style={styles.ticketBrandTitle}>
+                        AomoriTrips Pass
+                      </div>
+                      <div style={styles.ticketBrandJp}>
+                        青森トラベルバウチャー
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={styles.statusPill}>
+                    <span style={styles.greenDot}></span>
+                    <span>{b.status} · PAGO CONFIRMADO</span>
+                  </div>
+                </div>
+
+                {/* Cuerpo del Ticket */}
+                <div style={styles.ticketBody}>
+                  <div style={styles.ticketDetails}>
+                    <div style={styles.packTitleBig}>{b.packTitle}</div>
+                    <div style={styles.seasonTagline}>
+                      🌿 {b.seasonSelected}
+                    </div>
+
+                    <div style={styles.metaGrid}>
+                      <div style={styles.metaItem}>
+                        <span style={styles.metaLabel}>TITULAR DEL VIAJE:</span>
+                        <strong style={styles.metaVal}>{b.travelerName}</strong>
+                      </div>
+
+                      <div style={styles.metaItem}>
+                        <span style={styles.metaLabel}>CÓDIGO DE RESERVA:</span>
+                        <code style={styles.codeVal}>{b.bookingCode}</code>
+                      </div>
+
+                      <div style={styles.metaItem}>
+                        <span style={styles.metaLabel}>FECHA DE SALIDA:</span>
+                        <strong style={styles.metaVal}>{b.travelDate}</strong>
+                      </div>
+
+                      <div style={styles.metaItem}>
+                        <span style={styles.metaLabel}>PASAJEROS:</span>
+                        <strong style={styles.metaVal}>
+                          {b.travelersCount} persona(s)
+                        </strong>
+                      </div>
+
+                      <div style={styles.metaItem}>
+                        <span style={styles.metaLabel}>TOTAL ABONADO:</span>
+                        <strong style={styles.priceVal}>
+                          ${b.totalPriceUsd.toLocaleString()} USD
+                        </strong>
+                      </div>
+
+                      <div style={styles.metaItem}>
+                        <span style={styles.metaLabel}>INCLUSIONES CLAVE:</span>
+                        <span style={styles.inclusionsText}>
+                          Shinkansen JR Pass + Ryokan Onsen + Seguro
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sección del Código QR Offline */}
+                  <div style={styles.qrSection}>
+                    <div style={styles.qrFrame}>
+                      <img
+                        src={b.qrData}
+                        alt={`Voucher QR ${b.bookingCode}`}
+                        style={styles.qrImg}
+                      />
+                    </div>
+                    <span style={styles.qrHelp}>
+                      Escaneable en torniquetes JR East y recepción de Ryokan
+                    </span>
+                    <span style={styles.offlineGuaranteed}>
+                      📶 100% Funcional sin conexión
+                    </span>
+                  </div>
+                </div>
+
+                {/* Pie de Página del Ticket */}
+                <div style={styles.ticketFooter}>
+                  <span>
+                    🛡️ Asistencia bilingüe 24/7 en Japón: +81 (0)17-700-AOMORI
+                  </span>
+                  <span>ID Sistema: {b.id.slice(0, 8)}...</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Guía Rápida para el Viajero en Japón */}
+        <div style={styles.travelTipsCard}>
+          <h3 style={styles.tipsTitle}>
+            💡 Recomendaciones para tu viaje a Aomori
+          </h3>
+          <div style={styles.tipsGrid}>
+            <div style={styles.tipItem}>
+              <strong>🚄 Uso del JR Pass:</strong> Presenta este código QR o
+              canjea tu billete físico en las máquinas automáticas de JR East en
+              Narita o Shin-Aomori.
+            </div>
+            <div style={styles.tipItem}>
+              <strong>♨️ Etiqueta de Onsen:</strong> Dúchate completamente con
+              jabón antes de entrar al agua termal. No se permite ropa ni
+              bañadores en los baños tradicionales.
+            </div>
+            <div style={styles.tipItem}>
+              <strong>🍎 Gastronomía Tsugaru:</strong> No dejes de probar el
+              pastel de manzana de Aomori, el Nokkedon en el Mercado Furukawa y
+              la sidra artesanal de Tsugaru.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
+  viewWrapper: {
+    minHeight: "100vh",
+    backgroundColor: "var(--color-washi-cream)",
+    paddingBottom: "80px",
+  },
+  headerSection: {
+    backgroundColor: "var(--color-aomori-blue)",
+    backgroundImage: "linear-gradient(180deg, #0f2d48 0%, #163b5d 100%)",
+    color: "#FFFFFF",
+    padding: "36px 0 28px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+  },
+  headerContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px",
+  },
+  userRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "18px",
+  },
+  avatarCircle: {
+    width: "72px",
+    height: "72px",
+    borderRadius: "50%",
+    backgroundColor: "rgba(224, 242, 254, 0.35)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "2px solid rgba(255, 255, 255, 0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 6px 18px rgba(0, 0, 0, 0.2)",
+    flexShrink: 0,
+  },
+  avatarKanji: {
+    fontFamily: "var(--font-japanese)",
+    fontSize: "2.1rem",
+    fontWeight: 700,
+    color: "#FFFFFF",
+    textShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
+  },
+  userInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  },
+  userName: {
+    fontSize: "1.55rem",
+    fontWeight: 800,
+    letterSpacing: "-0.4px",
+    color: "#FFFFFF",
+    margin: 0,
+  },
+  badgeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  statusBadge: {
+    backgroundColor: "var(--color-sun-orange)",
+    color: "#FFFFFF",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    padding: "3px 12px",
+    borderRadius: "var(--radius-pill)",
+    boxShadow: "0 2px 8px rgba(249, 115, 22, 0.4)",
+    letterSpacing: "0.2px",
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "12px",
+    marginTop: "6px",
+  },
+  statCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    border: "1px solid rgba(255, 255, 255, 0.16)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    borderRadius: "var(--radius-md)",
+    padding: "12px 14px",
+    textAlign: "center",
+  },
+  statNumber: {
+    fontSize: "1.35rem",
+    fontWeight: 800,
+    color: "#FFFFFF",
+    lineHeight: 1.1,
+  },
+  statLabel: {
+    fontSize: "0.74rem",
+    color: "#BAE6FD",
+    marginTop: "2px",
+    fontWeight: 500,
+  },
+  subTabBar: {
+    backgroundColor: "#FFFFFF",
+    borderBottom: "1px solid var(--border-light)",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+    marginBottom: "8px",
+  },
+  subTabContainer: {
+    display: "flex",
+    gap: "36px",
+    justifyContent: "center",
+  },
+  subTabActive: {
+    padding: "16px 20px",
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    color: "var(--color-aomori-blue)",
+    cursor: "default",
+    background: "none",
+    border: "none",
+    position: "relative",
+  },
+  subTabInactive: {
+    padding: "16px 20px",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "var(--color-text-muted)",
+    cursor: "pointer",
+    background: "none",
+    border: "none",
+    transition: "color 150ms ease",
+  },
+  activeTabIndicator: {
+    position: "absolute",
+    bottom: 0,
+    left: "15%",
+    right: "15%",
+    height: "3px",
+    backgroundColor: "var(--color-aomori-blue)",
+    borderRadius: "3px 3px 0 0",
+  },
   section: {
     padding: "32px 0 60px",
   },

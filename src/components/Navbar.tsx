@@ -3,9 +3,13 @@
 import React from "react";
 
 interface NavbarProps {
-  activeTab: "explore" | "agent" | "wallet";
-  setActiveTab: (tab: "explore" | "agent" | "wallet") => void;
+  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz";
+  setActiveTab: (
+    tab: "explore" | "agent" | "wallet" | "profile" | "quiz"
+  ) => void;
   bookingsCount: number;
+  favoritesCount: number;
+  onGoToFavorites: () => void;
   onOpenAuditModal: () => void;
 }
 
@@ -13,6 +17,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   bookingsCount,
+  favoritesCount = 0,
+  onGoToFavorites,
   onOpenAuditModal,
 }) => {
   return (
@@ -66,10 +72,44 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span style={styles.badgeCount}>{bookingsCount}</span>
             )}
           </button>
+
+          <button
+            style={{
+              ...styles.navLink,
+              ...(activeTab === "profile" ? styles.navLinkActive : {}),
+            }}
+            onClick={() => setActiveTab("profile")}
+          >
+            👤 Perfil
+          </button>
+
+          {/* Links a páginas independientes de Capa 1 & 2 */}
+          <a href="/quiz" style={{ ...styles.navLink, textDecoration: "none" }}>
+            🌸 Mi Japón
+          </a>
+
+          <a
+            href="/itinerary-builder"
+            style={{ ...styles.navLink, textDecoration: "none" }}
+          >
+            🗺️ Armar Viaje
+          </a>
         </nav>
 
-        {/* Acceso a Información Técnica / Rúbrica UTN */}
+        {/* Acceso a Favoritos & Información Técnica / Rúbrica UTN */}
         <div style={styles.rightActions}>
+          {favoritesCount > 0 && onGoToFavorites && (
+            <button
+              style={styles.favNavBtn}
+              onClick={onGoToFavorites}
+              title={`Ver tus ${favoritesCount} favoritos`}
+              aria-label="Ver favoritos"
+            >
+              <span>❤️</span>
+              <span style={styles.favNavCount}>{favoritesCount}</span>
+            </button>
+          )}
+
           <button
             style={styles.auditButton}
             className="desktop-audit-btn"
@@ -185,6 +225,28 @@ const styles: Record<string, React.CSSProperties> = {
   rightActions: {
     display: "flex",
     alignItems: "center",
+    gap: "10px",
+  },
+  favNavBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+    backgroundColor: "rgba(254, 226, 226, 0.18)",
+    border: "1px solid rgba(254, 202, 202, 0.4)",
+    padding: "6px 12px",
+    borderRadius: "var(--radius-pill)",
+    color: "#FEE2E2",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 150ms ease",
+  },
+  favNavCount: {
+    backgroundColor: "#DC2626",
+    color: "#FFFFFF",
+    fontSize: "0.68rem",
+    borderRadius: "9999px",
+    padding: "1px 6px",
   },
   auditButton: {
     display: "flex",

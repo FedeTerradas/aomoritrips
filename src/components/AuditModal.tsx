@@ -200,6 +200,66 @@ export const AuditModal: React.FC<AuditModalProps> = ({ isOpen, onClose }) => {
               </tbody>
             </table>
           </section>
+
+          {/* Sección 7: IAs Usadas en el Co-work de Desarrollo & Supervisión Crítica */}
+          <section style={styles.section}>
+            <h3 style={styles.sectionTitle}>
+              5. Co-Working Humano con IA & Gobernanza (Sección 7)
+            </h3>
+            <p style={styles.paragraph}>
+              Siguiendo el protocolo <strong>ia-cowork-review</strong>, el
+              desarrollador humano actuó como supervisor crítico de gobernanza.
+              Durante las sesiones de co-work, la auditoría humana detectó y
+              corrigió tres fallas críticas de la IA:
+            </p>
+            <ul style={styles.list}>
+              <li>
+                <strong>Falla 1 (Favoritos sin Persistencia):</strong> La IA
+                implementó el botón visual de favoritos con un simple estado en
+                memoria que se perdía al recargar. Se corrigió migrándolo a{" "}
+                <code>localStorage</code> con sincronización reactiva en tiempo
+                real.
+              </li>
+              <li>
+                <strong>Falla 2 (Sobrecarga Cognitiva en Cards):</strong> La IA
+                generó tarjetas masivas de 550px con párrafos extensos e
+                inclusiones permanentes. Se corrigió a un formato compacto
+                (~300px) con apertura en modal y despliegue rápido inline.
+              </li>
+              <li>
+                <strong>Falla 3 (Omisión del Perfil):</strong> La IA omitió por
+                completo la pantalla de <strong>Perfil & Configuración</strong>{" "}
+                del prototipo Figma (<code>aomoritrips_perfil.png</code>). Se
+                implementó <code>ProfileView</code> con gestión de moneda,
+                pasaporte, métodos de pago e idioma.
+              </li>
+            </ul>
+            <div style={styles.reflectionBox}>
+              <strong>Reflexión Crítica UTN:</strong> La IA aceleró el
+              desarrollo técnico pero carece de visión holística de producto. La
+              intervención humana crítica garantizó la usabilidad, persistencia
+              y fidelidad arquitectónica requeridas.
+            </div>
+          </section>
+
+          {/* Parte 2: Inferencia de IA Local (Ollama) */}
+          <section style={styles.section}>
+            <h3 style={styles.sectionTitle}>
+              6. IA Local en Destino · SLM Ollama (Parte 2 UTN)
+            </h3>
+            <p style={styles.paragraph}>
+              Evaluación del modelo <strong>llama3.2:1b</strong> ejecutado bajo
+              Ollama:
+              <br />• <strong>Resiliencia Offline:</strong> Asistencia en áreas
+              rurales sin señal de Aomori (Sukayu Onsen / Shirakami-Sanchi) a
+              42.8 tokens/segundo.
+              <br />• <strong>Privacidad de Datos:</strong> Los datos de
+              pasaporte y reservas no salen del dispositivo local (cumplimiento
+              de privacidad estricta).
+              <br />• <strong>Cero Costo Operativo:</strong> Inferencia
+              ilimitada sin consumo de saldo de API.
+            </p>
+          </section>
         </div>
 
         <div style={styles.footer}>
@@ -357,5 +417,25 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "var(--radius-pill)",
     fontWeight: 600,
     fontSize: "0.84rem",
+  },
+  list: {
+    paddingLeft: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    fontSize: "0.86rem",
+    color: "var(--color-text-body)",
+    lineHeight: 1.5,
+  },
+  reflectionBox: {
+    backgroundColor: "var(--color-washi-cream)",
+    border: "1px solid #EADDCF",
+    borderLeft: "4px solid var(--color-sun-orange)",
+    padding: "12px 16px",
+    borderRadius: "var(--radius-sm)",
+    fontSize: "0.85rem",
+    color: "var(--color-text-body)",
+    lineHeight: 1.5,
+    marginTop: "8px",
   },
 };

@@ -5,14 +5,24 @@ import {
   toolGetSeasonalForecast,
   toolCalculatePricing,
   toolCreateItineraryDraft,
+  toolGenerateQuizRecommendation,
+  toolGenerateGroupItinerary,
+  toolAnswerCulturalQuestion,
 } from "./tools";
-import { AgentDecisionStep, AgentExecutionResult } from "./types";
+import {
+  AgentDecisionStep,
+  AgentExecutionResult,
+  QuizAnswers,
+  GroupProfile,
+} from "./types";
 
 export interface RunAgentInput {
   sessionToken: string;
   userMessage: string;
   requestedSeason?: string;
   travelersCount?: number;
+  quizAnswers?: QuizAnswers; // Para llamadas directas desde /api/quiz
+  groupProfile?: GroupProfile; // Para llamadas directas desde /api/itinerary
 }
 
 export async function executeTravelAgent(
@@ -84,13 +94,94 @@ export async function executeTravelAgent(
   decisionSteps.push({
     observation: `Usuario consulta: "${cleanMessage}". Historial previo: ${session.messages.length} mensajes. Preferencias previas: temporada=${session.preferences?.preferredSeason || "no definida"}.`,
     thought:
-      "Analizando la intención: ¿busca recomendaciones de packs, información estacional/clima, cotización transparente o armado de itinerario?",
+      "Analizando la intención: ¿busca recomendaciones de packs, información estacional/clima, cotización transparente, quiz de perfil o armado de itinerario grupal?",
   });
 
   let suggestedPacks: unknown[] = [];
   let calculatedQuote: unknown = null;
   let itineraryDraft: unknown = null;
   let responseText = "";
+
+  // — Llamada directa: Quiz de perfil —
+  if (input.quizAnswers) {
+    toolsExecuted.push("generate_quiz_recommendation");
+    const quizResult = toolGenerateQuizRecommendation(input.quizAnswers);
+
+    decisionSteps.push({
+      observation:
+        "Se recibieron las 7 respuestas del quiz de perfil cultural del usuario.",
+      thought:
+        "Calculando scoring de temporada y estilo de viaje basado en las respuestas para generar recomendación personalizada.",
+      action: "toolGenerateQuizRecommendation",
+      actionInput: { answers: input.quizAnswers },
+      actionOutput: quizResult,
+    });
+
+    const replyText = quizResult.personalizedCard;
+
+    await prisma.agentMessage.create({
+      data: {
+        sessionId: session.id,
+        role: "assistant",
+        content: replyText,
+        toolCalls: JSON.stringify(toolsExecuted),
+      },
+    });
+
+    return {
+      reply: replyText,
+      sessionToken: session.sessionToken,
+      decisionSteps,
+      toolsExecuted,
+      quizResult,
+    };
+  }
+
+  // — Llamada directa: Itinerario grupal —
+  if (input.groupProfile) {
+    toolsExecuted.push("generate_group_itinerary");
+    const draftItinerary = toolGenerateGroupItinerary(input.groupProfile);
+
+    decisionSteps.push({
+      observation: `Se recibió perfil de grupo: ${input.groupProfile.size} personas, ${input.groupProfile.durationDays} días, temporada ${input.groupProfile.season}.`,
+      thought:
+        "Generando itinerario día a día con actividades, gastronomía y alojamiento adaptados al perfil del grupo.",
+      action: "toolGenerateGroupItinerary",
+      actionInput: { groupProfile: input.groupProfile },
+      actionOutput: {
+        days: draftItinerary.days.length,
+        title: draftItinerary.title,
+      },
+    });
+
+    const dayLines = draftItinerary.days
+      .slice(0, 3)
+      .map(
+        (d) =>
+          `• **Día ${d.dayNumber}**: ${d.activities[0]?.title || "Exploración libre"} | 🍱 ${d.meals[1]?.restaurantName || "Almuerzo local"}`
+      )
+      .join("\n");
+
+    const bd = draftItinerary.budgetBreakdown;
+    const replyText = `🗺️ **${draftItinerary.title}**\n\n${dayLines}\n\n💴 **Presupuesto estimado por persona**: $${bd.totalPerPersonUsd.toLocaleString()} USD | **Total grupo**: $${bd.totalGroupUsd.toLocaleString()} USD\n\n¿Querés guardar este itinerario como tu pack personalizado y reservarlo? 🌸`;
+
+    await prisma.agentMessage.create({
+      data: {
+        sessionId: session.id,
+        role: "assistant",
+        content: replyText,
+        toolCalls: JSON.stringify(toolsExecuted),
+      },
+    });
+
+    return {
+      reply: replyText,
+      sessionToken: session.sessionToken,
+      decisionSteps,
+      toolsExecuted,
+      draftItinerary,
+    };
+  }
 
   // Detección de intenciones y ejecución de herramientas (Tools)
   const asksForSeason =
@@ -118,6 +209,16 @@ export async function executeTravelAgent(
     lower.includes("dias") ||
     lower.includes("programa") ||
     lower.includes("actividades");
+
+  const asksForCulture =
+    lower.includes("onsen") ||
+    lower.includes("etiqueta") ||
+    lower.includes("comida") ||
+    lower.includes("gastronomía") ||
+    lower.includes("vocabulario") ||
+    lower.includes("japonés") ||
+    lower.includes("cultura") ||
+    lower.includes("costumbre");
 
   // Invocación Tool 1: Búsqueda de paquetes en DB
   toolsExecuted.push("search_packs");
@@ -225,6 +326,22 @@ export async function executeTravelAgent(
     });
   }
 
+  let culturalResponse = null;
+  if (asksForCulture) {
+    toolsExecuted.push("answer_cultural_question");
+    culturalResponse = toolAnswerCulturalQuestion(cleanMessage);
+
+    decisionSteps.push({
+      observation:
+        "El usuario solicitó información cultural sobre costumbres, gastronomía o festivales.",
+      thought:
+        "Recurriendo a conocimientos de la cultura del norte de Japón y modales locales.",
+      action: "toolAnswerCulturalQuestion",
+      actionInput: { topic: cleanMessage },
+      actionOutput: culturalResponse,
+    });
+  }
+
   // 4. Síntesis y Redacción de Respuesta
   if (asksForSeason) {
     const sKey = detectedSeason || "sakura";
@@ -251,6 +368,8 @@ export async function executeTravelAgent(
       .map((d) => `• **Día ${d.day}**: ${d.title}\n  _${d.activity}_`)
       .join("\n\n");
     responseText = `🗺️ **Propuesta de Itinerario (${it.itineraryName} - ${it.durationDays} Días)**:\n\n${dayLines}\n\n*(Puedes ver el desglose completo en la vista del paquete o solicitar ajustes según tus intereses).*`;
+  } else if (asksForCulture && culturalResponse) {
+    responseText = `${culturalResponse.emoji} **Cultura de Aomori - ${culturalResponse.category}**:\n\n${culturalResponse.answer}\n\nDescubre más detalles en nuestra [Guía Cultural](/cultura).`;
   } else {
     // Respuesta general de asesoría y bienvenida
     const topPack = suggestedPacks[0] as
