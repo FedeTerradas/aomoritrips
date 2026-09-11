@@ -183,6 +183,113 @@ export async function executeTravelAgent(
     };
   }
 
+  // Detección de cantidad de viajeros en mensaje (ej: "2 personas", "con mi pareja")
+  let detectedTravelersCount: number | undefined = input.travelersCount;
+  if (!detectedTravelersCount) {
+    const directPaxMatch = lower.match(
+      /(\d+)\s*(?:personas?|adultos?|viajeros?|pax)/
+    );
+    if (directPaxMatch) {
+      detectedTravelersCount = parseInt(directPaxMatch[1], 10);
+    } else if (
+      lower.includes("pareja") ||
+      lower.includes("mi novia") ||
+      lower.includes("mi novio") ||
+      lower.includes("mi esposa") ||
+      lower.includes("mi esposo") ||
+      lower.includes("de a dos")
+    ) {
+      detectedTravelersCount = 2;
+    } else if (
+      lower.includes("solo") ||
+      lower.includes("sola") ||
+      lower.includes("viajo solo") ||
+      lower.includes("viajo sola")
+    ) {
+      detectedTravelersCount = 1;
+    }
+  }
+
+  // Detección de destino / palabra clave
+  let detectedDestinationQuery: string | undefined = undefined;
+  let detectedSeason = input.requestedSeason;
+
+  if (
+    lower.includes("hirosaki") ||
+    lower.includes("samurai") ||
+    lower.includes("samurái") ||
+    lower.includes("cerezos") ||
+    lower.includes("sakura")
+  ) {
+    detectedDestinationQuery = lower.includes("hirosaki")
+      ? "hirosaki"
+      : undefined;
+    if (!detectedSeason) detectedSeason = "sakura";
+  } else if (
+    lower.includes("nebuta") ||
+    lower.includes("festival") ||
+    lower.includes("cofradía") ||
+    lower.includes("cofradia")
+  ) {
+    detectedDestinationQuery = "nebuta";
+    if (!detectedSeason) detectedSeason = "nebuta";
+  } else if (
+    lower.includes("hakkoda") ||
+    lower.includes("sukayu") ||
+    lower.includes("hito") ||
+    lower.includes("hitō") ||
+    lower.includes("nieve")
+  ) {
+    detectedDestinationQuery = lower.includes("hakkoda")
+      ? "hakkoda"
+      : undefined;
+    if (!detectedSeason) detectedSeason = "snow";
+  } else if (lower.includes("osorezan") || lower.includes("shimokita")) {
+    detectedDestinationQuery = "osorezan";
+    if (!detectedSeason) detectedSeason = "koyo";
+  } else if (
+    lower.includes("shirakami") ||
+    lower.includes("oirase") ||
+    lower.includes("towada") ||
+    lower.includes("matagi")
+  ) {
+    detectedDestinationQuery = "shirakami";
+    if (!detectedSeason) detectedSeason = "koyo";
+  }
+
+  // Detección estacional complementaria por meses o clima
+  if (!detectedSeason) {
+    if (
+      lower.includes("abril") ||
+      lower.includes("mayo") ||
+      lower.includes("primavera")
+    ) {
+      detectedSeason = "sakura";
+    } else if (
+      lower.includes("agosto") ||
+      lower.includes("verano") ||
+      lower.includes("julio")
+    ) {
+      detectedSeason = "nebuta";
+    } else if (
+      lower.includes("octubre") ||
+      lower.includes("noviembre") ||
+      lower.includes("otoño") ||
+      lower.includes("koyo")
+    ) {
+      detectedSeason = "koyo";
+    } else if (
+      lower.includes("diciembre") ||
+      lower.includes("enero") ||
+      lower.includes("febrero") ||
+      lower.includes("marzo") ||
+      lower.includes("invierno") ||
+      lower.includes("ski")
+    ) {
+      detectedSeason = "snow";
+    }
+  }
+
   // Detección de intenciones y ejecución de herramientas (Tools)
   const asksForSeason =
     lower.includes("temporada") ||
@@ -192,16 +299,30 @@ export async function executeTravelAgent(
     lower.includes("sakura") ||
     lower.includes("nebuta") ||
     lower.includes("nieve") ||
-    lower.includes("otoño");
+    lower.includes("otoño") ||
+    lower.includes("cerezos") ||
+    lower.includes("mes") ||
+    lower.includes("época") ||
+    lower.includes("epoca") ||
+    lower.includes("fechas") ||
+    lower.includes("primavera") ||
+    lower.includes("verano") ||
+    lower.includes("invierno");
 
   const asksForPricing =
     lower.includes("precio") ||
     lower.includes("cuanto cuesta") ||
     lower.includes("cuánto cuesta") ||
+    lower.includes("cuanto sale") ||
+    lower.includes("cuánto sale") ||
     lower.includes("cotizar") ||
     lower.includes("personas") ||
     lower.includes("descuento") ||
-    lower.includes("presupuesto");
+    lower.includes("presupuesto") ||
+    lower.includes("tarifa") ||
+    lower.includes("costaría") ||
+    lower.includes("costaria") ||
+    Boolean(detectedTravelersCount && detectedTravelersCount > 1);
 
   const asksForItinerary =
     lower.includes("itinerario") ||
@@ -222,48 +343,36 @@ export async function executeTravelAgent(
 
   // Invocación Tool 1: Búsqueda de paquetes en DB
   toolsExecuted.push("search_packs");
-  let detectedSeason = input.requestedSeason;
-  if (lower.includes("cerezos") || lower.includes("sakura"))
-    detectedSeason = "sakura";
-  else if (
-    lower.includes("nebuta") ||
-    lower.includes("festival") ||
-    lower.includes("verano")
-  )
-    detectedSeason = "nebuta";
-  else if (
-    lower.includes("otoño") ||
-    lower.includes("koyo") ||
-    lower.includes("hojas")
-  )
-    detectedSeason = "koyo";
-  else if (
-    lower.includes("nieve") ||
-    lower.includes("invierno") ||
-    lower.includes("ski") ||
-    lower.includes("esqui")
-  )
-    detectedSeason = "snow";
 
   const packsFound = await toolSearchPacks({
-    season: detectedSeason,
-    query: cleanMessage.length > 5 ? cleanMessage : undefined,
+    season: detectedDestinationQuery ? undefined : detectedSeason,
+    query: detectedDestinationQuery,
   });
   suggestedPacks =
-    packsFound.length > 0 ? packsFound : await toolSearchPacks({});
+    packsFound.length > 0
+      ? packsFound
+      : detectedSeason
+        ? await toolSearchPacks({ season: detectedSeason })
+        : await toolSearchPacks({});
+  if (suggestedPacks.length === 0) {
+    suggestedPacks = await toolSearchPacks({});
+  }
 
   decisionSteps.push({
-    observation: `Se encontraron ${suggestedPacks.length} packs candidatos en la base de datos de AomoriTrips.`,
-    thought: `Se ejecutó la herramienta search_packs con filtro de temporada='${detectedSeason || "todas"}'.`,
+    observation: `Se encontraron ${suggestedPacks.length} packs candidatos en la base de datos de AomoriTrips (destino='${detectedDestinationQuery || "general"}', temporada='${detectedSeason || "todas"}').`,
+    thought: `Se ejecutó la herramienta search_packs con filtro de destino y temporada.`,
     action: "toolSearchPacks",
-    actionInput: { season: detectedSeason },
+    actionInput: { season: detectedSeason, query: detectedDestinationQuery },
     actionOutput: { count: suggestedPacks.length },
   });
 
   // Invocación Tool 2: Si pregunta por clima / época
   if (asksForSeason) {
     toolsExecuted.push("get_seasonal_forecast");
-    const seasonKey = detectedSeason || "sakura";
+    const seasonKey =
+      detectedSeason ||
+      (suggestedPacks[0] as { seasonTag?: string })?.seasonTag ||
+      "sakura";
     const forecast = toolGetSeasonalForecast(seasonKey);
 
     decisionSteps.push({
@@ -276,13 +385,13 @@ export async function executeTravelAgent(
   }
 
   // Invocación Tool 3: Si pide cotización / personas
-  const count = input.travelersCount || session.preferences?.groupSize || 2;
+  const count = detectedTravelersCount || session.preferences?.groupSize || 2;
   if (asksForPricing) {
     toolsExecuted.push("calculate_pricing");
     const firstPack = suggestedPacks[0] as
       { priceBaseUsd: number; seasonTag: string } | undefined;
     const base = firstPack ? firstPack.priceBaseUsd : 2890;
-    const sTag = firstPack ? firstPack.seasonTag : "sakura";
+    const sTag = firstPack ? firstPack.seasonTag : detectedSeason || "sakura";
 
     calculatedQuote = toolCalculatePricing(base, count, sTag);
 
@@ -342,12 +451,27 @@ export async function executeTravelAgent(
     });
   }
 
-  // 4. Síntesis y Redacción de Respuesta
+  // 4. Síntesis y Redacción de Respuesta (Multi-objetivo: Temporada + Cotización + Itinerario)
+  const chosenPack = suggestedPacks[0] as
+    | {
+        title: string;
+        priceBaseUsd: number;
+        seasonLabel: string;
+        seasonTag: string;
+      }
+    | undefined;
+
+  const responseSections: string[] = [];
+
   if (asksForSeason) {
-    const sKey = detectedSeason || "sakura";
+    const sKey = detectedSeason || chosenPack?.seasonTag || "sakura";
     const f = toolGetSeasonalForecast(sKey);
-    responseText = `🌸 **Recomendación Estacional para Aomori (${f.season})**:\n\n${f.highlight}\n\n- 🌡️ **Temperatura típica**: ${f.tempRange}\n- 📅 **Mejor momento**: ${f.bestMonths}\n- 🎒 **Consejo de equipaje**: ${f.packingTips.join(", ")}.\n\nPara esta época te recomendamos especialmente nuestro pack: **${(suggestedPacks[0] as { title: string })?.title || "Hirosaki Sakura Dream"}**.`;
-  } else if (asksForPricing && calculatedQuote) {
+    responseSections.push(
+      `🌸 **Recomendación Estacional para Aomori (${f.season})**:\n\n${f.highlight}\n\n- 🌡️ **Temperatura típica**: ${f.tempRange}\n- 📅 **Mejor momento**: ${f.bestMonths}\n- 🎒 **Consejo de equipaje**: ${f.packingTips.join(", ")}.\n\nPara esta época te recomendamos especialmente nuestra expedición: **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru"}**.`
+    );
+  }
+
+  if (asksForPricing && calculatedQuote) {
     const q = calculatedQuote as {
       travelersCount: number;
       pricePerPersonUsd: number;
@@ -356,8 +480,12 @@ export async function executeTravelAgent(
       grandTotalUsd: number;
       groupDiscountApplied: string;
     };
-    responseText = `💴 **Cotización Transparente AomoriTrips** (Sin cargos ocultos):\n\n- **Cantidad de viajeros**: ${q.travelersCount} persona(s)\n- **Precio por persona**: $${q.pricePerPersonUsd} USD (descuento aplicado: ${q.groupDiscountApplied})\n- **Subtotal experiencias y Ryokan**: $${q.subtotalUsd} USD\n- **Tasas e impuestos de prefectura**: $${q.taxesAndTransfersUsd} USD\n- **TOTAL FINAL GARANTIZADO**: **$${q.grandTotalUsd} USD**\n\nTodos los paquetes incluyen vuelo internacional, JR East Tohoku Pass ilimitado, Ryokan tradicional con aguas termales y guía bilingüe.`;
-  } else if (asksForItinerary && itineraryDraft) {
+    responseSections.push(
+      `💴 **Cotización Transparente AomoriTrips** (Sin cargos ocultos para ${q.travelersCount} persona${q.travelersCount > 1 ? "s" : ""}):\n\n- **Expedición seleccionada**: ${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos"}\n- **Cantidad de viajeros**: ${q.travelersCount} persona(s)\n- **Precio por persona**: $${q.pricePerPersonUsd} USD (descuento aplicado: ${q.groupDiscountApplied})\n- **Subtotal experiencias y Ryokan**: $${q.subtotalUsd} USD\n- **Tasas e impuestos de prefectura**: $${q.taxesAndTransfersUsd} USD\n- **TOTAL FINAL GARANTIZADO**: **$${q.grandTotalUsd} USD**\n\nTodos los paquetes incluyen vuelo internacional, JR East Tohoku Pass ilimitado, Ryokan tradicional con aguas termales y guía bilingüe.`
+    );
+  }
+
+  if (asksForItinerary && itineraryDraft) {
     const it = itineraryDraft as {
       itineraryName: string;
       durationDays: number;
@@ -367,14 +495,21 @@ export async function executeTravelAgent(
       .slice(0, 4)
       .map((d) => `• **Día ${d.day}**: ${d.title}\n  _${d.activity}_`)
       .join("\n\n");
-    responseText = `🗺️ **Propuesta de Itinerario (${it.itineraryName} - ${it.durationDays} Días)**:\n\n${dayLines}\n\n*(Puedes ver el desglose completo en la vista del paquete o solicitar ajustes según tus intereses).*`;
-  } else if (asksForCulture && culturalResponse) {
-    responseText = `${culturalResponse.emoji} **Cultura de Aomori - ${culturalResponse.category}**:\n\n${culturalResponse.answer}\n\nDescubre más detalles en nuestra [Guía Cultural](/cultura).`;
+    responseSections.push(
+      `🗺️ **Propuesta de Itinerario (${it.itineraryName} - ${it.durationDays} Días)**:\n\n${dayLines}\n\n*(Puedes ver el desglose completo en la vista del paquete o solicitar ajustes según tus intereses).*`
+    );
+  }
+
+  if (asksForCulture && culturalResponse) {
+    responseSections.push(
+      `${culturalResponse.emoji} **Cultura de Aomori - ${culturalResponse.category}**:\n\n${culturalResponse.answer}\n\nDescubre más detalles en nuestra [Guía Cultural](/cultura).`
+    );
+  }
+
+  if (responseSections.length > 0) {
+    responseText = responseSections.join("\n\n---\n\n");
   } else {
-    // Respuesta general de asesoría y bienvenida
-    const topPack = suggestedPacks[0] as
-      { title: string; priceBaseUsd: number; seasonLabel: string } | undefined;
-    responseText = `¡Konnichiwa! Soy tu **Sensei de viajes de AomoriTrips** (青森の先生) ⛩️.\n\nTe guiaré con sabiduría local para descubrir el norte auténtico de Japón sin barreras idiomáticas ni complicaciones logísticas. En base a nuestros registros, te recomiendo explorar **${topPack?.title || "Hirosaki Sakura Dream"}** (${topPack?.seasonLabel || "Temporada especial"}), desde **$${topPack?.priceBaseUsd || 2890} USD** todo incluido.\n\n¿Te gustaría que diseñemos un itinerario a tu medida, calculemos tarifas para tu grupo o te brinde recomendaciones sobre la mejor época para viajar?`;
+    responseText = `¡Konnichiwa! Soy tu **Sensei de viajes de AomoriTrips** (青森の先生) ⛩️.\n\nTe guiaré con sabiduría local para descubrir el norte auténtico de Japón sin barreras idiomáticas ni complicaciones logísticas. En base a nuestros registros, te recomiendo explorar **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru"}** (${chosenPack?.seasonLabel || "Temporada especial"}), desde **$${chosenPack?.priceBaseUsd || 2890} USD** todo incluido.\n\n¿Te gustaría que diseñemos un itinerario a tu medida, calculemos tarifas para tu grupo o te brinde recomendaciones sobre la mejor época para viajar?`;
   }
 
   // 5. Actualizar la Memoria Persistente en DB (Preferencias y Mensaje del Asistente)
@@ -387,17 +522,17 @@ export async function executeTravelAgent(
     },
   });
 
-  if (detectedSeason || input.travelersCount) {
+  if (detectedSeason || detectedTravelersCount) {
     await prisma.travelerPreference.upsert({
       where: { sessionId: session.id },
       update: {
         preferredSeason: detectedSeason || session.preferences?.preferredSeason,
-        groupSize: input.travelersCount || session.preferences?.groupSize,
+        groupSize: count,
       },
       create: {
         sessionId: session.id,
         preferredSeason: detectedSeason,
-        groupSize: input.travelersCount || 1,
+        groupSize: count,
       },
     });
   }
