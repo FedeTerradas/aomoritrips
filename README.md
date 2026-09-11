@@ -18,12 +18,12 @@
 
 ## 📌 Enlaces del Proyecto
 
-| Recurso                    | Enlace                                                                                     | Descripción                                           |
-| :------------------------- | :----------------------------------------------------------------------------------------- | :---------------------------------------------------- |
-| **Repositorio GitHub**     | [github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Código fuente, historial de commits y suite de tests  |
-| **Aplicación Web en Vivo** | [aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en producción en Vercel con SSR            |
-| **Video de Demostración**  | [youtu.be/placeholder-aomoritrips-demo](https://youtu.be/placeholder-aomoritrips-demo)     | Video demostrativo del ciclo completo (3 min)         |
-| **Informe Académico**      | [`docs/informe_entrega_final_aomoritrips.md`](docs/informe_entrega_final_aomoritrips.md)   | Informe técnico según la rúbrica oficial de la UTN.BA |
+| Recurso                    | Enlace                                                                                   | Descripción                                           |
+| :------------------------- | :--------------------------------------------------------------------------------------- | :---------------------------------------------------- |
+| **Repositorio GitHub**     | [github.com/FedeTerradas/aomoritrips](https://github.com/FedeTerradas/aomoritrips)       | Código fuente, historial de commits y suite de tests  |
+| **Aplicación Web en Vivo** | [aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                 | Despliegue en producción en Vercel con SSR            |
+| **Video de Demostración**  | [youtu.be/placeholder-aomoritrips-demo](https://youtu.be/placeholder-aomoritrips-demo)   | Video demostrativo del ciclo completo (3 min)         |
+| **Informe Académico**      | [`docs/informe_entrega_final_aomoritrips.md`](docs/informe_entrega_final_aomoritrips.md) | Informe técnico según la rúbrica oficial de la UTN.BA |
 
 ---
 
@@ -118,7 +118,7 @@ El proyecto implementa medidas concretas auditadas por una suite de pruebas auto
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/federicoterradas/aomoritrips.git
+git clone https://github.com/FedeTerradas/aomoritrips.git
 cd aomoritrips
 ```
 
