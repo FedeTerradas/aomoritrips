@@ -111,7 +111,11 @@ export default function HomePage() {
             favoritesCount={favoritesCount}
           />
 
-          <section className="container" style={styles.catalogSection}>
+          <section
+            id="catalog-section"
+            className="container"
+            style={styles.catalogSection}
+          >
             <div style={styles.catalogHeader}>
               <div>
                 <span style={styles.sectionSubtitleJP}>
@@ -226,12 +230,9 @@ export default function HomePage() {
               <p style={styles.quizSubtitle}>
                 Encuentra el viaje perfecto según tu estilo y preferencias.
               </p>
-              <button
-                style={styles.quizBtn}
-                onClick={() => setActiveTab("quiz")}
-              >
-                Hacer el test
-              </button>
+              <a href="/quiz" style={styles.quizBtn}>
+                Hacer el test →
+              </a>
             </div>
             <div style={styles.quizSakura} className="hide-on-mobile-quiz">
               <CharacterDisplay character="sakura" size="md" />
@@ -554,6 +555,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     border: "none",
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    textDecoration: "none",
     boxShadow: "0 6px 16px rgba(249, 115, 22, 0.3)",
     transition: "all 200ms ease",
   },

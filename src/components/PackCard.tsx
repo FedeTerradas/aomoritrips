@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useFavorites } from "@/hooks/useFavorites";
-import { useBucketList } from "@/hooks/useBucketList";
 
 export interface TravelPackData {
   id: string;
@@ -28,35 +27,16 @@ interface PackCardProps {
 
 export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { isInList, addItem, removeByRefId } = useBucketList();
   const [isExpanded, setIsExpanded] = useState(false);
   const [favoriteAnim, setFavoriteAnim] = useState(false);
-  const [bucketAnim, setBucketAnim] = useState(false);
 
   const favActive = isFavorite(pack.id);
-  const inBucketList = isInList(pack.id);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setFavoriteAnim(true);
     toggleFavorite(pack.id);
     setTimeout(() => setFavoriteAnim(false), 300);
-  };
-
-  const handleBucketListClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setBucketAnim(true);
-    if (inBucketList) {
-      await removeByRefId(pack.id);
-    } else {
-      await addItem({
-        itemType: "pack",
-        refId: pack.id,
-        title: pack.title,
-        imageUrl: pack.heroImage,
-      });
-    }
-    setTimeout(() => setBucketAnim(false), 300);
   };
 
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -79,6 +59,21 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
     }
   };
 
+  const getDisplaySeasonLabel = (tag: string, defaultLabel: string) => {
+    switch (tag?.toLowerCase()) {
+      case "sakura":
+        return "🌸 Primavera";
+      case "nebuta":
+        return "🏮 Festival Nebuta";
+      case "koyo":
+        return "🍁 Follaje Koyo";
+      case "snow":
+        return "❄️ Nieve & Onsen";
+      default:
+        return defaultLabel.length > 20 ? "⛩️ Ruta Auténtica" : defaultLabel;
+    }
+  };
+
   return (
     <article
       style={{
@@ -97,13 +92,16 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
           loading="lazy"
         />
 
-        {/* Badge Flotante de Temporada y Botón Favorito Persistente */}
+        {/* Badge Flotante de Temporada y Único Botón de Favorito */}
         <div style={styles.topBadgeRow}>
           <span
             className={`season-badge ${getSeasonClass(pack.seasonTag)}`}
             title={pack.seasonLabel}
+            style={styles.seasonBadgeCustom}
           >
-            <span className="season-label-desktop">{pack.seasonLabel}</span>
+            <span className="season-label-desktop">
+              {getDisplaySeasonLabel(pack.seasonTag, pack.seasonLabel)}
+            </span>
             <span className="season-label-mobile">
               {pack.seasonTag === "sakura"
                 ? "🌸 Primavera"
@@ -117,39 +115,20 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
             </span>
           </span>
 
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              style={{
-                ...styles.favoriteBtn,
-                ...(inBucketList ? styles.bucketBtnActive : {}),
-                ...(bucketAnim ? styles.favoriteBtnBump : {}),
-              }}
-              onClick={handleBucketListClick}
-              title={
-                inBucketList ? "En tu lista de sueños" : "Guardar en Sueños"
-              }
-              aria-label={
-                inBucketList ? "En tu lista de sueños" : "Guardar en Sueños"
-              }
-            >
-              {inBucketList ? "🌟" : "⭐"}
-            </button>
-
-            <button
-              style={{
-                ...styles.favoriteBtn,
-                ...(favActive ? styles.favoriteBtnActive : {}),
-                ...(favoriteAnim ? styles.favoriteBtnBump : {}),
-              }}
-              onClick={handleFavoriteClick}
-              title={favActive ? "Quitar de favoritos" : "Guardar en favoritos"}
-              aria-label={
-                favActive ? "Quitar de favoritos" : "Guardar en favoritos"
-              }
-            >
-              {favActive ? "❤️" : "🤍"}
-            </button>
-          </div>
+          <button
+            style={{
+              ...styles.favoriteBtn,
+              ...(favActive ? styles.favoriteBtnActive : {}),
+              ...(favoriteAnim ? styles.favoriteBtnBump : {}),
+            }}
+            onClick={handleFavoriteClick}
+            title={favActive ? "Quitar de favoritos" : "Guardar en favoritos"}
+            aria-label={
+              favActive ? "Quitar de favoritos" : "Guardar en favoritos"
+            }
+          >
+            {favActive ? "❤️" : "🤍"}
+          </button>
         </div>
 
         {/* Badge de Duración */}
@@ -163,14 +142,20 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
       {/* Cuerpo de la Tarjeta Compacta (Estilo Prototipo Figma) */}
       <div style={styles.cardBody} className="pack-body-mobile">
         <div style={styles.ratingAndOrigin}>
-          <span style={styles.japaneseTitle}>{pack.japaneseTitle}</span>
+          <span style={styles.japaneseTitle} title={pack.japaneseTitle}>
+            {pack.japaneseTitle}
+          </span>
           <div style={styles.ratingRow}>
-            <span style={styles.stars}>★ {pack.rating}</span>
+            <span style={styles.stars}>★ {pack.rating.toFixed(2)}</span>
             <span style={styles.reviewsCount}>({pack.reviewsCount})</span>
           </div>
         </div>
 
-        <h3 style={styles.title} className="pack-title-mobile">
+        <h3
+          style={styles.title}
+          className="pack-title-mobile"
+          title={pack.title}
+        >
           {pack.title}
         </h3>
 
@@ -214,7 +199,9 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
               ${pack.priceBaseUsd.toLocaleString()}{" "}
               <span style={styles.currency}>USD</span>
             </div>
-            <span style={styles.noHiddenFees}>Garantía sin costos ocultos</span>
+            <span style={styles.noHiddenFees}>
+              ✓ Garantía sin costos ocultos
+            </span>
           </div>
 
           <button
@@ -271,41 +258,45 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    zIndex: 2,
+  },
+  seasonBadgeCustom: {
+    maxWidth: "calc(100% - 48px)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.16)",
   },
   favoriteBtn: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    border: "1px solid rgba(255, 255, 255, 0.6)",
-    width: "36px",
-    height: "36px",
+    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    border: "1px solid rgba(255, 255, 255, 0.7)",
+    width: "38px",
+    height: "38px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
+    boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
     cursor: "pointer",
-    transition: "transform 150ms ease, background-color 150ms ease",
-    fontSize: "1rem",
+    transition: "all 180ms cubic-bezier(0.4, 0, 0.2, 1)",
+    fontSize: "1.05rem",
+    flexShrink: 0,
   },
   favoriteBtnActive: {
     backgroundColor: "#FFFFFF",
     boxShadow: "0 4px 16px rgba(239, 68, 68, 0.35)",
     borderColor: "rgba(239, 68, 68, 0.3)",
   },
-  bucketBtnActive: {
-    backgroundColor: "#FFFFFF",
-    boxShadow: "0 4px 16px rgba(249, 115, 22, 0.35)",
-    borderColor: "var(--color-sun-orange)",
-  },
   favoriteBtnBump: {
-    transform: "scale(1.25)",
+    transform: "scale(1.22)",
   },
   durationBadge: {
     position: "absolute",
     bottom: "10px",
     left: "12px",
-    backgroundColor: "rgba(15, 23, 42, 0.78)",
+    backgroundColor: "rgba(15, 23, 42, 0.76)",
     color: "#FFFFFF",
     padding: "4px 10px",
     borderRadius: "var(--radius-pill)",
@@ -315,6 +306,7 @@ const styles: Record<string, React.CSSProperties> = {
     WebkitBackdropFilter: "blur(8px)",
     border: "1px solid rgba(255, 255, 255, 0.18)",
     boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+    zIndex: 2,
   },
   cardBody: {
     padding: "16px 18px",
@@ -327,17 +319,23 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "6px",
+    gap: "8px",
   },
   japaneseTitle: {
     fontFamily: "var(--font-japanese)",
     fontSize: "0.78rem",
     fontWeight: 600,
     color: "var(--color-aomori-light)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    flex: 1,
   },
   ratingRow: {
     display: "flex",
     alignItems: "center",
     gap: "4px",
+    flexShrink: 0,
   },
   stars: {
     color: "#F59E0B",
@@ -349,11 +347,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "0.74rem",
   },
   title: {
-    fontSize: "1.12rem",
+    fontSize: "1.06rem",
     fontWeight: 800,
     color: "var(--color-text-title)",
-    lineHeight: 1.3,
+    lineHeight: 1.32,
     marginBottom: "8px",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    minHeight: "2.8rem",
   },
   expandToggleRow: {
     display: "flex",
@@ -413,7 +416,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderTop: "1px solid var(--border-light)",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
     gap: "10px",
     flexWrap: "wrap",
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { CharacterDisplay } from "./CharacterDisplay";
 
 interface HeroBannerProps {
@@ -20,6 +20,18 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenSensei,
   favoritesCount = 0,
 }) => {
+  const [travelers, setTravelers] = useState<string>("2 adultos");
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const catalogElem = document.getElementById("catalog-section");
+    if (catalogElem) {
+      catalogElem.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 720, behavior: "smooth" });
+    }
+  };
+
   const seasons = [
     { id: "all", label: "Todos los Destinos", icon: "🗾" },
     ...(favoritesCount > 0
@@ -76,25 +88,85 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           y bosques vírgenes inaccesibles sin un guía local experto.
         </p>
 
-        {/* Buscador Estilo Unidad 4 */}
-        <div style={styles.searchContainer} className="hero-search-container">
-          <div style={styles.searchBox} className="hero-search-box">
-            <span style={styles.searchIcon}>📍</span>
+        {/* Buscador Estándar de Turismo (Estilo Airbnb / Booking) */}
+        <form
+          onSubmit={handleSearchSubmit}
+          style={styles.tourismSearchBar}
+          className="tourism-search-bar"
+        >
+          {/* Segmento 1: Destino */}
+          <div style={styles.searchSegment} className="search-segment">
+            <span style={styles.segmentLabel}>¿A dónde?</span>
             <input
               type="text"
-              placeholder="¿A dónde en Japón te gustaría viajar? (ej. Hirosaki, Onsen, Nebuta...)"
+              placeholder="Buscar destino..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={styles.searchInput}
+              style={styles.segmentInput}
+              aria-label="Buscar destino"
             />
           </div>
 
+          <div style={styles.segmentDivider} className="search-divider" />
+
+          {/* Segmento 2: Fechas / Temporada */}
+          <div style={styles.searchSegment} className="search-segment">
+            <span style={styles.segmentLabel}>Temporada</span>
+            <select
+              value={selectedSeason}
+              onChange={(e) => setSelectedSeason(e.target.value)}
+              style={styles.segmentSelect}
+              aria-label="Seleccionar temporada"
+            >
+              <option value="all">Todas las fechas</option>
+              <option value="sakura">🌸 Primavera (Sakura)</option>
+              <option value="nebuta">🏮 Verano (Nebuta)</option>
+              <option value="koyo">🍁 Otoño (Koyo)</option>
+              <option value="snow">❄️ Invierno (Nieve)</option>
+            </select>
+          </div>
+
+          <div style={styles.segmentDivider} className="search-divider" />
+
+          {/* Segmento 3: Viajeros */}
+          <div style={styles.searchSegment} className="search-segment">
+            <span style={styles.segmentLabel}>Viajeros</span>
+            <select
+              value={travelers}
+              onChange={(e) => setTravelers(e.target.value)}
+              style={styles.segmentSelect}
+              aria-label="Cantidad de viajeros"
+            >
+              <option value="1 adulto">1 adulto</option>
+              <option value="2 adultos">2 adultos</option>
+              <option value="Grupo (3-5)">Grupo (3-5)</option>
+              <option value="Familia">Familia</option>
+            </select>
+          </div>
+
+          {/* Botón Buscar */}
           <button
-            style={styles.conciergeBtn}
-            className="hero-concierge-btn"
-            onClick={onOpenSensei}
+            type="submit"
+            style={styles.searchSubmitBtn}
+            className="search-submit-btn"
+            title="Buscar experiencias en Aomori"
           >
-            <span>⛩️ Consultar al Sensei</span>
+            Buscar
+          </button>
+        </form>
+
+        {/* Asistencia del Agente IA (En segundo plano) */}
+        <div style={styles.secondaryAgentRow}>
+          <button
+            style={styles.secondaryAgentBtn}
+            onClick={onOpenSensei}
+            type="button"
+          >
+            <span style={styles.agentSparkle}>✨</span>
+            <span>
+              ¿Buscás una ruta personalizada?{" "}
+              <strong>Consultar al Sensei IA →</strong>
+            </span>
           </button>
         </div>
 
@@ -180,51 +252,101 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 400,
     textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
   },
-  searchContainer: {
-    display: "flex",
-    gap: "12px",
-    width: "100%",
-    maxWidth: "700px",
-    marginBottom: "32px",
-    flexWrap: "wrap",
-    justifyContent: "center",
-  },
-  searchBox: {
-    flex: 1,
-    minWidth: "270px",
+  tourismSearchBar: {
     display: "flex",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: "var(--radius-pill)",
-    padding: "6px 20px",
-    boxShadow:
-      "0 16px 36px -8px rgba(15, 45, 72, 0.28), 0 2px 6px rgba(0, 0, 0, 0.08)",
-    border: "1px solid rgba(255, 255, 255, 0.8)",
-  },
-  searchIcon: {
-    fontSize: "1.15rem",
-    marginRight: "10px",
-  },
-  searchInput: {
+    padding: "8px 10px 8px 24px",
     width: "100%",
+    maxWidth: "880px",
+    boxShadow:
+      "0 16px 38px -6px rgba(15, 45, 72, 0.32), 0 4px 12px rgba(0, 0, 0, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.9)",
+    marginBottom: "16px",
+    gap: "8px",
+    position: "relative",
+    zIndex: 5,
+  },
+  searchSegment: {
+    display: "flex",
+    flexDirection: "column",
+    textAlign: "left",
+    flex: 1,
+    minWidth: "140px",
+    padding: "4px 8px",
+  },
+  segmentLabel: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#64748B",
+    marginBottom: "2px",
+    letterSpacing: "0.2px",
+  },
+  segmentInput: {
     border: "none",
     outline: "none",
-    fontSize: "0.95rem",
+    fontSize: "0.92rem",
+    fontWeight: 600,
     color: "var(--color-text-title)",
     backgroundColor: "transparent",
+    width: "100%",
   },
-  conciergeBtn: {
+  segmentSelect: {
+    border: "none",
+    outline: "none",
+    fontSize: "0.92rem",
+    fontWeight: 600,
+    color: "var(--color-text-title)",
+    backgroundColor: "transparent",
+    cursor: "pointer",
+    width: "100%",
+    padding: 0,
+  },
+  segmentDivider: {
+    width: "1px",
+    height: "36px",
+    backgroundColor: "#E2E8F0",
+    flexShrink: 0,
+  },
+  searchSubmitBtn: {
     background: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
     color: "#FFFFFF",
-    padding: "14px 28px",
+    padding: "14px 34px",
     borderRadius: "var(--radius-pill)",
     fontWeight: 700,
-    fontSize: "0.92rem",
-    boxShadow: "0 6px 20px rgba(249, 115, 22, 0.38)",
-    transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
-    whiteSpace: "nowrap",
-    cursor: "pointer",
+    fontSize: "1rem",
     border: "none",
+    cursor: "pointer",
+    boxShadow: "0 4px 14px rgba(249, 115, 22, 0.4)",
+    transition: "all 180ms ease",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+  },
+  secondaryAgentRow: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "24px",
+  },
+  secondaryAgentBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    padding: "7px 18px",
+    borderRadius: "var(--radius-pill)",
+    color: "#F0F9FF",
+    fontSize: "0.82rem",
+    fontWeight: 500,
+    cursor: "pointer",
+    transition: "all 200ms ease",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+  },
+  agentSparkle: {
+    fontSize: "0.95rem",
   },
   seasonRow: {
     display: "flex",

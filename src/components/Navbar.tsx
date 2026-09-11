@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("explore")}
           >
-            Packs & Experiencias
+            Packs
           </button>
 
           <button
@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("agent")}
           >
-            Sensei de Viajes
+            Sensei IA
           </button>
 
           <button
@@ -67,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("wallet")}
           >
-            Mis Billetes & QR
+            Mis Billetes
             {bookingsCount > 0 && (
               <span style={styles.badgeCount}>{bookingsCount}</span>
             )}
@@ -80,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("profile")}
           >
-            👤 Perfil
+            Perfil
           </button>
 
           {/* Links a páginas independientes de Capa 1 & 2 */}
@@ -97,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Acceso a Favoritos & Información Técnica / Rúbrica UTN */}
-        <div style={styles.rightActions}>
+        <div style={styles.rightActions} className="desktop-right-actions">
           {favoritesCount > 0 && onGoToFavorites && (
             <button
               style={styles.favNavBtn}
@@ -114,6 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             style={styles.auditButton}
             className="desktop-audit-btn"
             onClick={onOpenAuditModal}
+            title="Ver Memoria Técnica de Inteligencia Artificial (UTN.BA)"
           >
             <span style={styles.utnDot}></span>
             <span>Memoria Técnica IA</span>
@@ -151,6 +152,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     height: "74px",
+    gap: "16px",
   },
   brand: {
     display: "flex",
@@ -158,6 +160,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "12px",
     cursor: "pointer",
     userSelect: "none",
+    flexShrink: 0,
   },
   kanjiMark: {
     fontFamily: "var(--font-japanese)",
@@ -188,7 +191,7 @@ const styles: Record<string, React.CSSProperties> = {
   nav: {
     display: "flex",
     alignItems: "center",
-    gap: "6px",
+    gap: "4px",
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
@@ -197,35 +200,41 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(255, 255, 255, 0.12)",
   },
   navLink: {
-    padding: "8px 18px",
+    padding: "7px 15px",
     borderRadius: "var(--radius-pill)",
     color: "#E2E8F0",
-    fontSize: "0.86rem",
+    fontSize: "0.84rem",
     fontWeight: 600,
-    transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+    transition: "all 180ms cubic-bezier(0.4, 0, 0.2, 1)",
     display: "flex",
     alignItems: "center",
-    gap: "6px",
+    gap: "5px",
     cursor: "pointer",
+    whiteSpace: "nowrap",
   },
   navLinkActive: {
     backgroundColor: "#FFFFFF",
     color: "var(--color-aomori-blue)",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
+    fontWeight: 700,
   },
   badgeCount: {
     backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
-    fontSize: "0.7rem",
+    fontSize: "0.68rem",
     borderRadius: "10px",
-    padding: "2px 7px",
+    padding: "1px 6px",
     fontWeight: 700,
     boxShadow: "0 2px 6px rgba(249, 115, 22, 0.4)",
   },
   rightActions: {
     display: "flex",
     alignItems: "center",
-    gap: "10px",
+    gap: "12px",
+    marginLeft: "auto",
+    paddingLeft: "16px",
+    borderLeft: "1px solid rgba(255, 255, 255, 0.14)",
+    flexShrink: 0,
   },
   favNavBtn: {
     display: "flex",
@@ -252,24 +261,26 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    border: "1px solid rgba(255, 255, 255, 0.22)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
     backdropFilter: "blur(8px)",
     WebkitBackdropFilter: "blur(8px)",
-    padding: "7px 16px",
-    borderRadius: "var(--radius-pill)",
+    padding: "7px 14px",
+    borderRadius: "8px",
     fontSize: "0.78rem",
     fontWeight: 600,
     color: "#F0F9FF",
     cursor: "pointer",
-    transition: "all 200ms ease",
+    transition: "all 180ms ease",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+    whiteSpace: "nowrap",
   },
   utnDot: {
-    width: "8px",
-    height: "8px",
+    width: "7px",
+    height: "7px",
     borderRadius: "50%",
     backgroundColor: "#34D399",
     boxShadow: "0 0 8px #34D399",
+    flexShrink: 0,
   },
 };
