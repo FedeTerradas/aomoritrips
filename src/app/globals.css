@@ -67,6 +67,22 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-pill: 9999px;
+
+  /* Aliases y compatibilidad de tokens en componentes */
+  --aomori-blue: var(--color-aomori-blue);
+  --sun-orange: var(--color-sun-orange);
+  --surface-white: var(--color-surface-pure);
+  --cream-bg: var(--color-washi-cream);
+  --border-subtle: var(--border-light);
+  --radius-full: var(--radius-pill);
+  --shadow-sm: var(--shadow-card);
+  --shadow-lg: var(--shadow-floating);
+  --shadow-orange: var(--shadow-button-orange);
+  --text-muted: var(--color-text-muted);
+  --text-secondary: var(--color-text-body);
+  --text-primary: var(--color-text-title);
+  --sky-accent: var(--color-ice-blue);
+  --sky-border: var(--color-ice-border);
 }
 
 /* Reset y Base */
@@ -201,6 +217,27 @@ textarea {
   display: none;
 }
 
+@media (min-width: 769px) and (max-width: 1140px) {
+  .desktop-nav-links {
+    gap: 2px !important;
+    padding: 3px 4px !important;
+  }
+  .desktop-nav-links button,
+  .desktop-nav-links a {
+    padding: 5px 9px !important;
+    font-size: 0.78rem !important;
+  }
+  .desktop-right-actions {
+    margin-left: 10px !important;
+    padding-left: 10px !important;
+    gap: 8px !important;
+  }
+  .desktop-audit-btn {
+    padding: 6px 10px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   .season-label-desktop {
     display: none !important;
@@ -307,6 +344,32 @@ textarea {
   .hero-container {
     padding-left: 16px !important;
     padding-right: 16px !important;
+  }
+
+  /* Buscador de Turismo Móvil (Estilo Airbnb / Booking) */
+  .tourism-search-bar {
+    flex-direction: column !important;
+    padding: 16px 18px !important;
+    border-radius: var(--radius-lg) !important;
+    gap: 10px !important;
+  }
+
+  .search-segment {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 2px 0 !important;
+  }
+
+  .search-divider {
+    width: 100% !important;
+    height: 1px !important;
+    margin: 2px 0 !important;
+  }
+
+  .search-submit-btn {
+    width: 100% !important;
+    text-align: center !important;
+    padding: 12px !important;
   }
 
   .hero-search-container {
