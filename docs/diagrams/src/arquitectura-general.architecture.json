@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitectura General AomoriTrips: Online y Bifurcación Offline",
+    "quality_profile": "showcase",
+    "viewBox": [1180, 520],
+    "views": [
+      {
+        "id": "full-flow",
+        "label": "Flujo Completo Online",
+        "focus": [
+          "ui",
+          "api",
+          "zod",
+          "orquestador",
+          "llm",
+          "tools",
+          "prisma",
+          "db"
+        ],
+        "note": "Traza el flujo transaccional desde el cliente web y el orquestador agéntico hasta la persistencia SQLite."
+      },
+      {
+        "id": "agent-loop",
+        "label": "Capa Agéntica 3 Niveles",
+        "focus": ["orquestador", "llm", "tools", "zod"],
+        "note": "Aísla la interacción entre el orquestador determinístico en TypeScript, el LLM y las herramientas."
+      },
+      {
+        "id": "offline-crypto",
+        "label": "Bifurcación Offline y Validación en Campo",
+        "focus": ["qrcode_gen", "wallet_offline", "guia", "crypto_verify"],
+        "note": "Emisión del voucher firmado con HMAC-SHA256 y su verificación matemática sin red en Sukayu Onsen."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Cliente Web / Móvil",
+      "sublabel": "Next.js 16 SSR / Washi UI",
+      "brand": "next-js",
+      "pos": [40, 150],
+      "size": [150, 60]
+    },
+    {
+      "id": "wallet_offline",
+      "type": "frontend",
+      "label": "Billetera Vouchers",
+      "sublabel": "Offline Cache / PWA",
+      "tag": "PWA Local",
+      "pos": [40, 270],
+      "size": [150, 60]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Routes",
+      "sublabel": "/api/packs, /bookings, /chat",
+      "pos": [270, 150],
+      "size": [150, 60]
+    },
+    {
+      "id": "qrcode_gen",
+      "type": "security",
+      "label": "Motor Criptográfico",
+      "sublabel": "HMAC-SHA256 & QR",
+      "tag": "Firma Digital",
+      "pos": [270, 270],
+      "size": [150, 60]
+    },
+    {
+      "id": "zod",
+      "type": "security",
+      "label": "Esquemas Zod",
+      "sublabel": "Validación runtime",
+      "tag": "Filtro Tipo",
+      "pos": [480, 150],
+      "size": [140, 60]
+    },
+    {
+      "id": "llm",
+      "type": "cloud",
+      "label": "LLM Probabilístico",
+      "sublabel": "Nivel 1: Inferencia",
+      "tag": "Llama 3.3 / Groq",
+      "pos": [690, 40],
+      "size": [160, 60]
+    },
+    {
+      "id": "orquestador",
+      "type": "backend",
+      "label": "Orquestador Agente",
+      "sublabel": "Nivel 2: Loop & Guardrail",
+      "tag": "Circuit Breaker",
+      "pos": [690, 150],
+      "size": [160, 60]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "Tools de Negocio",
+      "sublabel": "Nivel 3: Precios, Catálogo",
+      "pos": [690, 270],
+      "size": [160, 60]
+    },
+    {
+      "id": "prisma",
+      "type": "database",
+      "label": "Prisma ORM",
+      "sublabel": "Modo WAL concurrente",
+      "brand": "prisma",
+      "pos": [940, 270],
+      "size": [150, 60]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "SQLite (dev.db)",
+      "sublabel": "Persistencia ACID local",
+      "brand": "sqlite",
+      "pos": [940, 390],
+      "size": [150, 60]
+    },
+    {
+      "id": "guia",
+      "type": "external",
+      "label": "Terminal del Guía",
+      "sublabel": "App rural en montaña",
+      "tag": "100% Offline",
+      "pos": [480, 270],
+      "size": [140, 60]
+    },
+    {
+      "id": "crypto_verify",
+      "type": "security",
+      "label": "Verificación Cripto",
+      "sublabel": "Web Crypto API",
+      "tag": "< 1 ms",
+      "pos": [480, 390],
+      "size": [140, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. Cliente Web / Móvil (Next.js 16)",
+      "wraps": ["ui", "wallet_offline"],
+      "pad": 12
+    },
+    {
+      "kind": "region",
+      "label": "2. Servidor Node.js (Next.js App Router)",
+      "wraps": ["api", "qrcode_gen", "zod"],
+      "pad": 12
+    },
+    {
+      "kind": "security-group",
+      "label": "3. Capa de Inteligencia Artificial (3 Niveles)",
+      "wraps": ["llm", "orquestador", "tools"],
+      "pad": 12
+    },
+    {
+      "kind": "region",
+      "label": "4. Persistencia Relacional",
+      "wraps": ["prisma", "db"],
+      "pad": 12
+    },
+    {
+      "kind": "security-group",
+      "label": "5. Operación en Campo (Sukayu Onsen / Sin Red)",
+      "wraps": ["guia", "crypto_verify"],
+      "pad": 12
+    }
+  ],
+  "connections": [
+    {
+      "id": "ui-to-api",
+      "from": "ui",
+      "to": "api",
+      "label": "HTTPS / JSON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-zod",
+      "from": "api",
+      "to": "zod"
+    },
+    {
+      "id": "zod-to-orq",
+      "from": "zod",
+      "to": "orquestador"
+    },
+    {
+      "id": "orq-to-llm",
+      "from": "orquestador",
+      "to": "llm",
+      "label": "Prompts / Calls",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "orq-to-tools",
+      "from": "orquestador",
+      "to": "tools",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tools-to-prisma",
+      "from": "tools",
+      "to": "prisma",
+      "label": "Prisma Client",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "prisma-to-db",
+      "from": "prisma",
+      "to": "db",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-qr",
+      "from": "api",
+      "to": "qrcode_gen",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "qr-to-wallet",
+      "from": "qrcode_gen",
+      "to": "wallet_offline",
+      "label": "Voucher Offline",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "wallet-to-guia",
+      "from": "wallet_offline",
+      "to": "guia",
+      "label": "Escaneo QR",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [115, 360],
+        [550, 360]
+      ],
+      "labelDy": 14
+    },
+    {
+      "id": "guia-to-verify",
+      "from": "guia",
+      "to": "crypto_verify",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cliente y Billetera",
+      "items": [
+        "Interfaz Next.js 16 con tokens regionales Washi",
+        "Billetera PWA con almacenamiento offline de vouchers y favoritos"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Capa Agéntica Gobernada",
+      "items": [
+        "Orquestador TypeScript puro con compuerta Zod",
+        "Circuit Breaker con límite estricto de 3 iteraciones",
+        "Tools determinísticas para catálogo y tarificación sin alucinación"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Ciberseguridad y Offline",
+      "items": [
+        "Firma HMAC-SHA256 embebida en payload QR de alta densidad",
+        "Verificación matemática en destino sin internet (< 1ms)"
+      ]
+    }
+  ]
+}

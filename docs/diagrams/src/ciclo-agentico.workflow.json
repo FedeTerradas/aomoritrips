@@ -1,0 +1,329 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Ciclo de Decisión Agéntico Gobernado (Aomori Sensei)",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Camino Principal con Tool Calling",
+        "focus": [
+          "user",
+          "chat",
+          "planner",
+          "router",
+          "approval",
+          "tool",
+          "external",
+          "final"
+        ],
+        "note": "Traza la consulta del viajero, paso por guardrail, inferencia, validación determinística y entrega."
+      },
+      {
+        "id": "safety-gate",
+        "label": "Guardrails y Circuit Breaker",
+        "focus": ["router", "approval", "blocked", "retry"],
+        "note": "Aísla la compuerta de autorización de tools, el Circuit Breaker a 3 iteraciones y el fallback Washi."
+      },
+      {
+        "id": "evidence-loop",
+        "label": "Memoria y Persistencia Relacional",
+        "focus": ["store", "trace", "external"],
+        "note": "Aísla la carga de historial de sesión y la persistencia atómica en SQLite con Prisma WAL."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "ui", "label": "1. Interfaz de Usuario (Next.js 16)" },
+    { "id": "agent", "label": "2. Orquestador Agéntico (Loop Sensei)" },
+    {
+      "id": "policy",
+      "label": "3. Políticas & Circuit Breaker",
+      "variant": "exception"
+    },
+    { "id": "tools", "label": "4. Persistencia & Tools Determinísticas" }
+  ],
+  "phases": [
+    {
+      "id": "intake",
+      "label": "Ingreso & Guardrail",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "reasoning",
+      "label": "Inferencia & Routing",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "execution",
+      "label": "Validación & Cierre",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "agent_loop",
+      "label": "Loop de Razonamiento",
+      "lane": "agent",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "exception_path",
+      "label": "Control de Bucle (Circuit Breaker)",
+      "lane": "policy",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "security"
+    },
+    {
+      "id": "evidence_path",
+      "label": "Memoria Conversacional",
+      "lane": "tools",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "tool_work",
+      "label": "Ejecución Determinística",
+      "lane": "tools",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "chat",
+    "planner",
+    "router",
+    "approval",
+    "tool",
+    "external",
+    "final"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "ui",
+      "col": 0,
+      "type": "external",
+      "label": "Viajero",
+      "sublabel": "Lenguaje natural",
+      "width": 132
+    },
+    {
+      "id": "chat",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Chat Sensei",
+      "sublabel": "Input Guardrail Regex",
+      "tag": "OWASP LLM01",
+      "width": 132
+    },
+    {
+      "id": "final",
+      "lane": "ui",
+      "col": 5,
+      "type": "backend",
+      "label": "Respuesta Final",
+      "sublabel": "Tono Washi + UI Card",
+      "width": 132
+    },
+    {
+      "id": "planner",
+      "lane": "agent",
+      "col": 2,
+      "type": "backend",
+      "label": "Inferencia LLM",
+      "sublabel": "Observar & Razonar",
+      "tag": "Llama 3.3 70B",
+      "width": 132
+    },
+    {
+      "id": "router",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "Tool Router",
+      "sublabel": "Decide acción / tool",
+      "width": 132
+    },
+    {
+      "id": "approval",
+      "lane": "policy",
+      "col": 3,
+      "type": "security",
+      "label": "Tool Auth & Zod",
+      "sublabel": "Permiso & esquema",
+      "tag": "Doble Frontera",
+      "width": 132
+    },
+    {
+      "id": "blocked",
+      "lane": "policy",
+      "col": 4,
+      "type": "security",
+      "label": "Circuit Breaker",
+      "sublabel": "i >= MAX_ITERATIONS (3)",
+      "width": 132
+    },
+    {
+      "id": "retry",
+      "lane": "policy",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Fallback Washi",
+      "sublabel": "Degradación elegante",
+      "width": 132
+    },
+    {
+      "id": "tool",
+      "lane": "tools",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Ejecución Tool",
+      "sublabel": "Precios, Clima, Packs",
+      "tag": "TypeScript",
+      "width": 132
+    },
+    {
+      "id": "external",
+      "lane": "tools",
+      "col": 5,
+      "type": "cloud",
+      "label": "Verificación Salida",
+      "sublabel": "Validación de respuesta",
+      "width": 132
+    },
+    {
+      "id": "store",
+      "lane": "tools",
+      "col": 1,
+      "type": "database",
+      "label": "Memoria de Sesión",
+      "sublabel": "AgentSession previa",
+      "width": 132
+    },
+    {
+      "id": "trace",
+      "lane": "tools",
+      "col": 2,
+      "type": "database",
+      "label": "Persistencia DB",
+      "sublabel": "AgentMessage SQLite",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-chat",
+      "from": "user",
+      "to": "chat",
+      "variant": "default"
+    },
+    {
+      "id": "plan-request",
+      "from": "chat",
+      "to": "planner",
+      "label": "input saneado",
+      "variant": "emphasis"
+    },
+    {
+      "id": "planner-route",
+      "from": "planner",
+      "to": "router",
+      "variant": "default"
+    },
+    {
+      "id": "approval-check",
+      "from": "router",
+      "to": "approval",
+      "label": "requiere tool?",
+      "variant": "security"
+    },
+    {
+      "id": "approved-tool",
+      "from": "approval",
+      "to": "tool",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approval-denied",
+      "from": "approval",
+      "to": "blocked",
+      "label": "límite loop",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "retry-request",
+      "from": "blocked",
+      "to": "retry",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "tool-external-call",
+      "from": "tool",
+      "to": "external",
+      "variant": "default"
+    },
+    {
+      "id": "external-reply",
+      "from": "external",
+      "to": "final",
+      "variant": "emphasis",
+      "role": "return",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "outside-right",
+      "width": 1.2
+    },
+    {
+      "id": "record-result",
+      "from": "external",
+      "to": "trace",
+      "label": "persiste mensaje",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "route": "bottom-channel",
+      "labelSegment": 1
+    },
+    {
+      "id": "write-trace-memory",
+      "from": "store",
+      "to": "trace",
+      "label": "contexto previo",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Doble Frontera de Seguridad",
+      "items": [
+        "1. Input Guardrail intercepta patrones de inyección (OWASP LLM01)",
+        "2. Tool Authorization & Validation verifica permisos y esquemas Zod"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Control Determinístico de Bucle",
+      "items": [
+        "Circuit Breaker con corte forzado si i >= 3 iteraciones",
+        "Fallback elegante Washi previene consumo descontrolado de tokens"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Modelo de Dominio y Persistencia Relacional (Prisma ORM & SQLite)",
+    "quality_profile": "showcase",
+    "viewBox": [1080, 520],
+    "views": [
+      {
+        "id": "full-domain",
+        "label": "Modelo Integral",
+        "focus": ["pack", "booking", "session", "message", "pref"],
+        "note": "Estructura completa de entidades persistidas en dev.db bajo el modo Write-Ahead Logging (WAL)."
+      },
+      {
+        "id": "agent-memory-domain",
+        "label": "Dominio de Memoria del Agente",
+        "focus": ["session", "message", "pref"],
+        "note": "Aísla la persistencia de sesiones multi-turno y perfilado reactivo del viajero."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pack",
+      "type": "database",
+      "label": "TravelPack",
+      "sublabel": "Catálogo & Tarifas Base",
+      "tag": "slug / seasonTag",
+      "brand": "prisma",
+      "pos": [80, 140],
+      "size": [210, 70]
+    },
+    {
+      "id": "booking",
+      "type": "database",
+      "label": "BookingOrder",
+      "sublabel": "Órdenes & Firma QR",
+      "tag": "qrSignature HMAC",
+      "brand": "prisma",
+      "pos": [80, 330],
+      "size": [210, 70]
+    },
+    {
+      "id": "session",
+      "type": "database",
+      "label": "AgentSession",
+      "sublabel": "Sesión Multi-Turno",
+      "tag": "startedAt / lastActive",
+      "brand": "sqlite",
+      "pos": [440, 230],
+      "size": [210, 70]
+    },
+    {
+      "id": "message",
+      "type": "database",
+      "label": "AgentMessage",
+      "sublabel": "Historial Conversación",
+      "tag": "role / toolCalls",
+      "brand": "prisma",
+      "pos": [790, 140],
+      "size": [210, 70]
+    },
+    {
+      "id": "pref",
+      "type": "database",
+      "label": "TravelerPreference",
+      "sublabel": "Perfil Inferido del Viajero",
+      "tag": "budgetTier / interests",
+      "brand": "prisma",
+      "pos": [790, 330],
+      "size": [210, 70]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Dominio Transaccional de Catálogo y Reservas",
+      "wraps": ["pack", "booking"],
+      "pad": 15
+    },
+    {
+      "kind": "security-group",
+      "label": "Dominio Agéntico de Memoria y Perfilado",
+      "wraps": ["session", "message", "pref"],
+      "pad": 15
+    }
+  ],
+  "connections": [
+    {
+      "id": "pack-to-booking",
+      "from": "pack",
+      "to": "booking",
+      "label": "1 a N (referencia)",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "session-to-message",
+      "from": "session",
+      "to": "message",
+      "label": "1 a N (almacena)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "session-to-pref",
+      "from": "session",
+      "to": "pref",
+      "label": "1 a 0..1 (perfila)"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Integridad Relacional ACID",
+      "items": [
+        "Modelado con Prisma ORM sobre SQLite local (dev.db)",
+        "Modo Write-Ahead Logging (WAL) para lecturas y escrituras concurrentes sin bloqueo"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Alineación Domain-Driven",
+      "items": [
+        "Separación de bounded contexts entre Catálogo/Vouchers y Memoria Agéntica",
+        "Atributo criptográfico qrSignature para validación matemática offline"
+      ]
+    }
+  ]
+}

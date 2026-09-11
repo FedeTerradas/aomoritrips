@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Secuencia Temporal AomoriTrips: Flujo Agéntico y Validación Offline",
+    "quality_profile": "showcase",
+    "viewBox": [1080, 780],
+    "column_fit": "spread",
+    "views": [
+      {
+        "id": "agent-chat",
+        "label": "Interacción con Aomori Sensei",
+        "focus": ["viajero", "ui", "api", "guard", "sensei", "tools"],
+        "note": "Aísla la consulta en lenguaje natural, el guardrail, la invocación de herramientas y el cálculo."
+      },
+      {
+        "id": "booking-offline",
+        "label": "Checkout y Verificación Offline",
+        "focus": ["viajero", "ui", "api", "db", "guia"],
+        "note": "Aísla la generación del voucher firmado con HMAC-SHA256 y la validación en destino sin red."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "viajero",
+      "type": "external",
+      "label": "Viajero",
+      "sublabel": "Pasajero"
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Cliente Web",
+      "sublabel": "Next.js 16"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "App Router"
+    },
+    {
+      "id": "guard",
+      "type": "security",
+      "label": "Guardrail",
+      "sublabel": "Zod & OWASP"
+    },
+    {
+      "id": "sensei",
+      "type": "cloud",
+      "label": "Aomori Sensei",
+      "sublabel": "LLM Llama 3.3"
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "Tools",
+      "sublabel": "Catálogo & Pax"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "SQLite DB",
+      "sublabel": "Prisma WAL"
+    },
+    {
+      "id": "guia",
+      "type": "external",
+      "label": "Guía Rural",
+      "sublabel": "Sukayu Onsen"
+    }
+  ],
+  "segments": [
+    { "from": 150, "to": 285, "label": "1. Consulta e Input Guardrail" },
+    { "from": 295, "to": 495, "label": "2. Inferencia & Tool Calling" },
+    { "from": 505, "to": 635, "label": "3. Checkout & Firma HMAC" },
+    { "from": 645, "to": 705, "label": "4. Operación Offline en Destino" }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "viajero",
+      "to": "ui",
+      "y": 165,
+      "label": "Consulta plan y precio",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "ui",
+      "to": "api",
+      "y": 200,
+      "label": "POST /api/agent/chat",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m3",
+      "from": "api",
+      "to": "guard",
+      "y": 235,
+      "label": "Sanitización regex",
+      "variant": "security"
+    },
+    {
+      "id": "m4",
+      "from": "guard",
+      "to": "api",
+      "y": 270,
+      "label": "Entrada validada",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "api",
+      "to": "sensei",
+      "y": 305,
+      "label": "Prompt + Historial seguro",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "sensei",
+      "to": "api",
+      "y": 340,
+      "label": "Tool Call: calculatePricing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m7",
+      "from": "api",
+      "to": "tools",
+      "y": 375,
+      "label": "Ejecuta cálculo determinístico",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m8",
+      "from": "tools",
+      "to": "db",
+      "y": 410,
+      "label": "Lee catálogo TravelPack",
+      "variant": "default"
+    },
+    {
+      "id": "m9",
+      "from": "tools",
+      "to": "api",
+      "y": 445,
+      "label": "JSON desglose transparente",
+      "variant": "return"
+    },
+    {
+      "id": "m10",
+      "from": "api",
+      "to": "ui",
+      "y": 480,
+      "label": "Respuesta Washi + Tarjeta",
+      "variant": "return"
+    },
+    {
+      "id": "m11",
+      "from": "viajero",
+      "to": "ui",
+      "y": 515,
+      "label": "Confirma reserva y checkout",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m12",
+      "from": "ui",
+      "to": "api",
+      "y": 550,
+      "label": "POST /api/bookings",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m13",
+      "from": "api",
+      "to": "db",
+      "y": 585,
+      "label": "Persiste BookingOrder + HMAC",
+      "variant": "default"
+    },
+    {
+      "id": "m14",
+      "from": "api",
+      "to": "ui",
+      "y": 620,
+      "label": "Descarga voucher offline",
+      "variant": "return"
+    },
+    {
+      "id": "m15",
+      "from": "viajero",
+      "to": "guia",
+      "y": 655,
+      "label": "Exhibe QR en Sukayu Onsen",
+      "variant": "dashed"
+    },
+    {
+      "id": "m16",
+      "from": "guia",
+      "to": "viajero",
+      "y": 685,
+      "label": "Acceso confirmado (Web Crypto)",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    { "participant": "ui", "from": 200, "to": 625, "type": "frontend" },
+    { "participant": "api", "from": 200, "to": 620, "type": "backend" },
+    { "participant": "sensei", "from": 305, "to": 345, "type": "cloud" },
+    { "participant": "tools", "from": 375, "to": 450, "type": "backend" },
+    { "participant": "guia", "from": 655, "to": 690, "type": "external" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Interacción Híbrida",
+      "items": [
+        "El LLM razona discursivamente pero delega el cálculo matemático a tools",
+        "Toda respuesta queda persistida en SQLite bajo el modo WAL"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Operación 100% Desconectada",
+      "items": [
+        "El voucher viaja en caché PWA en el smartphone del viajero",
+        "El guía rural valida la firma matemática en < 1ms con Web Crypto API"
+      ]
+    }
+  ]
+}
