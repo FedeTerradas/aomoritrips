@@ -70,6 +70,11 @@ export default function HomePage() {
     fetchBookingsCount();
   }, []);
 
+  // Garantizar que al cambiar de sección la vista comience siempre en la cima
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [activeTab]);
+
   const handleBookingSuccess = () => {
     setSelectedPack(null);
     fetchBookingsCount();
@@ -79,7 +84,14 @@ export default function HomePage() {
   const handleGoToFavorites = () => {
     setActiveTab("explore");
     setSelectedSeason("favorites");
-    window.scrollTo({ top: 400, behavior: "smooth" });
+    setTimeout(() => {
+      const catalogEl = document.getElementById("catalog-section");
+      if (catalogEl) {
+        catalogEl.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.scrollTo({ top: 400, behavior: "smooth" });
+      }
+    }, 50);
   };
 
   const displayedPacks =
