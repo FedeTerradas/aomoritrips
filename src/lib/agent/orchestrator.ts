@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { validateAndSanitizeInput } from "./guardrails";
+import { inferenceOrchestrator } from "./inference";
 import {
   toolSearchPacks,
   toolGetSeasonalForecast,
@@ -23,6 +24,161 @@ export interface RunAgentInput {
   travelersCount?: number;
   quizAnswers?: QuizAnswers; // Para llamadas directas desde /api/quiz
   groupProfile?: GroupProfile; // Para llamadas directas desde /api/itinerary
+}
+
+interface ResilientMessage {
+  id: string;
+  role: string;
+  content: string;
+}
+
+interface ResilientSession {
+  id: string;
+  sessionToken: string;
+  messages: ResilientMessage[];
+  preferences: {
+    preferredSeason: string | null;
+    groupSize: number;
+  } | null;
+}
+
+const memorySessionStore = new Map<string, ResilientSession>();
+
+async function getOrCreateResilientSession(
+  input: RunAgentInput
+): Promise<ResilientSession> {
+  try {
+    let session = await prisma.agentSession.findUnique({
+      where: { sessionToken: input.sessionToken },
+      include: {
+        messages: { orderBy: { createdAt: "asc" }, take: 10 },
+        preferences: true,
+      },
+    });
+
+    if (!session) {
+      session = await prisma.agentSession.create({
+        data: {
+          sessionToken: input.sessionToken,
+          preferences: {
+            create: {
+              preferredSeason: input.requestedSeason || null,
+              groupSize: input.travelersCount || 1,
+            },
+          },
+        },
+        include: {
+          messages: true,
+          preferences: true,
+        },
+      });
+    }
+
+    return {
+      id: session.id,
+      sessionToken: session.sessionToken,
+      messages: session.messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+      })),
+      preferences: session.preferences
+        ? {
+            preferredSeason: session.preferences.preferredSeason,
+            groupSize: session.preferences.groupSize || 1,
+          }
+        : null,
+    };
+  } catch (err) {
+    console.warn(
+      "[Orchestrator] Base de datos en modo solo lectura o no disponible, usando memoria de sesión:",
+      err
+    );
+    let mem = memorySessionStore.get(input.sessionToken);
+    if (!mem) {
+      mem = {
+        id: "mem_" + input.sessionToken,
+        sessionToken: input.sessionToken,
+        messages: [],
+        preferences: {
+          preferredSeason: input.requestedSeason || null,
+          groupSize: input.travelersCount || 1,
+        },
+      };
+      memorySessionStore.set(input.sessionToken, mem);
+    }
+    return mem;
+  }
+}
+
+async function recordResilientMessage(
+  sessionId: string,
+  sessionToken: string,
+  role: string,
+  content: string,
+  toolCalls?: string
+) {
+  try {
+    if (!sessionId.startsWith("mem_")) {
+      await prisma.agentMessage.create({
+        data: {
+          sessionId,
+          role,
+          content,
+          toolCalls,
+        },
+      });
+    }
+  } catch (err) {
+    console.warn(
+      "[Orchestrator] Mensaje no persistido en DB (filesystem read-only):",
+      err
+    );
+  }
+
+  const mem = memorySessionStore.get(sessionToken);
+  if (mem) {
+    mem.messages.push({
+      id: "msg_" + Date.now(),
+      role,
+      content,
+    });
+  }
+}
+
+async function recordResilientPreferences(
+  sessionId: string,
+  sessionToken: string,
+  preferredSeason?: string,
+  groupSize?: number
+) {
+  try {
+    if (!sessionId.startsWith("mem_")) {
+      await prisma.travelerPreference.upsert({
+        where: { sessionId },
+        update: {
+          ...(preferredSeason ? { preferredSeason } : {}),
+          ...(groupSize ? { groupSize } : {}),
+        },
+        create: {
+          sessionId,
+          preferredSeason: preferredSeason || null,
+          groupSize: groupSize || 1,
+        },
+      });
+    }
+  } catch (err) {
+    console.warn(
+      "[Orchestrator] Preferencias no persistidas en DB (filesystem read-only):",
+      err
+    );
+  }
+
+  const mem = memorySessionStore.get(sessionToken);
+  if (mem && mem.preferences) {
+    if (preferredSeason) mem.preferences.preferredSeason = preferredSeason;
+    if (groupSize) mem.preferences.groupSize = groupSize;
+  }
 }
 
 export async function executeTravelAgent(
@@ -51,41 +207,16 @@ export async function executeTravelAgent(
 
   const cleanMessage = guardrail.sanitizedInput;
 
-  // 2. Recuperar o Inicializar Sesión y Memoria Persistente en DB
-  let session = await prisma.agentSession.findUnique({
-    where: { sessionToken: input.sessionToken },
-    include: {
-      messages: { orderBy: { createdAt: "asc" }, take: 10 },
-      preferences: true,
-    },
-  });
+  // 2. Recuperar o Inicializar Sesión y Memoria Persistente en DB (o memoria de contingencia)
+  const session = await getOrCreateResilientSession(input);
 
-  if (!session) {
-    session = await prisma.agentSession.create({
-      data: {
-        sessionToken: input.sessionToken,
-        preferences: {
-          create: {
-            preferredSeason: input.requestedSeason || null,
-            groupSize: input.travelersCount || 1,
-          },
-        },
-      },
-      include: {
-        messages: true,
-        preferences: true,
-      },
-    });
-  }
-
-  // Guardar mensaje de usuario en la memoria persistente
-  await prisma.agentMessage.create({
-    data: {
-      sessionId: session.id,
-      role: "user",
-      content: cleanMessage,
-    },
-  });
+  // Guardar mensaje de usuario en la memoria
+  await recordResilientMessage(
+    session.id,
+    session.sessionToken,
+    "user",
+    cleanMessage
+  );
 
   // 3. Ciclo de Decisión Agéntica (Decision Loop)
   const lower = cleanMessage.toLowerCase();
@@ -119,14 +250,13 @@ export async function executeTravelAgent(
 
     const replyText = quizResult.personalizedCard;
 
-    await prisma.agentMessage.create({
-      data: {
-        sessionId: session.id,
-        role: "assistant",
-        content: replyText,
-        toolCalls: JSON.stringify(toolsExecuted),
-      },
-    });
+    await recordResilientMessage(
+      session.id,
+      session.sessionToken,
+      "assistant",
+      replyText,
+      JSON.stringify(toolsExecuted)
+    );
 
     return {
       reply: replyText,
@@ -165,14 +295,13 @@ export async function executeTravelAgent(
     const bd = draftItinerary.budgetBreakdown;
     const replyText = `🗺️ **${draftItinerary.title}**\n\n${dayLines}\n\n💴 **Presupuesto estimado por persona**: $${bd.totalPerPersonUsd.toLocaleString()} USD | **Total grupo**: $${bd.totalGroupUsd.toLocaleString()} USD\n\n¿Querés guardar este itinerario como tu pack personalizado y reservarlo? 🌸`;
 
-    await prisma.agentMessage.create({
-      data: {
-        sessionId: session.id,
-        role: "assistant",
-        content: replyText,
-        toolCalls: JSON.stringify(toolsExecuted),
-      },
-    });
+    await recordResilientMessage(
+      session.id,
+      session.sessionToken,
+      "assistant",
+      replyText,
+      JSON.stringify(toolsExecuted)
+    );
 
     return {
       reply: replyText,
@@ -506,35 +635,79 @@ export async function executeTravelAgent(
     );
   }
 
+  // 4. Síntesis y Redacción de Respuesta mediante el Inference Seam
+  let inferenceSource: AgentExecutionResult["inferenceSource"] = undefined;
+
   if (responseSections.length > 0) {
     responseText = responseSections.join("\n\n---\n\n");
+    inferenceSource = {
+      provider: "fallback-rules",
+      model: "aomori-tools-v1",
+      latencyMs: 10,
+    };
   } else {
-    responseText = `¡Konnichiwa! Soy tu **Sensei de viajes de AomoriTrips** (青森の先生) ⛩️.\n\nTe guiaré con sabiduría local para descubrir el norte auténtico de Japón sin barreras idiomáticas ni complicaciones logísticas. En base a nuestros registros, te recomiendo explorar **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru"}** (${chosenPack?.seasonLabel || "Temporada especial"}), desde **$${chosenPack?.priceBaseUsd || 2890} USD** todo incluido.\n\n¿Te gustaría que diseñemos un itinerario a tu medida, calculemos tarifas para tu grupo o te brinde recomendaciones sobre la mejor época para viajar?`;
+    // Consulta abierta o conversacional: delegar al Inference Orchestrator
+    const promptMessages: Array<{
+      role: "system" | "user" | "assistant";
+      content: string;
+    }> = [
+      {
+        role: "system",
+        content:
+          "Eres Aomori Sensei (青森の先生), sabio y hospitalario guía de viajes de AomoriTrips. Asesoras sobre aguas termales onsen (Sukayu, Koganezaki), castillos en Hirosaki, gastronomía auténtica (nokkedon, manzanas Tsugaru) y tren bala Shinkansen en Tohoku, Japón. Habla en español con calidez, respeto y hospitalidad japonesa (omotenashi). Sé conciso y utiliza emojis sutiles (⛩️, 🌸, 🏮, ❄️).",
+      },
+    ];
+
+    for (const msg of session.messages.slice(-5)) {
+      if (msg.role === "user" || msg.role === "assistant") {
+        promptMessages.push({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+        });
+      }
+    }
+    promptMessages.push({ role: "user", content: cleanMessage });
+
+    const inferenceResult = await inferenceOrchestrator.runInference(
+      promptMessages,
+      { temperature: 0.4, maxTokens: 450 }
+    );
+
+    responseText = inferenceResult.text;
+    inferenceSource = {
+      provider: inferenceResult.provider,
+      model: inferenceResult.model,
+      latencyMs: inferenceResult.latencyMs,
+    };
+
+    decisionSteps.push({
+      observation: `Respuesta sintetizada con éxito mediante motor: ${inferenceResult.provider} (${inferenceResult.model}).`,
+      thought: `Inferencia ejecutada en ${inferenceResult.latencyMs}ms con el contrato InferenceProvider.`,
+      action: "INFERENCE_SYNTHESIS",
+      actionInput: {
+        provider: inferenceResult.provider,
+        model: inferenceResult.model,
+      },
+      actionOutput: { latencyMs: inferenceResult.latencyMs },
+    });
   }
 
-  // 5. Actualizar la Memoria Persistente en DB (Preferencias y Mensaje del Asistente)
-  await prisma.agentMessage.create({
-    data: {
-      sessionId: session.id,
-      role: "assistant",
-      content: responseText,
-      toolCalls: JSON.stringify(toolsExecuted),
-    },
-  });
+  // 5. Actualizar la Memoria Persistente (Tolerante a fallos de filesystem en Vercel)
+  await recordResilientMessage(
+    session.id,
+    session.sessionToken,
+    "assistant",
+    responseText,
+    JSON.stringify(toolsExecuted)
+  );
 
   if (detectedSeason || detectedTravelersCount) {
-    await prisma.travelerPreference.upsert({
-      where: { sessionId: session.id },
-      update: {
-        preferredSeason: detectedSeason || session.preferences?.preferredSeason,
-        groupSize: count,
-      },
-      create: {
-        sessionId: session.id,
-        preferredSeason: detectedSeason,
-        groupSize: count,
-      },
-    });
+    await recordResilientPreferences(
+      session.id,
+      session.sessionToken,
+      detectedSeason,
+      count
+    );
   }
 
   return {
@@ -545,6 +718,7 @@ export async function executeTravelAgent(
     suggestedPacks,
     calculatedQuote,
     itineraryDraft,
+    inferenceSource,
     inferredPreferences: {
       preferredSeason: detectedSeason || undefined,
       groupSize: count,

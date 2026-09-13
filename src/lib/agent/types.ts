@@ -113,4 +113,9 @@ export interface AgentExecutionResult {
     interests?: string[];
     groupSize?: number;
   };
+  inferenceSource?: {
+    provider: "ollama-slm" | "cloud-llm" | "fallback-rules";
+    model: string;
+    latencyMs?: number;
+  };
 }
