@@ -13,6 +13,10 @@ export const en: TranslationSchema = {
     login: "Log In",
     logout: "Log Out",
     technicalAudit: "AI Technical Report",
+    more: "More",
+    moreDescQuiz: "Discover your travel style",
+    moreDescBuilder: "Custom itinerary planner",
+    moreDescAdmin: "Manage packs and catalog",
   },
   hero: {
     badge: "CURATED EXPEDITIONS · AOMORI 2026",

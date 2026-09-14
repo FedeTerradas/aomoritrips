@@ -13,6 +13,10 @@ export const ja: TranslationSchema = {
     login: "ログイン",
     logout: "ログアウト",
     technicalAudit: "AI技術レポート",
+    more: "その他",
+    moreDescQuiz: "旅のスタイルを発見",
+    moreDescBuilder: "オーダーメイド旅程作成",
+    moreDescAdmin: "ツアー管理・登録",
   },
   hero: {
     badge: "厳選ツアー · 青森 2026",

@@ -11,6 +11,10 @@ export const es = {
     login: "Ingresar",
     logout: "Cerrar sesión",
     technicalAudit: "Memoria Técnica IA",
+    more: "Más",
+    moreDescQuiz: "Descubre tu estilo de viaje",
+    moreDescBuilder: "Itinerarios personalizados",
+    moreDescAdmin: "Gestión de paquetes y catálogo",
   },
   hero: {
     badge: "EXPEDICIONES CURADAS · AOMORI 2026",
