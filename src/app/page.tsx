@@ -13,10 +13,12 @@ import { BottomNav } from "@/components/BottomNav";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { FaqSection } from "@/components/FaqSection";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
 import { CharacterDisplay } from "@/components/CharacterDisplay";
 import { AdminPacksView } from "@/components/AdminPacksView";
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   >("explore");
@@ -282,8 +284,8 @@ export default function HomePage() {
         />
       )}
 
-      {/* VISTA 5: Panel de Administración de Paquetes */}
-      {activeTab === "admin" && (
+      {/* VISTA 5: Panel de Administración de Paquetes (Protegido por Rol) */}
+      {activeTab === "admin" && user?.role === "ADMIN" && (
         <AdminPacksView
           onBackToExplore={() => setActiveTab("explore")}
           onPackCreated={() => {
@@ -291,6 +293,66 @@ export default function HomePage() {
             setActiveTab("explore");
           }}
         />
+      )}
+
+      {/* Pantalla de Acceso Restringido para usuarios sin rol ADMIN */}
+      {activeTab === "admin" && user?.role !== "ADMIN" && (
+        <section
+          className="container animate-fade-in"
+          style={{ padding: "80px 24px", textAlign: "center" }}
+        >
+          <div
+            style={{
+              maxWidth: "520px",
+              margin: "0 auto",
+              backgroundColor: "#FFFFFF",
+              padding: "40px 32px",
+              borderRadius: "16px",
+              boxShadow: "var(--shadow-card)",
+              border: "1px solid var(--border-light)",
+            }}
+          >
+            <span style={{ fontSize: "3.2rem" }}>🛡️</span>
+            <h2
+              style={{
+                color: "var(--color-aomori-blue)",
+                marginTop: "16px",
+                marginBottom: "8px",
+                fontWeight: 800,
+              }}
+            >
+              Acceso Restringido (403)
+            </h2>
+            <p
+              style={{
+                color: "var(--color-text-muted)",
+                fontSize: "0.92rem",
+                lineHeight: 1.6,
+                marginBottom: "24px",
+              }}
+            >
+              Esta sección está reservada exclusivamente para el equipo de{" "}
+              <strong>Administración de AomoriTrips</strong>. Como usuario
+              estándar o invitado, no tienes permisos para dar de alta o
+              eliminar paquetes oficiales del catálogo.
+            </p>
+            <button
+              onClick={() => setActiveTab("explore")}
+              style={{
+                backgroundColor: "var(--color-aomori-blue)",
+                color: "#FFFFFF",
+                padding: "12px 28px",
+                borderRadius: "var(--radius-pill)",
+                fontWeight: 700,
+                fontSize: "0.9rem",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              ← Volver a Explorar Paquetes
+            </button>
+          </div>
+        </section>
       )}
 
       {/* Modal de Detalle y Checkout */}

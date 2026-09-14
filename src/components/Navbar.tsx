@@ -88,15 +88,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             {t.nav.profile}
           </button>
 
-          <button
-            style={{
-              ...styles.navLink,
-              ...(activeTab === "admin" ? styles.navLinkActive : {}),
-            }}
-            onClick={() => setActiveTab("admin")}
-          >
-            ⚙️ {t.nav.admin}
-          </button>
+          {user?.role === "ADMIN" && (
+            <button
+              style={{
+                ...styles.navLink,
+                ...(activeTab === "admin" ? styles.navLinkActive : {}),
+              }}
+              onClick={() => setActiveTab("admin")}
+            >
+              ⚙️ {t.nav.admin}
+            </button>
+          )}
 
           {/* Links a páginas independientes de Capa 1 & 2 */}
           <a href="/quiz" style={{ ...styles.navLink, textDecoration: "none" }}>

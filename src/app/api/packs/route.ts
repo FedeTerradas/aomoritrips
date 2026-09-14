@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CreatePackSchema } from "@/lib/validation/pack-schema";
+import { getAuthSession } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
   try {
@@ -50,6 +51,27 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // RBAC: Solo usuarios con rol ADMIN pueden publicar paquetes
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No autorizado. Inicia sesión como administrador.",
+        },
+        { status: 401 }
+      );
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Acceso denegado. Se requieren permisos de Administrador.",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const parsed = CreatePackSchema.safeParse(body);
 
@@ -116,6 +138,27 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    // RBAC: Solo usuarios con rol ADMIN pueden eliminar paquetes
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No autorizado. Inicia sesión como administrador.",
+        },
+        { status: 401 }
+      );
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Acceso denegado. Se requieren permisos de Administrador.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

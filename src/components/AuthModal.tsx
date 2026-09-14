@@ -72,6 +72,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleAdminDemoLogin = async () => {
+    setEmail("admin@aomoritrips.jp");
+    setPassword("admin2026");
+    setErrorMsg(null);
+    setIsSubmitting(true);
+    try {
+      try {
+        await login("admin@aomoritrips.jp", "admin2026");
+      } catch {
+        await register(
+          "Kenji Sato (Admin)",
+          "admin@aomoritrips.jp",
+          "admin2026"
+        );
+      }
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Error en login de administrador"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return createPortal(
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -172,14 +198,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div style={styles.divider}>
             <span style={styles.dividerText}>Acceso Rápido Evaluación UTN</span>
           </div>
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={isSubmitting}
-            style={styles.demoBtn}
-          >
-            🌸 Iniciar sesión como Hana Yamamoto (Cuenta Demo)
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={isSubmitting}
+              style={styles.demoBtn}
+            >
+              🌸 Iniciar como Hana Yamamoto (Viajero Estándar)
+            </button>
+            <button
+              type="button"
+              onClick={handleAdminDemoLogin}
+              disabled={isSubmitting}
+              style={{
+                ...styles.demoBtn,
+                backgroundColor: "#F8FAFC",
+                color: "var(--color-aomori-blue)",
+                borderColor: "#CBD5E1",
+              }}
+            >
+              ⚙️ Iniciar como Kenji Sato (Administrador de Packs)
+            </button>
+          </div>
         </div>
       </div>
     </div>,
