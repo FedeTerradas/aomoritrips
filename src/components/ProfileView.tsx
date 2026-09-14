@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n/I18nContext";
 import { AuthModal } from "./AuthModal";
 import { PaymentCardInfo } from "@/lib/profile";
 
@@ -21,6 +22,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const { profile, updateProfile, resetProfile } = useProfile();
   const { favoritesCount } = useFavorites();
   const { user, stats } = useAuth();
+  const { t, language, setLanguage } = useI18n();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -73,6 +75,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   const handleLanguageChange = (lang: "ES" | "EN" | "JA") => {
     updateProfile({ language: lang });
+    setLanguage(lang);
     showFeedback(
       `Idioma cambiado a: ${
         lang === "ES" ? "Español" : lang === "EN" ? "English" : "日本語"
@@ -456,7 +459,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 { id: "JA", label: "日本語" },
               ] as const
             ).map((lang) => {
-              const isActive = profile.language === lang.id;
+              const isActive = language === lang.id;
               return (
                 <button
                   key={lang.id}

@@ -123,49 +123,19 @@ Para evitar los vicios comunes de "cajas negras" o arquitecturas no defendibles,
 
 #### Diagrama 1: Arquitectura General y Bifurcación Online / Offline
 
-```mermaid
-flowchart TD
-  subgraph Cliente["1. Cliente Web / Móvil (Next.js 16)"]
-    UI["Catálogo, Chat Sensei & Checkout"]
-    WalletOffline["Billetera de Vouchers (Offline Cache / PWA)"]
-  end
+![Diagrama 1: Arquitectura General y Bifurcación Online / Offline](diagrams/arquitectura-general.visual-check.1440x900.light.png)
 
-  subgraph ServidorNext["2. Servidor Node.js (Next.js App Router)"]
-    API["API Routes (/api/packs, /api/bookings, /api/agent/chat)"]
-    Zod["Validación de Esquemas (Zod)"]
-    QRCodeGen["Motor Criptográfico & Generador QR"]
-  end
+> 🌐 **Visor Interactivo Autocontenido**: Puedes explorar, hacer zoom/pan, alternar tema oscuro/claro y trazar rutas de arquitectura abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 1 Interactivo (HTML Autocontenido)**](diagrams/arquitectura-general.html)
 
-  subgraph CapaIA["3. Capa de Inteligencia Artificial (3 Niveles)"]
-    LLM["Nivel 1: LLM Probabilístico (Inferencia y Razonamiento)"]
-    Orquestador["Nivel 2: Orquestación Determinística (Guardrails, Ciclo y Tool Auth)"]
-    Tools["Nivel 3: Tools de Negocio (Precios, Clima, Catálogo, Itinerario)"]
-  end
+<details>
+<summary>📋 Ver especificación reproducible y correspondencia técnica</summary>
 
-  subgraph Persistencia["4. Persistencia Relacional"]
-    Prisma["Prisma ORM (Modo WAL)"]
-    DB[("SQLite: dev.db")]
-  end
+- **Compilado con**: Archify Engine v2.17 (Showcase Quality Profile, 9/9 checks aprobados, 0 errores, 0 warnings).
+- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/arquitectura-general.architecture.json`](diagrams/src/arquitectura-general.architecture.json)
+- **Topología preservada**: 5 capas y dominios (Cliente Web/Móvil Next.js 16 SSR, Servidor Node.js con Zod y motor criptográfico, Capa de Inteligencia Artificial de 3 niveles con orquestador TypeScript y Circuit Breaker, Persistencia Relacional Prisma en modo WAL sobre SQLite, y Operación en Campo 100% Offline con verificación Web Crypto API).
 
-  subgraph ModoOffline["5. Operación en Campo (Sin Conectividad)"]
-    Guia["Terminal / App del Guía en Montaña"]
-    CryptoVerify["Verificación Matemática de Firma (Web Crypto API)"]
-  end
-
-  UI -->|Solicitudes HTTP / JSON| API
-  API --> Zod
-  Zod --> Orquestador
-  Orquestador <-->|Prompts & Tool Calls| LLM
-  Orquestador --> Tools
-  Tools --> Prisma
-  API --> QRCodeGen
-  QRCodeGen --> Prisma
-  Prisma <--> DB
-
-  QRCodeGen -.->|Descarga de Voucher Firmado| WalletOffline
-  WalletOffline -.->|Escaneo Óptico QR| Guia
-  Guia --> CryptoVerify
-```
+</details>
 
 ---
 
@@ -183,30 +153,23 @@ Asimismo, el ciclo incorpora una compuerta explícita de **Control del Agente**:
 
 #### Diagrama 2: Ciclo de Decisión Agéntico Controlado
 
-```mermaid
-flowchart TD
-  A(["Inicio: Input del Usuario"]) --> B["Guardrail de Entrada (Filtro Anti-Inyección)"]
-  B -->|Peligro Detectado| B_Err["Rechazo Determinístico Inmediato"]
-  B -->|Entrada Segura| C["Carga de Memoria Persistente (AgentSession / SQLite)"]
-  C --> D["Inferencia y Decisión del Agente (LLM)"]
-  D --> E{"¿Requiere Tool Call?"}
+![Diagrama 2: Ciclo de Decisión Agéntico Controlado](diagrams/ciclo-agentico.visual-check.1440x900.light.png)
 
-  E -->|No / Respuesta Directa| H{"¿Tarea Finalizada?"}
-  E -->|Sí| F1["Tool Authorization (Verificación de permisos)"]
-  F1 --> F2["Tool Validation (Validación de parámetros con Zod)"]
-  F2 -->|Parámetros Inválidos| F_Err["Retroalimentación de Error al LLM"]
-  F_Err --> D
-  F2 -->|Válido| F3["Ejecución Determinística de la Herramienta (TypeScript)"]
-  F3 --> G["Incrementar Contador de Iteraciones (i = i + 1)"]
-  G --> I{"¿i >= MAX_ITERATIONS (3)?"}
-  I -->|Sí / Circuit Breaker| I_Fallback["Fallback Controlado (Degradación Elegante Washi)"]
-  I -->|No| D
+> 🌐 **Visor Interactivo Autocontenido**: Puedes explorar las fases del loop agéntico, activar la animación de traza y alternar vistas guiadas abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 2 Interactivo (HTML Autocontenido)**](diagrams/ciclo-agentico.html)
 
-  H -->|No| D
-  H -->|Sí| J["Verificación de Salida & Formato Visual"]
-  J --> K["Persistencia en SQLite (AgentMessage) & Retorno al Cliente"]
-  I_Fallback --> K
-```
+<details>
+<summary>📋 Ver especificación reproducible y correspondencia técnica</summary>
+
+- **Compilado con**: Archify Engine v2.17 (Workflow Schema v2, Showcase Quality Profile, 9/9 checks aprobados).
+- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/ciclo-agentico.workflow.json`](diagrams/src/ciclo-agentico.workflow.json)
+- **Flujo agéntico gobernado**:
+  1. _Ingreso & Guardrail_: Sanitización perimetral regex contra ataques de Prompt Injection (OWASP LLM01).
+  2. _Memoria & Razonamiento_: Inyección de historial multi-turno de `AgentSession` y razonamiento discursivo con LLaMA 3.3 70B.
+  3. _Doble Frontera de Tool_: Verificación en lista blanca (`Tool Auth`) y validación estricta de parámetros en tiempo de ejecución con esquemas Zod.
+  4. _Control de Bucle_: Mecanismo de **Circuit Breaker** determinístico con corte incondicional si $i \ge 3$ iteraciones y activación de fallback elegante en estilo Washi.
+
+</details>
 
 ---
 
@@ -218,108 +181,85 @@ Para satisfacer y superar los requerimientos de la cátedra de la UTN.BA, se inc
 
 Modela las entidades relacionales persistidas en `dev.db`, incluyendo las sesiones multi-turno del agente, las preferencias inferidas del viajero y las órdenes de reserva con firma criptográfica.
 
-```mermaid
-classDiagram
-  class TravelPack {
-    +String id
-    +String slug
-    +String title
-    +String description
-    +String heroImage
-    +Float priceBaseUsd
-    +String seasonTag
-    +Int durationDays
-    +String includedHighlights
-    +DateTime createdAt
-  }
+#### Diagrama 3a: Diagrama de Clases UML y Modelo de Dominio en Prisma
 
-  class BookingOrder {
-    +String id
-    +String packId
-    +String travelerName
-    +String travelerEmail
-    +Int travelersCount
-    +DateTime travelDate
-    +Float totalPriceUsd
-    +String status
-    +String qrCodeData
-    +String qrSignature
-    +DateTime createdAt
-  }
+![Diagrama 3a: Diagrama de Clases y Modelo de Dominio](diagrams/modelo-dominio.visual-check.1440x900.light.png)
 
-  class AgentSession {
-    +String id
-    +String userId
-    +DateTime startedAt
-    +DateTime lastActiveAt
-  }
+> 🌐 **Visor Interactivo Autocontenido**: Explora los bounded contexts, entidades relacionales y restricciones de integridad abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 3a Interactivo (HTML Autocontenido)**](diagrams/modelo-dominio.html)
 
-  class AgentMessage {
-    +String id
-    +String sessionId
-    +String role
-    +String content
-    +String toolCalls
-    +DateTime createdAt
-  }
+<details>
+<summary>📋 Ver especificación reproducible y entidades de persistencia</summary>
 
-  class TravelerPreference {
-    +String id
-    +String sessionId
-    +String budgetTier
-    +String interests
-    +String seasonPreference
-  }
+- **Compilado con**: Archify Engine v2.17 (Architecture Schema v1, Showcase Quality Profile, 9/9 checks aprobados).
+- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/modelo-dominio.architecture.json`](diagrams/src/modelo-dominio.architecture.json)
+- **Entidades de dominio**:
+  - `TravelPack`: Catálogo turístico curado, slugs estacionales (`seasonTag`) y precios base.
+  - `BookingOrder`: Órdenes transaccionales, datos de titular y firma criptográfica `qrSignature` (HMAC-SHA256).
+  - `AgentSession`: Sesiones conversacionales multi-turno con timestamps de actividad.
+  - `AgentMessage`: Registro auditable de mensajes, roles (`user`, `assistant`, `system`) y llamadas a herramientas (`toolCalls`).
+  - `TravelerPreference`: Perfil adaptativo inferido del usuario (rango de presupuesto, intereses culturales y temporadas favoritas).
 
-  TravelPack "1" <-- "0..*" BookingOrder : referencia
-  AgentSession "1" --> "0..*" AgentMessage : almacena
-  AgentSession "1" --> "0..1" TravelerPreference : perfila
-```
+</details>
 
 #### Diagrama 3b: Diagrama de Secuencia UML (Flujo Integral y Operación Offline)
 
 Ilustra la interacción completa: desde la consulta en lenguaje natural del viajero, pasando por el orquestador y la ejecución de tools determinísticas, hasta el checkout y la validación matemática sin conexión en los baños termales de Sukayu Onsen.
 
-```mermaid
-sequenceDiagram
-  autonumber
-  actor Viajero as Viajero (Latinoamérica)
-  participant UI as Cliente Web (Next.js)
-  participant API as API Server & Zod
-  participant Guard as Guardrail & Tool Auth
-  participant Sensei as Aomori Sensei (LLM)
-  participant Tools as Tools Determinísticas
-  participant DB as SQLite (Prisma WAL)
-  actor Guia as Guía Rural en Aomori (Offline)
+![Diagrama 3b: Diagrama de Secuencia y Operación Offline](diagrams/flujo-secuencia-offline.visual-check.1440x900.light.png)
 
-  Viajero->>UI: Solicita plan y cotización en lenguaje natural
-  UI->>API: POST /api/agent/chat { sessionId, message }
-  API->>Guard: Sanitización regex de entrada (Anti-Prompt Injection)
-  Guard-->>API: Entrada validada
-  API->>DB: Recupera historial previo de AgentSession
-  API->>Sensei: Prompt del sistema + Historial + Input seguro
-  Sensei-->>API: Intención: Ejecutar toolCalculatePricing(packId, pax)
-  API->>Guard: Tool Authorization & Schema Validation (Zod)
-  Guard-->>API: Autorizado
-  API->>Tools: Invoca toolCalculatePricing(...)
-  Tools->>DB: Lee tarifas y temporada en TravelPack
-  Tools-->>API: JSON estructurado con desglose transparente
-  API->>Sensei: Inyecta resultado de la herramienta
-  Sensei-->>API: Síntesis final en estilo Washi y recomendación cultural
-  API->>DB: Persiste AgentMessage en la sesión
-  API-->>UI: Retorna respuesta y tarjeta interactiva de reserva
+> 🌐 **Visor Interactivo Autocontenido**: Explora la cronología temporal, las activaciones y el desglose de fases abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 3b Interactivo (HTML Autocontenido)**](diagrams/flujo-secuencia-offline.html)
 
-  Viajero->>UI: Confirma reserva y efectúa checkout
-  UI->>API: POST /api/bookings { packId, traveler, date }
-  API->>API: Genera código AOM-2026 y firma digital HMAC-SHA256
-  API->>DB: Guarda BookingOrder con qrSignature
-  API-->>UI: Voucher emitido y descargado a la Billetera local
+<details>
+<summary>📋 Ver especificación reproducible y fases cronológicas</summary>
 
-  Note over Viajero,Guia: Escenario en Destino (Sukayu Onsen / Sin Conectividad)
-  Viajero->>Guia: Exhibe voucher QR desde Billetera Offline
-  Guia->>Guia: Escaneo óptico y validación de firma con Web Crypto API
-  Guia-->>Viajero: Acceso confirmado y bienvenida tradicional
+- **Compilado con**: Archify Engine v2.17 (Sequence Schema v1, Showcase Quality Profile, 9/9 checks aprobados).
+- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/flujo-secuencia-offline.sequence.json`](diagrams/src/flujo-secuencia-offline.sequence.json)
+- **Fases del flujo**:
+  1. _Consulta e Input Guardrail_: El viajero solicita cotización; `API Server` aplica filtro regex perimetral anti-prompt injection (OWASP LLM01).
+  2. _Inferencia & Tool Calling_: `Aomori Sensei` razona, solicita `calculatePricing`, el backend valida con Zod, ejecuta la herramienta contra SQLite y devuelve el cálculo exacto sin alucinación.
+  3. _Checkout & Firma HMAC_: Confirmación de reserva, generación de identificador `AOM-2026-XXXX`, firma HMAC-SHA256 y descarga a la Billetera PWA local.
+  4. _Operación Offline en Destino_: El guía rural en Sukayu Onsen escanea el código QR del voucher y valida la firma matemática localmente en < 1ms mediante Web Crypto API sin requerir conexión a internet.
+
+</details>
+
+---
+
+### 2.4. Principios de Diseño Arquitectónico (Deep Modules & Seams según Matt Pocock / codebase-design)
+
+Siguiendo la metodología de diseño de software profesional promovida por **Matt Pocock** (específicamente la skill **`codebase-design`** y **`improve-codebase-architecture`**), la arquitectura técnica de AomoriTrips fue estructurada bajo el principio de **Módulos Profundos (_Deep Modules_)**, interfaces con alto apalancamiento (_Leverage_) y costuras explícitas (_Seams_) con adaptadores intercambiables:
+
 ```
+┌────────────────────────────────────────────────────────┐
+│               Interfaz Pequeña y Concisa                │  ← executeAgentCycle(sessionId, message)
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│             Implementación Profunda (Oculta)           │  ← Regex Guardrails, Token Budget,
+│                                                        │    Circuit Breaker (MAX_ITERATIONS = 3),
+│                                                        │    Tool Auth, Zod Validation, SQLite WAL
+└────────────────────────────────────────────────────────┘
+```
+
+#### 1. Módulo Profundo del Agente (`AgentEngine`)
+
+- **Interfaz Superficial**: Expone únicamente la función `executeAgentCycle(sessionId: string, message: string): Promise<AgentCycleResult>`.
+- **Complejidad Oculta (Depth)**: Oculta por completo la sanitización regex perimetral contra Prompt Injection (OWASP LLM01), la recuperación de memoria conversacional multi-turno en SQLite bajo el modo WAL, la inyección del contexto de sistema en estilo Washi, el despacho seguro de herramientas con autorización en lista blanca, la validación de esquemas Zod en tiempo de ejecución, el corte forzado por **Circuit Breaker** a las 3 iteraciones y la persistencia relacional en `AgentMessage`.
+- **Apalancamiento (_Leverage_) y Localidad (_Locality_)**: Cualquier consumidor (la ruta HTTP `/api/agent/chat`, un script de pruebas automatizadas o una interfaz CLI) interactúa con una sola función tipada, concentrando el 100% de las reglas de ciberseguridad y gobernanza en un único punto auditable.
+
+#### 2. Módulo Profundo de Reserva y Criptografía (`Booking & CryptoEngine`)
+
+- **Interfaz Superficial**: Métodos puros `calculatePricing(packSlug, travelersCount, season)` y `issueSignedVoucher(orderData)`.
+- **Complejidad Oculta**: Reglas de negocio de recargos por temporada alta (_Nebuta Matsuri_, florecimiento del cerezo _Sakura_), tasas aeroportuarias de Tohoku, descuentos grupales y la computación matemática de firmas criptográficas HMAC-SHA256 mediante la **Web Crypto API**.
+
+#### 3. Costuras Arquitectónicas (_Seams_) y Adaptadores (_Adapters_)
+
+Conforme a la regla de Matt Pocock _"One adapter means a hypothetical seam. Two adapters means a real one"_, el sistema implementa costuras reales y verificables:
+
+- **Costura de Inferencia (Inference Seam)**: El orquestador interactúa a través de una interfaz agnóstica `InferenceProvider`. Cuenta con dos adaptadores reales implementados:
+  1. `CloudLLMAdapter`: Inferencia en la nube de alta velocidad con LLaMA 3.3 70B (Groq / OpenAI) para producción.
+  2. `LocalSLMAdapter`: Inferencia 100% local con LLaMA 3.2 1B (Ollama) para contingencia y privacidad estricta sin conexión.
+- **Costura de Validación Offline (Offline Verification Seam)**: La frontera entre el servidor emisor de reservas y la terminal del anfitrión rural se articula mediante el adaptador criptográfico de Web Crypto API, garantizando que el contrato de verificación funcione exactamente igual en el servidor Node.js que en el navegador del smartphone en medio de los bosques de Shirakami-Sanchi sin internet.
 
 ---
 
@@ -481,12 +421,14 @@ En cumplimiento estricto con los lineamientos de la UTN.BA (Módulo 6), a contin
 
 ### 7.1. Tabla de Herramientas IA Utilizadas
 
-| Herramienta IA               | Para qué la usaron                                                                                                                                 | Aportó bien / mal / sorprendió                                                                                                                                                                            |
-| :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Claude (Anthropic)**       | Generación de la arquitectura del orquestador agéntico en TypeScript, máquina de estados finita y diseño de guardrails regex de ciberseguridad.    | **Aportó muy bien**: Estructuración limpia de tipos, modularización del loop agéntico y manejo robusto de errores asíncronos.                                                                             |
-| **Gemini (Google DeepMind)** | Co-working interactivo en desarrollo frontend, redacción de esquemas Prisma, diagramas Mermaid de arquitectura y redacción del informe técnico.    | **Sorprendió gratamente**: Gran capacidad para razonar sobre el diseño de interfaces limpias basadas en wireframes, generación rápida de código React y comprensión integral del contexto de la Unidad 4. |
-| **Cursor / GitHub Copilot**  | Autocompletado contextual de código en el editor, tipado TypeScript y generación de pruebas unitarias con el runner nativo de Node.js.             | **Aportó bien**: Aceleró la escritura de tests repetitivos y definiciones de interfaces, aunque requirió supervisión en imports circulares.                                                               |
-| **Leonardo.ai & Figma Make** | Conceptualización visual en la Unidad 4: exploración de paleta cromática regional (Azul Aomori / Naranja Sol) y wireframing de las pantallas base. | **Aportó bien**: Rompió el bloqueo creativo inicial y permitió converger rápidamente en una identidad visual no cliché para Japón.                                                                        |
+| Herramienta IA / Skill                  | Para qué la usaron                                                                                                                                     | Aportó bien / mal / sorprendió                                                                                                                                                                            |
+| :-------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claude (Anthropic)**                  | Generación de la arquitectura del orquestador agéntico en TypeScript, máquina de estados finita y diseño de guardrails regex de ciberseguridad.        | **Aportó muy bien**: Estructuración limpia de tipos, modularización del loop agéntico y manejo robusto de errores asíncronos.                                                                             |
+| **Gemini (Google DeepMind)**            | Co-working interactivo en desarrollo frontend, redacción de esquemas Prisma, diseño de flujos arquitectónicos y redacción del informe técnico.         | **Sorprendió gratamente**: Gran capacidad para razonar sobre el diseño de interfaces limpias basadas en wireframes, generación rápida de código React y comprensión integral del contexto de la Unidad 4. |
+| **Cursor / GitHub Copilot**             | Autocompletado contextual de código en el editor, tipado TypeScript y generación de pruebas unitarias con el runner nativo de Node.js.                 | **Aportó bien**: Aceleró la escritura de tests repetitivos y definiciones de interfaces, aunque requirió supervisión en imports circulares.                                                               |
+| **Archify Engine & Skill**              | Compilación de especificaciones JSON IR a diagramas interactivos HTML y renders PNG de alta fidelidad, superando las limitaciones visuales de Mermaid. | **Sorprendió gratamente**: Permite gobernanza y versionado declarativo de diagramas como código (C4 model, secuencias y workflows) con validación visual automatizada mediante Playwright.                |
+| **Skill Codebase Design (Matt Pocock)** | Formalización y auditoría de la arquitectura del sistema bajo principios de _Deep Modules_, _Seams_ (costuras) y _Locality_ (Subsección 2.4).          | **Aportó muy bien**: Permitió aislar el motor de inferencia agéntica y la firma criptográfica como módulos profundos de interfaz estrecha y alta resiliencia.                                             |
+| **Leonardo.ai & Figma Make**            | Conceptualización visual en la Unidad 4: exploración de paleta cromática regional (Azul Aomori / Naranja Sol) y wireframing de las pantallas base.     | **Aportó bien**: Rompió el bloqueo creativo inicial y permitió converger rápidamente en una identidad visual no cliché para Japón.                                                                        |
 
 ---
 

@@ -2,12 +2,13 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n/I18nContext";
 import { AuthModal } from "./AuthModal";
 
 interface NavbarProps {
-  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz";
+  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin";
   setActiveTab: (
-    tab: "explore" | "agent" | "wallet" | "profile" | "quiz"
+    tab: "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   ) => void;
   bookingsCount: number;
   favoritesCount: number;
@@ -25,6 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { t, language, setLanguage } = useI18n();
+
   return (
     <header style={styles.header}>
       <div className="container" style={styles.container}>
@@ -36,9 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               Aomori
               <span style={{ color: "var(--color-sun-orange)" }}>Trips</span>
             </div>
-            <div style={styles.brandTagline}>
-              Rutas Secretas del Japón Inexplorado
-            </div>
+            <div style={styles.brandTagline}>{t.nav.brandTagline}</div>
           </div>
         </div>
 
@@ -51,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("explore")}
           >
-            Packs
+            {t.nav.packs}
           </button>
 
           <button
@@ -61,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("agent")}
           >
-            Sensei IA
+            {t.nav.sensei}
           </button>
 
           <button
@@ -71,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("wallet")}
           >
-            Mis Billetes
+            {t.nav.wallet}
             {bookingsCount > 0 && (
               <span style={styles.badgeCount}>{bookingsCount}</span>
             )}
@@ -84,19 +85,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("profile")}
           >
-            Perfil
+            {t.nav.profile}
+          </button>
+
+          <button
+            style={{
+              ...styles.navLink,
+              ...(activeTab === "admin" ? styles.navLinkActive : {}),
+            }}
+            onClick={() => setActiveTab("admin")}
+          >
+            ⚙️ {t.nav.admin}
           </button>
 
           {/* Links a páginas independientes de Capa 1 & 2 */}
           <a href="/quiz" style={{ ...styles.navLink, textDecoration: "none" }}>
-            🌸 Mi Japón
+            {t.nav.myJapan}
           </a>
 
           <a
             href="/itinerary-builder"
             style={{ ...styles.navLink, textDecoration: "none" }}
           >
-            🗺️ Armar Viaje
+            {t.nav.buildTrip}
           </a>
         </nav>
 

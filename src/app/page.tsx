@@ -14,10 +14,11 @@ import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { FaqSection } from "@/components/FaqSection";
 import { useFavorites } from "@/hooks/useFavorites";
 import { CharacterDisplay } from "@/components/CharacterDisplay";
+import { AdminPacksView } from "@/components/AdminPacksView";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<
-    "explore" | "agent" | "wallet" | "profile" | "quiz"
+    "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   >("explore");
   const [packs, setPacks] = useState<TravelPackData[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("all");
@@ -276,6 +277,17 @@ export default function HomePage() {
           onGoToWallet={() => setActiveTab("wallet")}
           onGoToExploreFavorites={handleGoToFavorites}
           bookingsCount={bookingsCount}
+        />
+      )}
+
+      {/* VISTA 5: Panel de Administración de Paquetes */}
+      {activeTab === "admin" && (
+        <AdminPacksView
+          onBackToExplore={() => setActiveTab("explore")}
+          onPackCreated={() => {
+            fetchPacks();
+            setActiveTab("explore");
+          }}
         />
       )}
 

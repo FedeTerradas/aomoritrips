@@ -3,9 +3,9 @@
 import React from "react";
 
 interface BottomNavProps {
-  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz";
+  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin";
   setActiveTab: (
-    tab: "explore" | "agent" | "wallet" | "profile" | "quiz"
+    tab: "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   ) => void;
   bookingsCount: number;
   onOpenAuditModal: () => void;

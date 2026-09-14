@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { I18nProvider } from "@/i18n/I18nContext";
 
 export const metadata: Metadata = {
   title: "AomoriTrips | Viajes a Japón con Inteligencia Artificial Agéntica",
@@ -28,7 +29,9 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#1C4F7C" />
       </head>
-      <body>{children}</body>
+      <body>
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }
