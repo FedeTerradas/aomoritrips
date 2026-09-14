@@ -174,27 +174,31 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
-  // Estadísticas dinámicas reales (priorizan la cuenta activa)
+  // Estadísticas dinámicas reales (priorizan la cuenta activa o reservas locales)
   const displayName = user ? user.name : profile.name;
   const displayAvatar = user
     ? user.name.charAt(0).toUpperCase()
     : profile.avatarKanji;
-  const displayTrips = user
-    ? stats.tripsCount
+  const displayTrips = user ? stats.tripsCount : bookingsCount;
+  const displayCountries = user
+    ? stats.countriesCount
     : bookingsCount > 0
-      ? bookingsCount
-      : profile.tripsCount;
-  const displayCountries = user ? stats.countriesCount : profile.countriesCount;
+      ? 1
+      : 0;
   const displayKilometers = user
     ? stats.kilometersCount
-    : profile.kilometersCount;
+    : bookingsCount > 0
+      ? `${(bookingsCount * 1.4).toFixed(1)}k km`
+      : "0 km";
   const displayLevel = user
     ? stats.tripsCount === 0
       ? "🌱 Nuevo Viajero · Nv. 1"
       : stats.tripsCount <= 2
         ? "🌸 Viajero Sakura · Nv. 2"
         : "🏮 Explorador Nebuta · Nv. 3"
-    : profile.statusLevel;
+    : bookingsCount === 0
+      ? "🌱 Modo Explorador Invitado"
+      : "🌸 Viajero Sakura · Nv. 2";
 
   return (
     <div style={styles.viewWrapper} className="animate-fade-in">

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AuthModalProps {
@@ -14,6 +15,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
   const [tab, setTab] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,7 +25,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const { login, register } = useAuth();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isOpen || !isMounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Header con tabs */}
@@ -176,30 +182,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: {
     position: "fixed",
-    inset: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100vw",
+    height: "100vh",
     backgroundColor: "rgba(15, 23, 42, 0.75)",
-    backdropFilter: "blur(4px)",
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1000,
-    padding: "20px",
+    zIndex: 99999,
+    padding: "24px 16px",
+    overflowY: "auto",
+    boxSizing: "border-box",
   },
   modal: {
     backgroundColor: "#FFFFFF",
     borderRadius: "16px",
     width: "100%",
     maxWidth: "440px",
+    maxHeight: "calc(100vh - 48px)",
+    overflowY: "auto",
     padding: "28px",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
     border: "1px solid #E2E8F0",
+    margin: "auto",
+    boxSizing: "border-box",
   },
   header: {
     display: "flex",
