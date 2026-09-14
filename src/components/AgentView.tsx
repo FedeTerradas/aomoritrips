@@ -25,7 +25,7 @@ export const AgentView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showTechnicalInspector, setShowTechnicalInspector] = useState(false);
   const [selectedSteps, setSelectedSteps] = useState<AgentDecisionStep[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let token = localStorage.getItem("aomori_session_token");
@@ -50,7 +50,12 @@ export const AgentView: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages, isLoading]);
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -200,7 +205,7 @@ export const AgentView: React.FC = () => {
           </div>
 
           {/* Lista de Mensajes */}
-          <div style={styles.messagesList}>
+          <div ref={messagesContainerRef} style={styles.messagesList}>
             {messages.map((m) => {
               const isUser = m.role === "user";
               return (
@@ -277,7 +282,6 @@ export const AgentView: React.FC = () => {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Campo de Entrada */}

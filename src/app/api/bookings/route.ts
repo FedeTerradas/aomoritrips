@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import QRCode from "qrcode";
+import { getAuthSession } from "@/lib/auth/session";
 
 const CreateBookingSchema = z.object({
   packId: z.string().min(1),
@@ -95,9 +96,20 @@ export async function POST(request: Request) {
       },
     });
 
+    // Asociar con usuario registrado si existe sesión o coincidencia de correo
+    const session = await getAuthSession();
+    let resolvedUserId = session?.userId;
+    if (!resolvedUserId && travelerEmail) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: travelerEmail },
+      });
+      if (existingUser) resolvedUserId = existingUser.id;
+    }
+
     const newBooking = await prisma.bookingOrder.create({
       data: {
         bookingCode,
+        userId: resolvedUserId,
         packId,
         packTitle,
         travelerName,

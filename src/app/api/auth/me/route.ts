@@ -27,9 +27,6 @@ export async function GET() {
             paymentMethods: true,
           },
         },
-        bookings: {
-          where: { status: { not: "CANCELLED" } },
-        },
       },
     });
 
@@ -46,7 +43,20 @@ export async function GET() {
       });
     }
 
-    const tripsCount = user.bookings.length;
+    // Vincular retroactivamente reservas con el mismo correo
+    await prisma.bookingOrder.updateMany({
+      where: { travelerEmail: user.email, userId: null },
+      data: { userId: user.id },
+    });
+
+    const bookings = await prisma.bookingOrder.findMany({
+      where: {
+        OR: [{ userId: user.id }, { travelerEmail: user.email }],
+        status: { not: "CANCELLED" },
+      },
+    });
+
+    const tripsCount = bookings.length;
     const countriesCount = tripsCount > 0 ? 1 : 0; // Aomori, Japón
     const kmTotal = tripsCount * 1430; // Trayecto Tokio - Aomori ida y vuelta + circuito regional
     const kilometersCount =

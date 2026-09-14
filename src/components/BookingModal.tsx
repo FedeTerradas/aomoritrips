@@ -5,11 +5,12 @@ import { TravelPackData } from "./PackCard";
 import { toolCalculatePricing } from "@/lib/agent/tools";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BookingModalProps {
   pack: TravelPackData | null;
   onClose: () => void;
-  onBookingSuccess: (booking: unknown) => void;
+  onBookingSuccess: (bookingData: unknown) => void;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({
@@ -19,6 +20,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { profile } = useProfile();
+  const { user, notifyAuthChange } = useAuth();
   const [travelersCount, setTravelersCount] = useState(2);
   const [travelDate, setTravelDate] = useState("2026-10-15");
   const [travelerName, setTravelerName] = useState("");
@@ -27,10 +29,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (profile?.name && !travelerName) {
+    if (user) {
+      if (!travelerName && user.name) setTravelerName(user.name);
+      if (!travelerEmail && user.email) setTravelerEmail(user.email);
+    } else if (profile?.name && !travelerName) {
       setTravelerName(profile.name);
     }
-  }, [profile]);
+  }, [user, profile]);
 
   if (!pack) return null;
 
@@ -72,6 +77,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         throw new Error(data.error || "No se pudo procesar la reserva.");
       }
 
+      notifyAuthChange();
       onBookingSuccess(data.data);
     } catch (err: unknown) {
       setErrorMessage(

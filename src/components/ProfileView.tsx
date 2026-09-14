@@ -1009,7 +1009,7 @@ const styles: Record<string, React.CSSProperties> = {
   currencyPillActive: {
     backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    borderColor: "var(--color-aomori-blue)",
+    border: "1px solid var(--color-aomori-blue)",
     boxShadow: "0 2px 8px rgba(28, 79, 124, 0.25)",
   },
   securityNotice: {
@@ -1030,13 +1030,12 @@ const styles: Record<string, React.CSSProperties> = {
   securityNoticeText: {
     fontSize: "0.78rem",
     color: "#0369A1",
-    lineHeight: 1.45,
+    lineHeight: 1.5,
   },
   languageRow: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "12px",
-    paddingTop: "6px",
+    gap: "10px",
   },
   langBtn: {
     padding: "14px",
@@ -1053,7 +1052,7 @@ const styles: Record<string, React.CSSProperties> = {
   langBtnActive: {
     backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    borderColor: "var(--color-aomori-blue)",
+    border: "1px solid var(--color-aomori-blue)",
     boxShadow: "0 4px 14px rgba(28, 79, 124, 0.3)",
     transform: "translateY(-1px)",
   },

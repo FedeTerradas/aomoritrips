@@ -64,8 +64,10 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    fetchPacks();
-  }, [selectedSeason, searchQuery]);
+    if (activeTab === "explore") {
+      fetchPacks();
+    }
+  }, [activeTab, selectedSeason, searchQuery]);
 
   useEffect(() => {
     fetchBookingsCount();

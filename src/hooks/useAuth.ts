@@ -135,5 +135,7 @@ export function useAuth() {
     register,
     logout,
     refetch: fetchCurrentUser,
+    refreshSession: fetchCurrentUser,
+    notifyAuthChange,
   };
 }
