@@ -1,6 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "./AuthModal";
 
 interface NavbarProps {
   activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz";
@@ -21,6 +23,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoToFavorites,
   onOpenAuditModal,
 }) => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user, logout } = useAuth();
   return (
     <header style={styles.header}>
       <div className="container" style={styles.container}>
@@ -110,6 +114,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {/* Botón de Usuario o Login */}
+          {user ? (
+            <div style={styles.userChip}>
+              <button
+                style={styles.userProfileBtn}
+                onClick={() => setActiveTab("profile")}
+                title={`Perfil de ${user.name}`}
+              >
+                <span style={styles.userAvatarBadge}>
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span style={styles.userNameText}>
+                  {user.name.split(" ")[0]}
+                </span>
+              </button>
+              <button
+                style={styles.logoutBtn}
+                onClick={logout}
+                title="Cerrar sesión"
+              >
+                ↪
+              </button>
+            </div>
+          ) : (
+            <button
+              style={styles.loginBtn}
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Ingresar
+            </button>
+          )}
+
           <button
             style={styles.auditButton}
             className="desktop-audit-btn"
@@ -130,6 +166,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </header>
   );
 };
@@ -282,5 +323,65 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: "#34D399",
     boxShadow: "0 0 8px #34D399",
     flexShrink: 0,
+  },
+  loginBtn: {
+    backgroundColor: "var(--color-sun-orange)",
+    color: "#FFFFFF",
+    border: "none",
+    padding: "6px 16px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(249, 115, 22, 0.3)",
+    transition: "transform 0.15s ease",
+  },
+  userChip: {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    borderRadius: "var(--radius-pill)",
+    padding: "3px 4px 3px 6px",
+    gap: "6px",
+  },
+  userProfileBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    background: "none",
+    border: "none",
+    color: "#FFFFFF",
+    cursor: "pointer",
+    padding: 0,
+  },
+  userAvatarBadge: {
+    width: "24px",
+    height: "24px",
+    borderRadius: "50%",
+    backgroundColor: "var(--color-sun-orange)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    color: "#FFFFFF",
+  },
+  userNameText: {
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    maxWidth: "80px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  logoutBtn: {
+    background: "none",
+    border: "none",
+    color: "rgba(255, 255, 255, 0.7)",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    padding: "2px 4px",
+    borderRadius: "4px",
   },
 };

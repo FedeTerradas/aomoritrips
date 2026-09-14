@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "./AuthModal";
 import { PaymentCardInfo } from "@/lib/profile";
 
 interface ProfileViewProps {
@@ -18,7 +20,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 }) => {
   const { profile, updateProfile, resetProfile } = useProfile();
   const { favoritesCount } = useFavorites();
+  const { user, stats } = useAuth();
 
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile.name);
   const [saveFeedback, setSaveFeedback] = useState("");
@@ -37,11 +41,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     setTimeout(() => setSaveFeedback(""), 3500);
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (nameInput.trim()) {
-      updateProfile({ name: nameInput.trim() });
+      const trimmed = nameInput.trim();
+      updateProfile({ name: trimmed });
       setIsEditingName(false);
       showFeedback("Nombre actualizado exitosamente");
+
+      try {
+        const sessionToken =
+          localStorage.getItem("aomori_session_token") ||
+          "sess_default_traveler";
+        await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionToken,
+            fullName: trimmed,
+          }),
+        });
+      } catch (err) {
+        console.warn("No se pudo sincronizar nombre con el servidor:", err);
+      }
     }
   };
 
@@ -59,17 +80,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     );
   };
 
-  const handlePassportEdit = (
+  const handlePassportEdit = async (
     field: "number" | "expiry" | "nationality",
     val: string
   ) => {
+    const updatedPassport = {
+      ...profile.passport,
+      [field]: val,
+    };
     updateProfile({
-      passport: {
-        ...profile.passport,
-        [field]: val,
-      },
+      passport: updatedPassport,
     });
     showFeedback("Datos de pasaporte actualizados");
+
+    try {
+      const sessionToken =
+        localStorage.getItem("aomori_session_token") || "sess_default_traveler";
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionToken,
+          passportNumber: updatedPassport.number,
+          passportExpiry: updatedPassport.expiry,
+          nationality: updatedPassport.nationality,
+        }),
+      });
+    } catch (err) {
+      console.warn("No se pudo sincronizar pasaporte con el servidor:", err);
+    }
   };
 
   const handleLinkCard = async (e: React.FormEvent) => {
@@ -132,7 +171,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
-  const totalTrips = bookingsCount > 0 ? bookingsCount : profile.tripsCount;
+  // Estadísticas dinámicas reales (priorizan la cuenta activa)
+  const displayName = user ? user.name : profile.name;
+  const displayAvatar = user
+    ? user.name.charAt(0).toUpperCase()
+    : profile.avatarKanji;
+  const displayTrips = user
+    ? stats.tripsCount
+    : bookingsCount > 0
+      ? bookingsCount
+      : profile.tripsCount;
+  const displayCountries = user ? stats.countriesCount : profile.countriesCount;
+  const displayKilometers = user
+    ? stats.kilometersCount
+    : profile.kilometersCount;
+  const displayLevel = user
+    ? stats.tripsCount === 0
+      ? "🌱 Nuevo Viajero · Nv. 1"
+      : stats.tripsCount <= 2
+        ? "🌸 Viajero Sakura · Nv. 2"
+        : "🏮 Explorador Nebuta · Nv. 3"
+    : profile.statusLevel;
 
   return (
     <div style={styles.viewWrapper} className="animate-fade-in">
@@ -140,9 +199,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       <section style={styles.headerSection}>
         <div className="container" style={styles.headerContainer}>
           <div style={styles.userRow}>
-            {/* Avatar Kanji 花 */}
+            {/* Avatar Kanji 花 o Inicial */}
             <div style={styles.avatarCircle} title="Avatar de Viajero">
-              <span style={styles.avatarKanji}>{profile.avatarKanji}</span>
+              <span style={styles.avatarKanji}>{displayAvatar}</span>
             </div>
 
             <div style={styles.userInfo}>
@@ -161,7 +220,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <button
                     style={styles.nameCancelBtn}
                     onClick={() => {
-                      setNameInput(profile.name);
+                      setNameInput(displayName);
                       setIsEditingName(false);
                     }}
                   >
@@ -170,11 +229,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               ) : (
                 <div style={styles.nameDisplayRow}>
-                  <h1 style={styles.userName}>{profile.name}</h1>
+                  <h1 style={styles.userName}>{displayName}</h1>
                   <button
                     style={styles.editIconBtn}
                     onClick={() => {
-                      setNameInput(profile.name);
+                      setNameInput(displayName);
                       setIsEditingName(true);
                     }}
                     title="Editar nombre"
@@ -185,23 +244,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               )}
 
               <div style={styles.badgeRow}>
-                <span style={styles.statusBadge}>{profile.statusLevel}</span>
+                <span style={styles.statusBadge}>{displayLevel}</span>
               </div>
             </div>
           </div>
 
-          {/* 3 Estadísticas del Viajero */}
+          {/* 3 Estadísticas Dinámicas del Viajero */}
           <div style={styles.statsGrid}>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{totalTrips}</div>
+              <div style={styles.statNumber}>{displayTrips}</div>
               <div style={styles.statLabel}>Viajes</div>
             </div>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{profile.countriesCount}</div>
+              <div style={styles.statNumber}>{displayCountries}</div>
               <div style={styles.statLabel}>Países</div>
             </div>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{profile.kilometersCount}</div>
+              <div style={styles.statNumber}>{displayKilometers}</div>
               <div style={styles.statLabel}>km</div>
             </div>
           </div>
@@ -223,6 +282,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* CUERPO CON TARJETAS DE CONFIGURACIÓN */}
       <main className="container" style={styles.contentContainer}>
+        {/* Banner de Invitado si no está autenticado */}
+        {!user && (
+          <div style={styles.authBanner}>
+            <div style={styles.authBannerContent}>
+              <span style={styles.authBannerIcon}>🔐</span>
+              <div>
+                <div style={styles.authBannerTitle}>
+                  Modo Explorador Invitado
+                </div>
+                <div style={styles.authBannerDesc}>
+                  Inicia sesión o crea tu cuenta para vincular tus reservas,
+                  pasaporte y sumar kilómetros reales de viaje a tu perfil.
+                </div>
+              </div>
+            </div>
+            <button
+              style={styles.authBannerBtn}
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Iniciar Sesión / Registro
+            </button>
+          </div>
+        )}
+
         {saveFeedback && (
           <div style={styles.feedbackToast} className="animate-fade-in">
             <span>{saveFeedback}</span>
@@ -538,11 +621,68 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       )}
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
+  authBanner: {
+    backgroundColor: "#EFF6FF",
+    border: "1px solid #BFDBFE",
+    borderRadius: "12px",
+    padding: "16px 20px",
+    marginBottom: "24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "16px",
+    flexWrap: "wrap",
+    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.08)",
+  },
+  authBannerContent: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    flex: 1,
+    minWidth: "260px",
+  },
+  authBannerIcon: {
+    fontSize: "1.8rem",
+    backgroundColor: "#DBEAFE",
+    padding: "8px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authBannerTitle: {
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    color: "#1E40AF",
+    marginBottom: "2px",
+  },
+  authBannerDesc: {
+    fontSize: "0.82rem",
+    color: "#3B82F6",
+    lineHeight: "1.4",
+  },
+  authBannerBtn: {
+    backgroundColor: "#1C4F7C",
+    color: "#FFFFFF",
+    border: "none",
+    padding: "10px 18px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(28, 79, 124, 0.25)",
+    whiteSpace: "nowrap",
+  },
   viewWrapper: {
     minHeight: "100vh",
     backgroundColor: "var(--color-washi-cream)",
