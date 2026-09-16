@@ -68,9 +68,24 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
-  const handleCurrencyChange = (curr: string) => {
+  const handleCurrencyChange = async (curr: string) => {
     updateProfile({ currency: curr });
     showFeedback(`Divisa preferida: ${curr}`);
+
+    try {
+      const sessionToken =
+        localStorage.getItem("aomori_session_token") || "sess_default_traveler";
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionToken,
+          preferredCurrency: curr,
+        }),
+      });
+    } catch (err) {
+      console.warn("No se pudo sincronizar divisa con el servidor:", err);
+    }
   };
 
   const handleLanguageChange = (lang: "ES" | "EN" | "JA") => {
@@ -175,10 +190,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   };
 
   // Estadísticas dinámicas reales (priorizan la cuenta activa o reservas locales)
-  const displayName = user ? user.name : profile.name;
+  const isGuest =
+    !user &&
+    (!profile.name ||
+      profile.name === "Hana Yamamoto" ||
+      profile.name === "Invitado");
+  const displayName = user ? user.name : isGuest ? "Invitado" : profile.name;
   const displayAvatar = user
     ? user.name.charAt(0).toUpperCase()
-    : profile.avatarKanji;
+    : isGuest
+      ? "客"
+      : profile.avatarKanji || "花";
   const displayTrips = user ? stats.tripsCount : bookingsCount;
   const displayCountries = user
     ? stats.countriesCount
@@ -216,7 +238,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <div style={styles.nameEditRow}>
                   <input
                     type="text"
-                    value={nameInput}
+                    placeholder="Invitado"
+                    value={
+                      nameInput === "Hana Yamamoto" ? "Invitado" : nameInput
+                    }
                     onChange={(e) => setNameInput(e.target.value)}
                     style={styles.nameInput}
                     autoFocus

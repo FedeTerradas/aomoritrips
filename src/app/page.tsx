@@ -24,6 +24,8 @@ export default function HomePage() {
   >("explore");
   const [packs, setPacks] = useState<TravelPackData[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("all");
+  const [selectedBudget, setSelectedBudget] = useState<string>("all");
+  const [travelers, setTravelers] = useState<string>("2 adultos");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPack, setSelectedPack] = useState<TravelPackData | null>(null);
   const [bookingsCount, setBookingsCount] = useState<number>(0);
@@ -99,10 +101,24 @@ export default function HomePage() {
     }, 50);
   };
 
-  const displayedPacks =
-    selectedSeason === "favorites"
-      ? packs.filter((p) => favorites.includes(p.id))
-      : packs;
+  // Filtrado multi-dimensional dinámico: Temporada + Presupuesto + Favoritos
+  const displayedPacks = packs.filter((p) => {
+    if (selectedSeason === "favorites") {
+      if (!favorites.includes(p.id)) return false;
+    } else if (selectedSeason !== "all") {
+      if (p.seasonTag !== selectedSeason) return false;
+    }
+
+    if (selectedBudget === "under2500" && p.priceBaseUsd >= 2500) return false;
+    if (
+      selectedBudget === "2500-3000" &&
+      (p.priceBaseUsd < 2500 || p.priceBaseUsd > 3000)
+    )
+      return false;
+    if (selectedBudget === "over3000" && p.priceBaseUsd <= 3000) return false;
+
+    return true;
+  });
 
   return (
     <div style={styles.appWrapper} className="app-main-wrapper">
@@ -124,6 +140,10 @@ export default function HomePage() {
             setSelectedSeason={setSelectedSeason}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            selectedBudget={selectedBudget}
+            setSelectedBudget={setSelectedBudget}
+            travelers={travelers}
+            setTravelers={setTravelers}
             onOpenSensei={() => setActiveTab("agent")}
             favoritesCount={favoritesCount}
           />
@@ -204,6 +224,7 @@ export default function HomePage() {
                       style={styles.resetFiltersBtn}
                       onClick={() => {
                         setSelectedSeason("all");
+                        setSelectedBudget("all");
                         setSearchQuery("");
                       }}
                     >

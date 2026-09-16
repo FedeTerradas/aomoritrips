@@ -6,6 +6,7 @@ import { toolCalculatePricing } from "@/lib/agent/tools";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { formatCurrencyPrice } from "@/lib/currency";
 
 interface BookingModalProps {
   pack: TravelPackData | null;
@@ -199,7 +200,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div style={styles.breakdownBox}>
                 <div style={styles.breakdownRow}>
                   <span>Precio base por persona:</span>
-                  <strong>${quote.pricePerPersonUsd} USD</strong>
+                  <strong>
+                    {
+                      formatCurrencyPrice(
+                        quote.pricePerPersonUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.pricePerPersonUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
+                  </strong>
                 </div>
                 {quote.groupDiscountApplied !== "0%" && (
                   <div style={styles.breakdownRowDiscount}>
@@ -209,16 +223,53 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 )}
                 <div style={styles.breakdownRow}>
                   <span>Subtotal experiencias ({travelersCount} pax):</span>
-                  <span>${quote.subtotalUsd} USD</span>
+                  <span>
+                    {
+                      formatCurrencyPrice(
+                        quote.subtotalUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.subtotalUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
+                  </span>
                 </div>
                 <div style={styles.breakdownRow}>
                   <span>Tasas aéreas e impuestos locales (8%):</span>
-                  <span>${quote.taxesAndTransfersUsd} USD</span>
+                  <span>
+                    {
+                      formatCurrencyPrice(
+                        quote.taxesAndTransfersUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.taxesAndTransfersUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
+                  </span>
                 </div>
                 <div style={styles.totalRow}>
                   <span>TOTAL FINAL:</span>
                   <span style={styles.grandTotal}>
-                    ${quote.grandTotalUsd} USD
+                    {
+                      formatCurrencyPrice(
+                        quote.grandTotalUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.grandTotalUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
                   </span>
                 </div>
                 <div style={styles.guaranteeNote}>

@@ -240,6 +240,13 @@ Para transformar a AomoriTrips de una plataforma puramente transaccional a un po
   - Renderizado Server-Side con `generateStaticParams` para latencia ultrabaja y SEO impecable.
   - Cada artículo incluye un bloque interactivo con _Aomori Sensei_ para hacer preguntas específicas sobre el tema del post.
 
+### 4.3. Internacionalización Dinámica en Tiempo Real (Futura Expansión)
+
+- **Estado Actual**: El selector de idioma (`ES` / `EN` / `JA`) gestiona de forma inmediata la barra de navegación, menús de perfil y metadatos de sesión mediante `I18nContext`.
+- **Evolución Proyectada**: Integración de un motor de traducción dinámica en tiempo real para el contenido editorial y catálogo (fichas técnicas de paquetes, itinerarios y respuestas agénticas) mediante:
+  1. **Servicio Cloud**: Google Cloud Translation API o DeepL API con almacenamiento en caché local (Redis / SQLite) para optimizar costos de API.
+  2. **Alternativa Local-First**: SLM bilingüe especializado (como `qwen2.5:3b`) ejecutado bajo Ollama para realizar traducción en destino sin conexión a internet ni consumo de créditos externos.
+
 ---
 
 ## 5. Guía de Revisión Personal: Sección 7 y Parte 2 del Informe

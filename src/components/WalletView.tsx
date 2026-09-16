@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface BookingData {
   id: string;
@@ -29,6 +30,7 @@ export const WalletView: React.FC<WalletViewProps> = ({
   onGoToProfile,
 }) => {
   const { profile } = useProfile();
+  const { user, stats } = useAuth();
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,7 +57,38 @@ export const WalletView: React.FC<WalletViewProps> = ({
     window.print();
   };
 
-  const totalTrips = bookings.length > 0 ? bookings.length : profile.tripsCount;
+  // Estadísticas y visualización 100% sincronizadas con ProfileView
+  const isGuest =
+    !user &&
+    (!profile.name ||
+      profile.name === "Hana Yamamoto" ||
+      profile.name === "Invitado");
+  const displayName = user ? user.name : isGuest ? "Invitado" : profile.name;
+  const displayAvatar = user
+    ? user.name.charAt(0).toUpperCase()
+    : isGuest
+      ? "客"
+      : profile.avatarKanji || "花";
+  const displayTrips = user ? stats.tripsCount : bookings.length;
+  const displayCountries = user
+    ? stats.countriesCount
+    : bookings.length > 0
+      ? 1
+      : 0;
+  const displayKilometers = user
+    ? stats.kilometersCount
+    : bookings.length > 0
+      ? `${(bookings.length * 1.4).toFixed(1)}k km`
+      : "0 km";
+  const displayLevel = user
+    ? stats.tripsCount === 0
+      ? "🌱 Nuevo Viajero · Nv. 1"
+      : stats.tripsCount <= 2
+        ? "🌸 Viajero Sakura · Nv. 2"
+        : "🏮 Explorador Nebuta · Nv. 3"
+    : bookings.length === 0
+      ? "🌱 Modo Explorador Invitado"
+      : "🌸 Viajero Sakura · Nv. 2";
 
   return (
     <div style={styles.viewWrapper} className="animate-fade-in">
@@ -64,28 +97,28 @@ export const WalletView: React.FC<WalletViewProps> = ({
         <div className="container" style={styles.headerContainer}>
           <div style={styles.userRow}>
             <div style={styles.avatarCircle} title="Avatar de Viajero">
-              <span style={styles.avatarKanji}>{profile.avatarKanji}</span>
+              <span style={styles.avatarKanji}>{displayAvatar}</span>
             </div>
 
             <div style={styles.userInfo}>
-              <h1 style={styles.userName}>{profile.name}</h1>
+              <h1 style={styles.userName}>{displayName}</h1>
               <div style={styles.badgeRow}>
-                <span style={styles.statusBadge}>{profile.statusLevel}</span>
+                <span style={styles.statusBadge}>{displayLevel}</span>
               </div>
             </div>
           </div>
 
           <div style={styles.statsGrid}>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{totalTrips}</div>
+              <div style={styles.statNumber}>{displayTrips}</div>
               <div style={styles.statLabel}>Viajes</div>
             </div>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{profile.countriesCount}</div>
+              <div style={styles.statNumber}>{displayCountries}</div>
               <div style={styles.statLabel}>Países</div>
             </div>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{profile.kilometersCount}</div>
+              <div style={styles.statNumber}>{displayKilometers}</div>
               <div style={styles.statLabel}>km</div>
             </div>
           </div>
