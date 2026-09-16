@@ -3,13 +3,15 @@
 import React, { useState } from "react";
 import { CharacterDisplay } from "./CharacterDisplay";
 
+export type BudgetFilter = "all" | "under2500" | "2500-3000" | "over3000";
+
 interface HeroBannerProps {
   selectedSeason: string;
   setSelectedSeason: (season: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedBudget: string;
-  setSelectedBudget: (budget: string) => void;
+  selectedBudget: BudgetFilter;
+  setSelectedBudget: (budget: BudgetFilter) => void;
   travelers: string;
   setTravelers: (travelers: string) => void;
   onOpenSensei: () => void;
@@ -120,7 +122,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             <span style={styles.segmentLabel}>Presupuesto</span>
             <select
               value={selectedBudget}
-              onChange={(e) => setSelectedBudget(e.target.value)}
+              onChange={(e) =>
+                setSelectedBudget(e.target.value as BudgetFilter)
+              }
               style={styles.segmentSelect}
               aria-label="Seleccionar rango de presupuesto"
             >

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
-import { HeroBanner } from "@/components/HeroBanner";
+import { HeroBanner, BudgetFilter } from "@/components/HeroBanner";
 import { PackCard, TravelPackData } from "@/components/PackCard";
 import { BookingModal } from "@/components/BookingModal";
 import { AgentView } from "@/components/AgentView";
@@ -24,7 +24,7 @@ export default function HomePage() {
   >("explore");
   const [packs, setPacks] = useState<TravelPackData[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("all");
-  const [selectedBudget, setSelectedBudget] = useState<string>("all");
+  const [selectedBudget, setSelectedBudget] = useState<BudgetFilter>("all");
   const [travelers, setTravelers] = useState<string>("2 adultos");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPack, setSelectedPack] = useState<TravelPackData | null>(null);

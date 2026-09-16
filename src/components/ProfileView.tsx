@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useProfile } from "@/hooks/useProfile";
 import { useFavorites } from "@/hooks/useFavorites";
-import { useAuth } from "@/hooks/useAuth";
+import { useTravelerDisplay } from "@/hooks/useTravelerDisplay";
 import { useI18n } from "@/i18n/I18nContext";
 import { AuthModal } from "./AuthModal";
 import { PaymentCardInfo } from "@/lib/profile";
@@ -19,9 +18,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onGoToExploreFavorites,
   bookingsCount = 0,
 }) => {
-  const { profile, updateProfile, resetProfile } = useProfile();
+  const {
+    isGuest,
+    displayName,
+    displayAvatar,
+    displayTrips,
+    displayCountries,
+    displayKilometers,
+    displayLevel,
+    profile,
+    updateProfile,
+    resetProfile,
+    user,
+    stats,
+  } = useTravelerDisplay(bookingsCount);
   const { favoritesCount } = useFavorites();
-  const { user, stats } = useAuth();
   const { t, language, setLanguage } = useI18n();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -188,39 +199,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       setIsTokenizing(false);
     }
   };
-
-  // Estadísticas dinámicas reales (priorizan la cuenta activa o reservas locales)
-  const isGuest =
-    !user &&
-    (!profile.name ||
-      profile.name === "Hana Yamamoto" ||
-      profile.name === "Invitado");
-  const displayName = user ? user.name : isGuest ? "Invitado" : profile.name;
-  const displayAvatar = user
-    ? user.name.charAt(0).toUpperCase()
-    : isGuest
-      ? "客"
-      : profile.avatarKanji || "花";
-  const displayTrips = user ? stats.tripsCount : bookingsCount;
-  const displayCountries = user
-    ? stats.countriesCount
-    : bookingsCount > 0
-      ? 1
-      : 0;
-  const displayKilometers = user
-    ? stats.kilometersCount
-    : bookingsCount > 0
-      ? `${(bookingsCount * 1.4).toFixed(1)}k km`
-      : "0 km";
-  const displayLevel = user
-    ? stats.tripsCount === 0
-      ? "🌱 Nuevo Viajero · Nv. 1"
-      : stats.tripsCount <= 2
-        ? "🌸 Viajero Sakura · Nv. 2"
-        : "🏮 Explorador Nebuta · Nv. 3"
-    : bookingsCount === 0
-      ? "🌱 Modo Explorador Invitado"
-      : "🌸 Viajero Sakura · Nv. 2";
 
   return (
     <div style={styles.viewWrapper} className="animate-fade-in">
