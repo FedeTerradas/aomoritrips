@@ -283,20 +283,31 @@ Conforme a la rúbrica oficial de la UTN.BA, a continuación se presenta la tabl
 
 La plataforma web interactiva se encuentra completamente operativa, implementando la arquitectura visual de la Unidad 4:
 
-1. **Pantalla Principal (Home / Catálogo Curado)**:
+1. **Pantalla Principal (Home / Catálogo Curado y Filtro Dinámico)**:
+
+   ![Home y Catálogo Curado](./screenshots/captura1_catalogo_home.png)
+
    - Header con branding regional (`青森 AomoriTrips`), navegación superior y badge reactivo de reservas y favoritos.
-   - Hero inmersivo con fotografía de las montañas de Aomori, buscador predictivo y selector horizontal de temporadas (`🌸 Sakura`, `🏮 Nebuta`, `🍁 Koyo`, `❄️ Snow` y `❤️ Mis Favoritos`).
-   - Grilla de tarjetas de viaje compactas con fotografías en alta definición, badges flotantes, precio transparente por persona en dólares y botón interactivo para apertura y cotización.
+   - Hero inmersivo con fotografía de las montañas de Aomori, buscador predictivo con filtro de presupuesto y selector de temporadas (`🌸 Sakura`, `🏮 Nebuta`, `🍁 Koyo`, `❄️ Snow` y `❤️ Mis Favoritos`).
+   - Grilla de tarjetas de viaje compactas con fotografías en alta definición, badges flotantes, precio transparente con divisa activa y botón interactivo para apertura y cotización.
 
 2. **Flujo de Uso Principal (Interacción con Aomori Sensei y Cotización)**:
+
+   ![Chat Interactivo con Aomori Sensei](./screenshots/captura2_chat_sensei.png)
+
    - Panel conversacional en tiempo real con el asistente _Aomori Sensei_ (`青森の先生`).
    - Visualización del inspector agéntico que expone el ciclo de decisión (`Observar → Razonar → Ejecutar Herramientas → Verificar`).
-   - Modal de reserva detallada (`BookingModal`) con galería fotográfica, itinerario día por día, desglose transparente de costos (vuelo, ryokan, billete Shinkansen, impuestos) y cálculo en vivo según cantidad de viajeros.
+   - Modal de reserva detallada (`BookingModal`) con itinerario día por día, desglose transparente de costos en la divisa seleccionada y cálculo en vivo según cantidad de viajeros.
 
 3. **Resultado / Output Visible para el Usuario (Billetera QR y Perfil)**:
-   - Emisión instantánea de voucher digital tras la confirmación de reserva.
+
+   ![Billetera de Vouchers QR Offline](./screenshots/captura3_billetera_qr.png)
+
+   ![Perfil de Viajero y Métodos de Pago](./screenshots/captura4_perfil_viajero.png)
+
+   - Emisión instantánea de voucher digital tras la confirmación de reserva con código único `AOM-2026`.
    - Código QR dinámico de alta fidelidad generado con la paleta de colores de Aomori (`#1C4F7C`), validable offline en destino.
-   - Pantalla de Perfil y Configuración (`ProfileView`) fiel al prototipo Figma de la Unidad 4 (`aomoritrips_perfil.png`), con administración de métodos de pago, selector interactivo de divisa (`USD $`, `JPY ¥`, `EUR €`, `ARS $`), datos de pasaporte, selector de idioma (`ES`, `EN`, `日本語`) y gestión de experiencias favoritas guardadas.
+   - Pantalla de Perfil y Configuración (`ProfileView`) fiel al prototipo Figma de la Unidad 4 (`aomoritrips_perfil.png`), con administración de métodos de pago, selector interactivo de divisa (`USD $`, `JPY ¥`, `EUR €`, `ARS $`), datos de pasaporte y selector de idioma (`ES`, `EN`, `日本語`).
 
 ### 4.2. Video de Demostración
 
@@ -512,7 +523,7 @@ En línea con la filosofía del protocolo **`ia-cowork-review`**, la inteligenci
 ### 7.3. Reflexión Crítica Obligatoria (Consigna Oficial UTN.BA)
 
 > **Reflexión obligatoria**:
-> El co-work con Inteligencia Artificial redujo a menos de un tercio el tiempo necesario para desarrollar una aplicación completa: hubiera sido prácticamente imposible estructurar en los plazos del curso una arquitectura con Next.js 16, orquestador agéntico con loop de decisión, integración de Prisma con SQLite, validación de esquemas Zod, generación de QR dinámicos y diseño responsivo sin la asistencia continua de modelos generativos. Sin embargo, la experiencia demostró fehacientemente que la IA carece de criterio estético global y coherencia de estado si no es supervisada con rigor: la IA asumió atajos inaceptables como dejar botones de favoritos puramente cosméticos sin persistencia de datos, saturó el layout con tarjetas sobredimensionadas que arruinaban la usabilidad móvil, y omitió componentes estructurales como la pantalla de Perfil. La intervención humana crítica fue el factor determinante que transformó un conjunto de fragmentos de código autogenerados en un producto de software robusto, auditable, accesible y fiel a las especificaciones originales.
+> La IA redujo los tiempos significativamente para crear una aplicación de estas características y stack tecnológico. Utilizando el método de trabajo de co-work, sugirió ideas que fueron siempre revisadas por mí. No se podría haber logrado completar un prototipo con esta velocidad y funcionalidades sin su asistencia. Sin embargo, la IA comete errores que deben ser detectados por el humano; no se puede delegar ciegamente en ella. Fui responsable de supervisar y corregir sus fallas, así como de tomar las decisiones finales sobre el diseño y la implementación. Es una herramienta que debe ser usada con cuidado y responsabilidad. Gracias a las nuevas herramientas y avances de los modelos fui capaz de realizar auditorías de seguridad de código, UI/UX, arquitectura del sistema, diagramas interactivos, generación y compilación de modelos locales con Ollama, generación de QR dinámicos y diseño responsivo de manera mucho más sencilla, además de documentar todo para un mayor entendimiento personal. Me ayudó a mejorar mi criterio como profesional y me motivó a seguir aprendiendo (y a equivocarme para mejorar). Gracias a esta cursada me siento mucho más seguro para crear nuevas aplicaciones y potenciar mis habilidades en el mundo de la tecnología.
 
 ---
 
@@ -522,30 +533,30 @@ En línea con la filosofía del protocolo **`ia-cowork-review`**, la inteligenci
 
 #### 1. ¿Qué papel jugaría un LLM/SLM local en tu proyecto?
 
-En AomoriTrips, un modelo de lenguaje local pequeño (SLM como `llama3.2:1b` o `phi-3 mini` ejecutado bajo **Ollama**) cumple un rol estratégico como **Agente de Soporte Offline y Guardián de Privacidad en Destino**:
+En AomoriTrips, un modelo de lenguaje pequeño ejecutado de forma local (SLM como `llama3.2:1b` o `llama3.2:3b` bajo **Ollama**) cumple un rol estratégico como **asistente de contingencia offline y privacidad en destino**:
 
-- **No reemplazaría por completo** al modelo cloud de 70B parámetros en producción web (donde se prioriza la riqueza de vocabulario y el razonamiento complejo), sino que actuaría como un **subagente de contingencia local**: en caso de caída de conectividad en zonas montañosas remotas de Tohoku (por ejemplo, en los valles del Monte Iwaki o las termas de Sukayu Onsen), la aplicación empaquetada o el dispositivo del guía local puede ejecutar inferencia directa sobre el hardware local.
-- Permite resolver consultas de itinerario, traducción de términos culturales japoneses y asistencia de primeros auxilios o transporte local a costo cero por token, con latencias ultra-bajas e independencia total de servidores externos.
+- **No reemplaza a los modelos de nube**: En la web pública se aprovecha la potencia de modelos frontera para razonamientos complejos, pero el SLM local actúa como respaldo directo cuando no hay conectividad en zonas montañosas de Tohoku (como las termas de Sukayu Onsen o los bosques de Shirakami-Sanchi).
+- **Asistencia ágil y económica**: Permite atender consultas rápidas de itinerario, transporte local o vocabulario cultural japonés a costo cero por token y sin depender de servidores externos.
 
 #### 2. ¿Qué le aportaría al usuario de la aplicación?
 
-Al usuario final le aporta tres beneficios tangibles:
+Al usuario final le brinda tres ventajas claras:
 
-1. **Resiliencia Extrema sin Conexión**: La prefectura de Aomori cuenta con extensas zonas de bosque primario (Shirakami-Sanchi) y carreteras de montaña donde la señal 4G/5G es nula o intermitente. Un SLM local permite que el viajero continúe interactuando con su Sensei de viajes para consultar instrucciones de llegada al ryokan o recomendaciones gastronómicas sin requerir un plan de datos internacional costoso.
-2. **Privacidad Absoluta de Datos Sensibles**: Datos como nombres completos, itinerarios de vuelo, números de pasaporte o requerimientos médicos y alimenticios jamás salen de la máquina del cliente, garantizando cumplimiento normativo de privacidad (GDPR / Ley de Protección de Datos Personales).
-3. **Cero Latencia en Consultas Frecuentes**: Al no existir viaje de ida y vuelta a servidores en EE.UU. o Japón, las respuestas breves se generan de manera instantánea mediante inferencia directa en el chip del dispositivo.
+1. **Recomendaciones Rápidas sin Internet**: Respuestas inmediatas y directas en su dispositivo, ideales para situaciones de viaje donde no hay señal telefónica o no se cuenta con un plan de datos internacional.
+2. **Privacidad Total de Datos Sensibles**: Información personal como nombres, números de pasaporte, comprobantes de pago o requerimientos alimenticios y médicos no viajan por internet ni se comparten con empresas terceras; se procesan localmente garantizando total confidencialidad.
+3. **Cero Latencia**: Al no requerir llamadas de red a servidores remotos, las consultas habituales se responden en milisegundos mediante inferencia directa en el procesador del equipo.
 
 #### 3. ¿Qué te aportaría a vos como profesional?
 
-1. **Auditoría Integral de Datos y Gobernanza**: Permite procesar y resumir logs de interacción, consultas de usuarios y métricas de soporte directamente en los servidores de la organización sin enviar telemetría a proveedores terceros, abriendo la puerta al análisis profundo de patrones de demanda turística sin riesgos legales de fuga de datos corporativos.
-2. **Autonomía Operativa en Desarrollo**: Facilita iterar, realizar pruebas automatizadas y validar prompts en entornos locales de desarrollo (aviones, trenes o zonas sin internet) sin consumir créditos de API ni depender de cuotas de tasa (_rate limits_).
-3. **Dominio de la Pila Completa de IA**: Permite adquirir competencia práctica en quantización de pesos (formatos GGUF Q4_K_M), gestión de memoria VRAM, context window tuning y optimización de inferencia en CPU/GPU, habilidades sumamente cotizadas en la industria TravelTech y Enterprise.
+1. **Criterio Técnico y Comprensión Real del Sistema**: Permite entender a fondo cómo funciona realmente un modelo de lenguaje por dentro y comparar con criterio práctico el rendimiento de un modelo local frente a uno en la nube, dejando de ver a la inteligencia artificial como una "caja negra mágica".
+2. **Dominio de la Infraestructura de IA**: Aporta experiencia concreta en empaquetado de modelos con Ollama (`Modelfile`), cuantización de pesos (formatos GGUF), gestión de memoria RAM/VRAM y optimización de prompts para modelos compactos.
+3. **Autonomía y Auditoría de Datos**: Brinda la capacidad de desarrollar, iterar pruebas y procesar registros de interacción de manera 100% autónoma, sin depender de conexión a internet, sin gastar créditos de API y con la tranquilidad de no fugar datos sensibles de usuarios ni de negocio.
 
 #### 4. ¿Qué limitaciones concretas tiene versus una API en la nube?
 
-1. **Capacidad de Hardware y Consumo de Recursos**: Correr modelos locales requiere hardware dedicado (al menos 8 GB a 16 GB de RAM unificada o GPU con VRAM dedicada). En computadoras estándar sin aceleración gráfica, la velocidad de generación puede caer por debajo de los 15 tokens/segundo, degradando la experiencia conversacional.
-2. **Capacidad de Razonamiento y Function Calling (Herramientas)**: Mientras que un modelo frontera como Claude 3.5 Sonnet o LLaMA 3.3 70B genera JSONs perfectamente estructurados para invocar múltiples herramientas en paralelo con 100% de fiabilidad sintáctica, un modelo de 1B o 3B parámetros presenta mayor tasa de alucinación en los nombres de las herramientas o en los esquemas de parámetros complejos.
-3. **Ventana de Contexto y Gestión del Modelo**: La actualización de conocimiento requiere descargar gigabytes de nuevos checkpoints o aplicar técnicas de RAG local (Retrieval-Augmented Generation), a diferencia de las APIs cloud que se actualizan de forma transparente en la nube.
+1. **Menor Profundidad de Razonamiento**: Los modelos compactos (1B a 3B) resuelven bien tareas directas y puntuales, pero tienen menor capacidad para razonamientos lógicos complejos, redacción muy elaborada o invocación estricta de múltiples herramientas simultáneas (*tool calling*), teniendo mayor propensión a alucinar frente a esquemas complejos.
+2. **Mayor Costo de Implementación y Mantenimiento Técnico**: Implementar estos sistemas locales no es trivial ni automático; requiere un profesional capacitado que sepa configurar los entornos, compilar los modelos, gestionar la memoria y crear mecanismos de contingencia. Además, demanda hardware con recursos suficientes de CPU/RAM/GPU.
+3. **Actualización del Conocimiento**: Una API en la nube se actualiza continuamente del lado del proveedor, mientras que un modelo local requiere descargar nuevos pesos o integrar bases de conocimiento locales (RAG con SQLite/vectores) para incorporar información nueva.
 
 ---
 

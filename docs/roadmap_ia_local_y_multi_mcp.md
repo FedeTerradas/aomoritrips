@@ -284,10 +284,11 @@ En estas secciones el docente evaluará tu **criterio personal, sentido crítico
 
 ## 6. Checklist de Tareas Inmediatas para la Entrega Final
 
-- [ ] **Captura 1 (Frontend)**: Pantalla Home / Catálogo con filtros estacionales en `http://localhost:3000`.
-- [ ] **Captura 2 (Frontend)**: Chat interactivo con _Aomori Sensei_ respondiendo y recomendando paquetes.
-- [ ] **Captura 3 (Frontend)**: Pantalla de Billetera con el código QR y la reserva confirmada (`AOM-2026`).
-- [ ] **Captura 4 (Terminal)**: Ventana de PowerShell ejecutando `ollama run llama3.2:1b` (para Parte 2).
+- [x] **Captura 1 (Frontend)**: Pantalla Home / Catálogo con filtros de presupuesto y estacionales (`docs/screenshots/captura1_catalogo_home.png`).
+- [x] **Captura 2 (Frontend)**: Chat interactivo con _Aomori Sensei_ respondiendo y recomendando paquetes (`docs/screenshots/captura2_chat_sensei.png`).
+- [x] **Captura 3 (Frontend)**: Pantalla de Billetera con el código QR y la reserva confirmada (`AOM-2026`) (`docs/screenshots/captura3_billetera_qr.png`).
+- [x] **Captura 4 (Frontend)**: Pantalla de Perfil de Viajero con estado "Invitado" y selector de divisa (`docs/screenshots/captura4_perfil_viajero.png`).
+- [ ] **Captura 5 (Terminal)**: Ventana de PowerShell ejecutando `ollama run llama3.2:1b` (para Parte 2).
 - [ ] **Video de Demostración (3 a 4 min)**:
   - Recorrido: Home → Chat con Sensei → Reserva con QR en Billetera → Terminal con 40 tests pasando y Ollama.
   - Subir a YouTube (No listado), Loom o Drive y pegar link en la tabla del informe y Sección 4.2.
