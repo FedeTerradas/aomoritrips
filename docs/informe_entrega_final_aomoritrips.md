@@ -21,12 +21,11 @@
 
 > **Nota para el evaluador**: Conforme a la consigna oficial, este informe académico actúa como guía estructurada e índice técnico del trabajo real publicado y comprobable en los siguientes enlaces:
 
-| Recurso                            | URL Directa                                                                                        | Estado / Observación                                                |
-| :--------------------------------- | :------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------ |
-| **Repositorio GitHub**             | [https://github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Repositorio con historial de commits progresivos y hooks de Husky   |
-| **Aplicación Web en Producción**   | [https://aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en vivo en Vercel con SSR Next.js y base de datos activa |
-| **Video de Demostración**          | [https://youtu.be/placeholder-aomoritrips-demo](https://youtu.be/placeholder-aomoritrips-demo)     | Video demostrativo del flujo completo (3 a 5 minutos)               |
-| **Código y Memoria en Repo Local** | `E:\Curso IA\proyecto_final_curso\aomoritrips`                                                     | Entorno local auditado con SQLite y Ollama local                    |
+| Recurso                          | URL Directa                                                                                        | Estado / Observación                                                                          |
+| :------------------------------- | :------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| **Repositorio GitHub**           | [https://github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Repositorio público con historial de commits progresivos y hooks de Husky                     |
+| **Aplicación Web en Producción** | [https://aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en vivo en Vercel con SSR Next.js                                                  |
+| **Video de Demostración**        | _(pendiente de grabación — disponible para presentación en vivo)_                                  | Recorrido del flujo completo: Home → Chat con Aomori Sensei → Checkout → Billetera QR Offline |
 
 ---
 
@@ -118,7 +117,7 @@ Para evitar los vicios comunes de "cajas negras" o arquitecturas no defendibles,
    - **Nivel 1: LLM Probabilístico (Inferencia y Comprensión Semántica)**: Modelo de lenguaje responsable de comprender el lenguaje natural del viajero, extraer intenciones, mantener el tono cultural empático de Aomori y generar recomendaciones discursivas.
    - **Nivel 2: Orquestación Determinística-Puente (Control del Ciclo y Seguridad)**: Máquina de estados en TypeScript que administra el ciclo de vida del agente, aplica filtros anti-inyección, implementa el **Circuit Breaker** (con límite de iteraciones) y actúa como compuerta de autorización y validación previa a la ejecución de cualquier herramienta.
    - **Nivel 3: Herramientas de Negocio Determinísticas (Tools)**: Funciones puras que consultan el catálogo oficial, calculan presupuestos exactos sin margen de alucinación y formatean borradores de itinerarios.
-3. **Persistencia Relacional y Memoria Multi-Turno**: SQLite local operado a través de **Prisma ORM** con modo **Write-Ahead Logging (WAL)**, que garantiza lecturas concurrentes sin bloqueo y desacopla el motor relacional para permitir una migración directa a PostgreSQL/Supabase en producción.
+3. **Persistencia Relacional y Memoria Multi-Turno**: SQLite operado a través de **Prisma ORM** con modo **Write-Ahead Logging (WAL)**, que garantiza lecturas concurrentes sin bloqueo y persistencia ACID en el entorno de desarrollo y evaluación educativa de este proyecto. La elección de SQLite es deliberada para este alcance: un único archivo autocontenido (`prisma/dev.db`) elimina la latencia de red y permite auditar la base de datos directamente con herramientas locales. Para un despliegue en producción real, la capa de Prisma ORM actúa como costura de abstracción: cambiar el motor requiere únicamente modificar el `provider` y el `DATABASE_URL` en el `.env`, sin alterar la lógica de negocio.
 4. **Mecanismo de Firma y Modo Offline**: La validación en zonas montañosas de Tohoku sin conectividad satelital ni 4G/5G se resuelve mediante un **voucher digital firmado con HMAC-SHA256**. El payload del código QR contiene `{ id: orderId, pack: packSlug, pax: travelersCount, date: travelDate, hash: signature }`. La aplicación del anfitrión en el ryokan rural verifica la firma matemática localmente en menos de 1 milisegundo mediante **Web Crypto API**, garantizando autenticidad e inmutabilidad sin depender de internet.
 
 #### Diagrama 1: Arquitectura General y Bifurcación Online / Offline
@@ -129,11 +128,10 @@ Para evitar los vicios comunes de "cajas negras" o arquitecturas no defendibles,
 > [🔍 **Abrir Diagrama 1 Interactivo (HTML Autocontenido)**](diagrams/arquitectura-general.html)
 
 <details>
-<summary>📋 Ver especificación reproducible y correspondencia técnica</summary>
+<summary>📋 Ver especificación fuente del diagrama</summary>
 
-- **Compilado con**: Archify Engine v2.17 (Showcase Quality Profile, 9/9 checks aprobados, 0 errores, 0 warnings).
-- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/arquitectura-general.architecture.json`](diagrams/src/arquitectura-general.architecture.json)
-- **Topología preservada**: 5 capas y dominios (Cliente Web/Móvil Next.js 16 SSR, Servidor Node.js con Zod y motor criptográfico, Capa de Inteligencia Artificial de 3 niveles con orquestador TypeScript y Circuit Breaker, Persistencia Relacional Prisma en modo WAL sobre SQLite, y Operación en Campo 100% Offline con verificación Web Crypto API).
+- **Especificación fuente**: [`docs/diagrams/src/arquitectura-general.architecture.json`](diagrams/src/arquitectura-general.architecture.json)
+- **Topología representada**: 5 capas (Cliente Next.js 16 SSR, Servidor Node.js + Zod, Capa IA de 3 niveles con Circuit Breaker, Persistencia Prisma/SQLite en modo WAL, Operación Offline con Web Crypto API).
 
 </details>
 
@@ -141,7 +139,7 @@ Para evitar los vicios comunes de "cajas negras" o arquitecturas no defendibles,
 
 ### 2.2. Ciclo de Decisión Agéntico (Loop del Aomori Sensei)
 
-El asistente _Aomori Sensei_ no opera como un simple chatbot de autocompletado probabilístico, sino como un **agente autónomo gobernado por software**. Para blindar el sistema contra costos descontrolados, bucles infinitos de llamadas a herramientas y alucinaciones de parámetros, el orquestador implementa una **doble frontera de seguridad**:
+El asistente _Aomori Sensei_ opera como un **agente único con ciclo de decisión gobernado por software** (no un sistema multi-agente). La distinción es deliberada y técnicamente relevante: concentrar la lógica en un agente único con control estricto del ciclo es más auditable, predecible y seguro que distribuirla en múltiples agentes coordinados. Para blindar el sistema contra costos descontrolados, bucles infinitos de llamadas a herramientas y alucinaciones de parámetros, el orquestador implementa una **doble frontera de seguridad**:
 
 1. **Primera Frontera (Input Guardrail)**: Sanitización regex y detección proactiva de inyecciones antes de enviar cualquier token al modelo.
 2. **Segunda Frontera (Tool Authorization & Validation)**: Antes de ejecutar cualquier función en el backend, el orquestador verifica que la herramienta solicitada esté en la lista blanca de permisos y que sus argumentos cumplan estrictamente el esquema de datos tipado (Zod).
@@ -159,15 +157,14 @@ Asimismo, el ciclo incorpora una compuerta explícita de **Control del Agente**:
 > [🔍 **Abrir Diagrama 2 Interactivo (HTML Autocontenido)**](diagrams/ciclo-agentico.html)
 
 <details>
-<summary>📋 Ver especificación reproducible y correspondencia técnica</summary>
+<summary>📋 Ver especificación fuente del diagrama</summary>
 
-- **Compilado con**: Archify Engine v2.17 (Workflow Schema v2, Showcase Quality Profile, 9/9 checks aprobados).
-- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/ciclo-agentico.workflow.json`](diagrams/src/ciclo-agentico.workflow.json)
-- **Flujo agéntico gobernado**:
-  1. _Ingreso & Guardrail_: Sanitización perimetral regex contra ataques de Prompt Injection (OWASP LLM01).
-  2. _Memoria & Razonamiento_: Inyección de historial multi-turno de `AgentSession` y razonamiento discursivo con LLaMA 3.3 70B.
-  3. _Doble Frontera de Tool_: Verificación en lista blanca (`Tool Auth`) y validación estricta de parámetros en tiempo de ejecución con esquemas Zod.
-  4. _Control de Bucle_: Mecanismo de **Circuit Breaker** determinístico con corte incondicional si $i \ge 3$ iteraciones y activación de fallback elegante en estilo Washi.
+- **Especificación fuente**: [`docs/diagrams/src/ciclo-agentico.workflow.json`](diagrams/src/ciclo-agentico.workflow.json)
+- **Fases del ciclo gobernado**:
+  1. _Ingreso & Guardrail_: Sanitización perimetral regex contra Prompt Injection (OWASP LLM01).
+  2. _Memoria & Razonamiento_: Historial multi-turno de `AgentSession` + LLaMA 3.3 70B.
+  3. _Doble Frontera de Tool_: Lista blanca de herramientas + validación Zod de parámetros.
+  4. _Circuit Breaker_: Corte determinístico a las 3 iteraciones + fallback estructurado.
 
 </details>
 
@@ -212,15 +209,14 @@ Ilustra la interacción completa: desde la consulta en lenguaje natural del viaj
 > [🔍 **Abrir Diagrama 3b Interactivo (HTML Autocontenido)**](diagrams/flujo-secuencia-offline.html)
 
 <details>
-<summary>📋 Ver especificación reproducible y fases cronológicas</summary>
+<summary>📋 Ver especificación fuente y fases cronológicas</summary>
 
-- **Compilado con**: Archify Engine v2.17 (Sequence Schema v1, Showcase Quality Profile, 9/9 checks aprobados).
-- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/flujo-secuencia-offline.sequence.json`](diagrams/src/flujo-secuencia-offline.sequence.json)
+- **Especificación fuente**: [`docs/diagrams/src/flujo-secuencia-offline.sequence.json`](diagrams/src/flujo-secuencia-offline.sequence.json)
 - **Fases del flujo**:
-  1. _Consulta e Input Guardrail_: El viajero solicita cotización; `API Server` aplica filtro regex perimetral anti-prompt injection (OWASP LLM01).
-  2. _Inferencia & Tool Calling_: `Aomori Sensei` razona, solicita `calculatePricing`, el backend valida con Zod, ejecuta la herramienta contra SQLite y devuelve el cálculo exacto sin alucinación.
-  3. _Checkout & Firma HMAC_: Confirmación de reserva, generación de identificador `AOM-2026-XXXX`, firma HMAC-SHA256 y descarga a la Billetera PWA local.
-  4. _Operación Offline en Destino_: El guía rural en Sukayu Onsen escanea el código QR del voucher y valida la firma matemática localmente en < 1ms mediante Web Crypto API sin requerir conexión a internet.
+  1. _Consulta e Input Guardrail_: El viajero solicita cotización; `API Server` aplica filtro regex anti-prompt injection (OWASP LLM01).
+  2. _Inferencia & Tool Calling_: `Aomori Sensei` razona, invoca `calculatePricing`, el backend valida con Zod y ejecuta contra SQLite.
+  3. _Checkout & Firma HMAC_: Confirmación, generación de `AOM-2026-XXXX`, firma HMAC-SHA256 y descarga a la Billetera PWA.
+  4. _Operación Offline en Destino_: El guía escanea el QR y valida la firma matemática localmente en < 1ms mediante Web Crypto API.
 
 </details>
 
@@ -381,16 +377,18 @@ A continuación se transcribe la traza de ejecución real registrada en la base 
 
 ### 5.1. Heurísticas de Nielsen Aplicadas al Proyecto
 
-Conforme a la rúbrica oficial, se evaluó la interfaz web frente a 6 de las 10 heurísticas de usabilidad de Jakob Nielsen:
+Conforme a la rúbrica oficial, se evaluó la interfaz web frente a 8 de las 10 heurísticas de usabilidad de Jakob Nielsen:
 
-| Heurística                                           | ¿Cumple? | Evidencia Concreta en AomoriTrips                                                                                                                                                                                                                                                                                                                               |
-| :--------------------------------------------------- | :------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Visibilidad del estado del sistema**            |  **Sí**  | La aplicación informa visualmente en todo momento el estado de las operaciones: spinners de carga al consultar el catálogo o al agente, toasts flotantes de confirmación al guardar ajustes en el perfil, badges de conteo en la barra de navegación para reservas y favoritos, y mensajes de progreso (`"Generando Vouchers Offline..."`) durante el checkout. |
-| **2. Coincidencia entre el sistema y el mundo real** |  **Sí**  | Se emplean metáforas visuales familiares para el viajero: billetes Shinkansen con diseño de ticket físico, sellos de control, íconos de pasaporte (`🛡️`), divisas reales (`USD $`, `JPY ¥`, `EUR €`, `ARS $`) y terminología clara sin jerga técnica opaca, explicando conceptos japoneses (_Ryokan_, _Onsen_, _JR Pass_) con descripciones accesibles.         |
-| **3. Control y libertad del usuario**                |  **Sí**  | Los modales (`BookingModal`, `AuditModal`) cuentan con botón visible de cierre (`✕`), cierre mediante tecla `Escape` y clic fuera del contenedor (overlay). En las tarjetas de viaje, los usuarios disponen de botones para desplegar o plegar el resumen rápido a demanda y botón para restablecer filtros con un solo clic.                                   |
-| **4. Consistencia y estándares**                     |  **Sí**  | Coherencia estricta en la paleta cromática regional (Azul Aomori `#1C4F7C`, Naranja Sol `#F97316`, Fondo Washi `#FDF8F2`). La navegación superior fija en desktop se traduce limpiamente a una barra inferior móvil de 5 íconos según los estándares de diseño nativo de iOS y Android.                                                                         |
-| **6. Reconocimiento antes que recuerdo**             |  **Sí**  | En lugar de exigir que el usuario recuerde los paquetes que le interesaron, la app ofrece un sistema de **Favoritos persistente con botón de corazón (❤️)** y un filtro dedicado en el hero banner. Asimismo, el formulario de checkout autocompleta el nombre y correo del titular a partir del perfil almacenado.                                             |
-| **8. Diseño estético y minimalista**                 |  **Sí**  | Rediseño consciente de las tarjetas de catálogo a un formato compacto (~300px), eliminando textos redundantes y bloques gigantescos de inclusiones que generaban sobrecarga cognitiva y scroll excesivo, permitiendo al usuario escanear visualmente las 5 experiencias en un solo vistazo.                                                                     |
+| Heurística                                           | ¿Cumple? | Evidencia Concreta en AomoriTrips                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| :--------------------------------------------------- | :------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Visibilidad del estado del sistema**            |  **Sí**  | La aplicación informa visualmente en todo momento el estado de las operaciones: spinners de carga al consultar el catálogo o al agente, toasts flotantes de confirmación al guardar ajustes en el perfil, badges de conteo en la barra de navegación para reservas y favoritos, y mensajes de progreso (`"Generando Vouchers Offline..."`) durante el checkout.                                                                                       |
+| **2. Coincidencia entre el sistema y el mundo real** |  **Sí**  | Se emplean metáforas visuales familiares para el viajero: billetes Shinkansen con diseño de ticket físico, sellos de control, íconos de pasaporte (`🛡️`), divisas reales (`USD $`, `JPY ¥`, `EUR €`, `ARS $`) y terminología clara sin jerga técnica opaca, explicando conceptos japoneses (_Ryokan_, _Onsen_, _JR Pass_) con descripciones accesibles.                                                                                               |
+| **3. Control y libertad del usuario**                |  **Sí**  | Los modales (`BookingModal`, `AuditModal`) cuentan con botón visible de cierre (`✕`), cierre mediante tecla `Escape` y clic fuera del contenedor (overlay). En las tarjetas de viaje, los usuarios disponen de botones para desplegar o plegar el resumen rápido a demanda y botón para restablecer filtros con un solo clic.                                                                                                                         |
+| **4. Consistencia y estándares**                     |  **Sí**  | Coherencia estricta en la paleta cromática regional (Azul Aomori `#1C4F7C`, Naranja Sol `#F97316`, Fondo Washi `#FDF8F2`). La navegación superior fija en desktop se traduce limpiamente a una barra inferior móvil de 5 íconos según los estándares de diseño nativo de iOS y Android.                                                                                                                                                               |
+| **5. Prevención de errores**                         |  **Sí**  | El sistema implementa prevención de errores en dos capas: (a) en la interfaz, el formulario de checkout valida campos obligatorios antes de permitir la confirmación, impidiendo reservas con datos incompletos; (b) en el backend, el módulo `guardrails.ts` intercepta proactivamente patrones de Prompt Injection antes de que el input llegue al LLM, previniendo comportamientos no deseados antes de que ocurran, no solo reaccionando a ellos. |
+| **6. Reconocimiento antes que recuerdo**             |  **Sí**  | En lugar de exigir que el usuario recuerde los paquetes que le interesaron, la app ofrece un sistema de **Favoritos persistente con botón de corazón (❤️)** y un filtro dedicado en el hero banner. Asimismo, el formulario de checkout autocompleta el nombre y correo del titular a partir del perfil almacenado.                                                                                                                                   |
+| **8. Diseño estético y minimalista**                 |  **Sí**  | Rediseño consciente de las tarjetas de catálogo a un formato compacto (~300px), eliminando textos redundantes y bloques gigantescos de inclusiones que generaban sobrecarga cognitiva y scroll excesivo, permitiendo al usuario escanear visualmente las 5 experiencias en un solo vistazo.                                                                                                                                                           |
+| **9. Ayuda para reconocer y recuperarse de errores** |  **Sí**  | Cuando el guardrail detecta un intento de inyección, el usuario recibe un mensaje claro y estructurado en lugar de un error técnico crudo. Cuando el Circuit Breaker interrumpe el bucle agéntico a las 3 iteraciones, el sistema activa un fallback elegante con una respuesta determinística que informa al usuario en lenguaje natural. Los errores de red en el catálogo muestran mensajes de reintento, no pantallas en blanco.                  |
 
 ### 5.2. Evaluación Orientada al Público Objetivo
 
@@ -404,16 +402,18 @@ Conforme a la rúbrica oficial, se evaluó la interfaz web frente a 6 de las 10 
 
 ## Sección 6 · Evaluación de Ciberseguridad
 
-En cumplimiento estricto con los lineamientos de la UTN.BA (Módulo 6), a continuación se presenta la bitácora de análisis de riesgos, vectores de ataque evaluados y salvaguardas implementadas:
+En cumplimiento estricto con los lineamientos de la UTN.BA (Módulo 6), a continuación se presenta la bitácora de análisis de riesgos, vectores de ataque evaluados y salvaguardas implementadas en el código auditado del repositorio:
 
 ### Log de Consideraciones de Seguridad
 
-| Riesgo Identificado                                | Tipo (OWASP / Privacidad / Acceso)              | Medida Implementada o Decisión Tomada en Código                                                                                                                                                                                                                                                                                                                                                                                                    |
-| :------------------------------------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Inyección de Prompt en el Agente IA**            | **OWASP LLM01 (Prompt Injection & Jailbreaks)** | Implementación de una barrera perimetral (`src/lib/agent/guardrails.ts`) con expresiones regulares que detectan intentos de escape de instrucciones (`ignore previous instructions`, `bypass`, `system prompt dump`, `dan mode`). Si se detecta un patrón malicioso, el orquestador aborta la llamada al LLM y retorna un mensaje seguro predefinido. Además, el contexto de sistema y los inputs de usuario viajan delimitados de forma estricta. |
-| **Exposición de Credenciales y Secretos de API**   | **Secretos en Código / Fuga de Entorno**        | Todas las API keys (Groq, OpenAI, secret keys de firma) residen exclusivamente en variables de entorno (`.env.local`). El archivo `.gitignore` excluye `.env*` de los commits. Las rutas de API de Next.js actúan como proxy perimetral seguro: el cliente en el navegador nunca tiene acceso directo a las credenciales del proveedor de IA.                                                                                                      |
-| **Privacidad y Exposición de PII de Pasajeros**    | **Privacidad de Datos (PII Mínima)**            | Principio de minimización de datos: la plataforma únicamente almacena el nombre del titular y correo electrónico para la generación del voucher. No se almacenan números reales de tarjetas de crédito (la tarjeta en Perfil se modela como token enmascarado `•••• 4821` para simulación didáctica). Los vouchers QR contienen hashes firmados y no datos sensibles en texto plano.                                                               |
-| **Falsificación o Alteración de Vouchers Offline** | **Integridad de Datos / Acceso no Autorizado**  | Cada voucher emitido genera un código único con prefijo institucional (`AOM-2026-XXXX`) acompañado de una firma digital HMAC-SHA256 calculada en backend mediante Web Crypto API. Esto permite que un guía rural en los valles de Aomori pueda validar la autenticidad matemática del voucher mediante escaneo óptico sin requerir conexión a internet y sin riesgo de falsificación.                                                              |
+| Riesgo Identificado                       | Tipo (OWASP / Privacidad / Acceso)              | Medida Implementada o Decisión Tomada en Código                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :---------------------------------------- | :---------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Autenticación y Control de Acceso**     | **Acceso No Autorizado / Gestión de Sesión**    | Sistema de autenticación propio en `src/lib/auth/session.ts`: tokens JWT ligeros firmados con **HMAC-SHA256** y comparación en tiempo constante (`timingSafeEqual`) para prevenir timing attacks. Ciclo completo: `/api/auth/login`, `/register`, `/logout`, `/me`. Los endpoints sensibles (`/api/bookings`, `/api/profile/*`) verifican sesión activa con `getAuthSession()` antes de cualquier operación. Token almacenado en cookie `aomori_auth_token` con `httpOnly: true`, `secure: true` en producción y expiración de 7 días. Las reservas se vinculan al `userId` autenticado. |
+| **Fuerza Bruta y Abuso de Endpoints**     | **OWASP API4 — Falta de Rate Limiting**         | Rate limiter en memoria implementado en `src/lib/security/rate-limit.ts` (sin dependencias externas, `Map` nativo de Node.js). Límites aplicados: `/api/auth/login`: **5 intentos/min por IP** (anti-brute-force de credenciales); `/api/bookings`: **5 requests/min por IP** (previene booking flooding); `/api/agent/chat`: **15 requests/min por IP** (protege el endpoint más costoso: LLM + DB). Devuelve HTTP 429 con header `Retry-After` conforme a RFC 7231.                                                                                                                    |
+| **Inyección de Prompt en el Agente IA**   | **OWASP LLM01 (Prompt Injection & Jailbreaks)** | Barrera perimetral en `src/lib/agent/guardrails.ts`: regex que detecta patrones de escape (`ignore previous instructions`, `bypass`, `system prompt dump`, `dan mode`, `jailbreak`). Aborta la llamada al LLM antes de enviar tokens si se detecta amenaza. Limitación reconocida: la sanitización regex es evadible por parafraseo. Para producción a escala, complementar con clasificación semántica de intenciones.                                                                                                                                                                  |
+| **Exposición de Credenciales y Secretos** | **Secretos en Código / Fuga de Entorno**        | Todas las API keys y claves de firma residen en variables de entorno (`.env.local`). El `.gitignore` excluye `.env*`. Las rutas de API de Next.js actúan como proxy perimetral: el navegador nunca accede directamente a los proveedores de IA. Headers HTTP de seguridad activados en `next.config.ts`: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` y `Content-Security-Policy`.                                                                                                                                                |
+| **Falsificación de Vouchers Offline**     | **Integridad de Datos / Falsificación**         | Cada voucher generado en `/api/bookings` incluye una firma **HMAC-SHA256 real** calculada con `createHmac("sha256", VOUCHER_HMAC_SECRET)` sobre la cadena `bookingCode\|email\|packId\|totalPriceUsd`. La clave secreta se gestiona en variables de entorno. Esto garantiza que el payload del QR no puede ser alterado sin invalidar la firma — verificable matemáticamente offline sin conexión a internet.                                                                                                                                                                            |
+| **Exposición de PII y Datos de Pago**     | **PCI-DSS Req 3 / Privacidad (PII Mínima)**     | Módulo de tokenización en `src/lib/security/tokenization.ts`: implementa validación por algoritmo de Luhn, detección de marca BIN y generación de `vaultToken` opaco con entropía criptográfica (`crypto.randomBytes`). Nunca se persiste el PAN completo ni el CVV. Solo se almacenan los últimos 4 dígitos (`last4`) para referencia visual del titular (PCI-DSS Req 3.3). Los datos de pasaporte se enmascaran mediante `maskPassport()` antes de cualquier log o respuesta.                                                                                                          |
 
 ---
 

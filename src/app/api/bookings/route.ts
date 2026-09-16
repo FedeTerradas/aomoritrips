@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import QRCode from "qrcode";
+import { createHmac } from "crypto";
 import { getAuthSession } from "@/lib/auth/session";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
 const CreateBookingSchema = z.object({
   packId: z.string().min(1),
@@ -41,6 +43,24 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Rate limiting: máx 5 reservas por IP por minuto
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(ip, "bookings", { max: 5 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Demasiadas solicitudes. Intenta en un momento.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const parsed = CreateBookingSchema.safeParse(body);
@@ -71,7 +91,16 @@ export async function POST(request: Request) {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const bookingCode = `AOM-2026-JP${randomSuffix}`;
 
-    // Payload de validación offline
+    // Firma HMAC-SHA256 del voucher — infalsificable sin la clave secreta
+    // ⚠️ [REVISIÓN HUMANA]: verificar que VOUCHER_HMAC_SECRET esté en .env.local
+    const VOUCHER_SECRET =
+      process.env.VOUCHER_HMAC_SECRET ??
+      "aomori-voucher-fallback-key-2026-utn-dev-only";
+    const hmacSignature = createHmac("sha256", VOUCHER_SECRET)
+      .update(`${bookingCode}|${travelerEmail}|${packId}|${totalPriceUsd}`)
+      .digest("hex");
+
+    // Payload de validación offline — la firma garantiza autenticidad sin conexión
     const voucherPayload = {
       app: "AomoriTrips",
       bookingCode,
@@ -81,9 +110,7 @@ export async function POST(request: Request) {
       passengers: travelersCount,
       season: seasonSelected,
       totalUsd: totalPriceUsd,
-      securityDigest: Buffer.from(`${bookingCode}-${travelerEmail}`).toString(
-        "base64"
-      ),
+      hmacSignature, // HMAC-SHA256 real, no base64 invertible
     };
 
     // Generar Data URL del código QR para renderizado inmediato y guardado offline

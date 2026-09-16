@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth/passwords";
 import { signAuthToken, AUTH_COOKIE_NAME } from "@/lib/auth/session";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
 const LoginSchema = z.object({
   email: z.string().email("Correo electrónico inválido").toLowerCase().trim(),
@@ -10,6 +11,25 @@ const LoginSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  // Protección anti-brute-force: máx 5 intentos de login por IP por minuto
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(ip, "login", { max: 5 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Demasiados intentos. Espera un momento antes de intentar de nuevo.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const parsed = LoginSchema.safeParse(body);
