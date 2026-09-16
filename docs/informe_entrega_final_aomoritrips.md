@@ -368,10 +368,66 @@ A continuación se transcribe la traza de ejecución real registrada en la base 
     }
   ],
   "agentReply": "¡Konnichiwa! Viajar a Aomori en agosto es una de las experiencias más intensas y emocionantes que podrás vivir en Japón. Durante esas fechas la ciudad vibra con el legendario **Festival Nebuta Matsuri**, donde colosales carrozas de papel washi iluminadas por fuego recorren las calles al son de tambores taiko.\n\nPara viajar con tu pareja (2 personas), te recomiendo nuestro paquete cerrado **'Festival de Fuego Nebuta Matsuri & Costa Sanriku' (6 días / 5 noches)**:\n- **Tarifa Base**: $1,650 USD por persona.\n- **Total Final para 2 viajeros**: **$3,564 USD** (incluye vuelos internos, asientos reservados en gradas VIP, ryokan con baños onsen y tasas aéreas).\n\n¿Te gustaría que reservemos las fechas de agosto o preferís revisar el itinerario día por día?"
-}
 ```
 
----
+### 4.4. Verificación Automatizada y Batería de Pruebas (Suite de Tests)
+
+Para garantizar que cada salvaguarda de seguridad, cálculo de negocio y costura de inferencia sea verificable de forma independiente y reproducible por la cátedra, el proyecto cuenta con una suite completa de pruebas unitarias y de integración ejecutables con `npm test`:
+
+```text
+> aomoritrips@0.1.0 test
+> tsx --test tests/**/*.test.ts
+
+✔ Ciberseguridad: el guardrail bloquea intentos de Prompt Injection (2.9ms)
+✔ Herramientas: toolCalculatePricing calcula desglose transparente sin cargos ocultos (18.6ms)
+✔ Herramientas: toolGetSeasonalForecast entrega datos auténticos de Aomori (0.8ms)
+✔ Herramientas: toolCreateItineraryDraft genera itinerario día por día estructurado (0.4ms)
+✔ Inference Seam: el orquestador garantiza respuesta sin fallar en entornos aislados (80.9ms)
+✔ Ciberseguridad Auth: hashing y verificación criptográfica con scrypt (96.3ms)
+✔ Ciberseguridad Auth: tokens JWT ligeros con HMAC-SHA256 (0.9ms)
+✔ Vouchers: la librería QRCode genera data URL en formato PNG válido con colores de Aomori (29.1ms)
+✔ Seguridad y Transparencia: el código de reserva tiene prefijo AOM-2026 (0.4ms)
+✔ Favoritos: manipulación idempotente de lista de IDs en memoria (2.4ms)
+✔ Perfil: configuración por defecto según prototipo Figma de Unidad 4 (0.3ms)
+✔ Perfil: fusión segura de actualizaciones parciales (0.2ms)
+✔ i18n: Paridad total y completitud de claves entre idiomas ES, EN y JA (1.8ms)
+✔ Validación Zod: CreatePackSchema valida paquetes turísticos correctamente (3.8ms)
+✔ Rate Limit: permite requests dentro del límite configurado (1.5ms)
+✔ Rate Limit: bloquea al superar el límite con HTTP 429 (0.4ms)
+✔ Rate Limit: decrece correctamente el contador de remaining (0.2ms)
+✔ Rate Limit: ventanas de distintos prefijos son independientes (0.2ms)
+✔ Rate Limit: distintas IPs tienen ventanas independientes (0.3ms)
+✔ Rate Limit: resetAt es un timestamp Unix futuro válido en ms (0.2ms)
+✔ getClientIp: extrae la primera IP del header x-forwarded-for (24.3ms)
+✔ getClientIp: usa x-real-ip cuando x-forwarded-for no está presente (0.4ms)
+✔ getClientIp: devuelve 'unknown' cuando no hay headers de IP (0.3ms)
+✔ Voucher HMAC: la firma no es base64 simple (no invertible con atob) (1.0ms)
+✔ Voucher HMAC: la misma entrada produce siempre la misma firma (determinístico) (0.5ms)
+✔ Voucher HMAC: modificar cualquier campo del payload invalida la firma (0.2ms)
+✔ Voucher HMAC: una clave diferente produce una firma completamente distinta (0.3ms)
+✔ Voucher HMAC: el campo 'bookingCode' en el payload es el prefijo AOM-2026-JP (0.3ms)
+✔ Rate Limit RED: la ventana expira según windowMs configurado (63.5ms)
+✔ Rate Limit RED: resetAt permite calcular Retry-After en segundos enteros positivos (0.4ms)
+✔ getClientIp RED: limpia espacios extra en x-forwarded-for (22.4ms)
+✔ Voucher HMAC RED: el digest siempre tiene exactamente 64 caracteres hex (SHA-256) (0.7ms)
+✔ Rate Limit RED: los contadores de login y bookings son completamente aislados (0.2ms)
+✔ Ciberseguridad PCI-DSS: detección de marcas de tarjetas (BIN detection) (0.8ms)
+✔ Ciberseguridad PCI-DSS: Algoritmo de Luhn (Módulo 10) (0.2ms)
+✔ Ciberseguridad PCI-DSS v4.0: Bóveda de Tokenización nunca almacena PAN en texto plano (0.4ms)
+✔ Ciberseguridad PCI-DSS: Rechazo de longitud inválida en tokenización (0.6ms)
+✔ Ciberseguridad PII: Enmascaramiento seguro de pasaporte (0.2ms)
+✔ Ciberseguridad Zod: Validación estricta de payloads para vinculación de tarjeta (3.0ms)
+✔ Ciberseguridad Zod: Validación de actualización de perfil (0.8ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ duration_ms 1590.5ms
+```
+
+Estado: **40/40 pruebas aprobadas (100% pass rate)**.
+
+````
 
 ## Sección 5 · Evaluación UX/UI
 
@@ -455,7 +511,7 @@ En línea con la filosofía del protocolo **`ia-cowork-review`**, la inteligenci
 
 ### 7.3. Reflexión Crítica Obligatoria (Consigna Oficial UTN.BA)
 
-> **Reflexión obligatoria**:  
+> **Reflexión obligatoria**:
 > El co-work con Inteligencia Artificial redujo a menos de un tercio el tiempo necesario para desarrollar una aplicación completa: hubiera sido prácticamente imposible estructurar en los plazos del curso una arquitectura con Next.js 16, orquestador agéntico con loop de decisión, integración de Prisma con SQLite, validación de esquemas Zod, generación de QR dinámicos y diseño responsivo sin la asistencia continua de modelos generativos. Sin embargo, la experiencia demostró fehacientemente que la IA carece de criterio estético global y coherencia de estado si no es supervisada con rigor: la IA asumió atajos inaceptables como dejar botones de favoritos puramente cosméticos sin persistencia de datos, saturó el layout con tarjetas sobredimensionadas que arruinaban la usabilidad móvil, y omitió componentes estructurales como la pantalla de Perfil. La intervención humana crítica fue el factor determinante que transformó un conjunto de fragmentos de código autogenerados en un producto de software robusto, auditable, accesible y fiel a las especificaciones originales.
 
 ---
@@ -517,7 +573,7 @@ En Aomori durante el invierno (diciembre a marzo), recomiendo tres lugares extra
    con raquetas de nieve.
 
 ¿Te gustaría información sobre el transporte en tren Shinkansen hacia la estación Shin-Aomori?
-```
+````
 
 - **Parámetros de Inferencia**: Temperature = `0.3`, Context Size = `2048`, Formato = GGUF Q4_K_M.
 - **Rendimiento Observado**: 42.8 tokens/segundo sobre CPU/GPU local, tiempo de primera respuesta < 600 ms, sin conexión a internet activa.
