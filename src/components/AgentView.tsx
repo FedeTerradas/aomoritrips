@@ -10,6 +10,11 @@ interface ChatMessage {
   content: string;
   toolsExecuted?: string[];
   decisionSteps?: AgentDecisionStep[];
+  inferenceSource?: {
+    provider: string;
+    model: string;
+    latencyMs?: number;
+  };
   timestamp: string;
 }
 
@@ -20,7 +25,7 @@ export const AgentView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showTechnicalInspector, setShowTechnicalInspector] = useState(false);
   const [selectedSteps, setSelectedSteps] = useState<AgentDecisionStep[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let token = localStorage.getItem("aomori_session_token");
@@ -45,7 +50,12 @@ export const AgentView: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages, isLoading]);
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -89,6 +99,7 @@ export const AgentView: React.FC = () => {
         content: agentData.reply,
         toolsExecuted: agentData.toolsExecuted,
         decisionSteps: agentData.decisionSteps,
+        inferenceSource: agentData.inferenceSource,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -194,7 +205,7 @@ export const AgentView: React.FC = () => {
           </div>
 
           {/* Lista de Mensajes */}
-          <div style={styles.messagesList}>
+          <div ref={messagesContainerRef} style={styles.messagesList}>
             {messages.map((m) => {
               const isUser = m.role === "user";
               return (
@@ -226,17 +237,33 @@ export const AgentView: React.FC = () => {
                       ))}
                     </div>
 
-                    {/* Tags sutiles de herramientas */}
-                    {m.toolsExecuted && m.toolsExecuted.length > 0 && (
+                    {/* Tags sutiles de motor de inferencia y herramientas */}
+                    {(m.inferenceSource ||
+                      (m.toolsExecuted && m.toolsExecuted.length > 0)) && (
                       <div style={styles.toolsBar}>
-                        <span style={styles.toolsCaption}>
-                          Datos consultados:
-                        </span>
-                        {m.toolsExecuted.map((t, ti) => (
-                          <span key={ti} style={styles.toolPill}>
-                            ✓ {t}
+                        {m.inferenceSource && (
+                          <span style={styles.inferencePill}>
+                            ⚡{" "}
+                            {m.inferenceSource.provider === "ollama-slm"
+                              ? `Ollama SLM (${m.inferenceSource.model})`
+                              : m.inferenceSource.provider === "cloud-llm"
+                                ? `Cloud LLM (${m.inferenceSource.model})`
+                                : "Motor Determinístico Aomori"}
+                            {m.inferenceSource.latencyMs
+                              ? ` · ${m.inferenceSource.latencyMs}ms`
+                              : ""}
                           </span>
-                        ))}
+                        )}
+                        {m.toolsExecuted && m.toolsExecuted.length > 0 && (
+                          <>
+                            <span style={styles.toolsCaption}>Datos:</span>
+                            {m.toolsExecuted.map((t, ti) => (
+                              <span key={ti} style={styles.toolPill}>
+                                ✓ {t}
+                              </span>
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -255,7 +282,6 @@ export const AgentView: React.FC = () => {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Campo de Entrada */}
@@ -514,6 +540,15 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "2px 8px",
     borderRadius: "4px",
     fontWeight: 600,
+  },
+  inferencePill: {
+    fontSize: "0.7rem",
+    backgroundColor: "rgba(249, 115, 22, 0.12)",
+    border: "1px solid rgba(249, 115, 22, 0.35)",
+    color: "var(--color-sun-orange)",
+    padding: "2px 8px",
+    borderRadius: "4px",
+    fontWeight: 700,
   },
   loadingContainer: {
     display: "flex",

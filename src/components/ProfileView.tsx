@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useProfile } from "@/hooks/useProfile";
 import { useFavorites } from "@/hooks/useFavorites";
-import { PaymentCardInfo } from "@/lib/profile";
+import { useTravelerDisplay } from "@/hooks/useTravelerDisplay";
+import { useI18n } from "@/i18n/I18nContext";
+import { AuthModal } from "./AuthModal";
+import { PaymentCardInfo, Currency } from "@/lib/profile";
+import { useBookings } from "@/lib/bookings-context";
 
 interface ProfileViewProps {
   onGoToWallet: () => void;
@@ -14,11 +17,27 @@ interface ProfileViewProps {
 export const ProfileView: React.FC<ProfileViewProps> = ({
   onGoToWallet,
   onGoToExploreFavorites,
-  bookingsCount = 0,
 }) => {
-  const { profile, updateProfile, resetProfile } = useProfile();
+  // Fuente única de verdad: mismo contexto que WalletView
+  const { confirmedCount } = useBookings();
+  const {
+    isGuest,
+    displayName,
+    displayAvatar,
+    displayTrips,
+    displayCountries,
+    displayKilometers,
+    displayLevel,
+    profile,
+    updateProfile,
+    resetProfile,
+    user,
+    stats,
+  } = useTravelerDisplay(confirmedCount);
   const { favoritesCount } = useFavorites();
+  const { t, language, setLanguage } = useI18n();
 
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile.name);
   const [saveFeedback, setSaveFeedback] = useState("");
@@ -32,26 +51,81 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [isTokenizing, setIsTokenizing] = useState(false);
   const [cardError, setCardError] = useState("");
 
+  // Estado para abrir el form de tarjeta post-login
+  const [pendingOpenCard, setPendingOpenCard] = useState(false);
+
+  // Handler para el botón de vincular tarjeta: requiere login (industria turismo)
+  const handleAddCardClick = () => {
+    if (!user) {
+      // Guardar intención de abrir el form luego del login
+      setPendingOpenCard(true);
+      setIsAuthModalOpen(true);
+    } else {
+      setIsAddCardOpen(true);
+    }
+  };
+
+  // Callback post-login: si tenía pendiente abrir el form de tarjeta, abrirlo
+  const handleAuthSuccess = () => {
+    if (pendingOpenCard) {
+      setPendingOpenCard(false);
+      setIsAddCardOpen(true);
+    }
+  };
+
   const showFeedback = (msg: string) => {
     setSaveFeedback(msg);
     setTimeout(() => setSaveFeedback(""), 3500);
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (nameInput.trim()) {
-      updateProfile({ name: nameInput.trim() });
+      const trimmed = nameInput.trim();
+      updateProfile({ name: trimmed });
       setIsEditingName(false);
       showFeedback("Nombre actualizado exitosamente");
+
+      try {
+        const sessionToken =
+          localStorage.getItem("aomori_session_token") ||
+          "sess_default_traveler";
+        await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionToken,
+            fullName: trimmed,
+          }),
+        });
+      } catch (err) {
+        console.warn("No se pudo sincronizar nombre con el servidor:", err);
+      }
     }
   };
 
-  const handleCurrencyChange = (curr: string) => {
+  const handleCurrencyChange = async (curr: Currency) => {
     updateProfile({ currency: curr });
     showFeedback(`Divisa preferida: ${curr}`);
+
+    try {
+      const sessionToken =
+        localStorage.getItem("aomori_session_token") || "sess_default_traveler";
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionToken,
+          preferredCurrency: curr,
+        }),
+      });
+    } catch (err) {
+      console.warn("No se pudo sincronizar divisa con el servidor:", err);
+    }
   };
 
   const handleLanguageChange = (lang: "ES" | "EN" | "JA") => {
     updateProfile({ language: lang });
+    setLanguage(lang);
     showFeedback(
       `Idioma cambiado a: ${
         lang === "ES" ? "Español" : lang === "EN" ? "English" : "日本語"
@@ -59,17 +133,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     );
   };
 
-  const handlePassportEdit = (
+  const handlePassportEdit = async (
     field: "number" | "expiry" | "nationality",
     val: string
   ) => {
+    const updatedPassport = {
+      ...profile.passport,
+      [field]: val,
+    };
     updateProfile({
-      passport: {
-        ...profile.passport,
-        [field]: val,
-      },
+      passport: updatedPassport,
     });
     showFeedback("Datos de pasaporte actualizados");
+
+    try {
+      const sessionToken =
+        localStorage.getItem("aomori_session_token") || "sess_default_traveler";
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionToken,
+          passportNumber: updatedPassport.number,
+          passportExpiry: updatedPassport.expiry,
+          nationality: updatedPassport.nationality,
+        }),
+      });
+    } catch (err) {
+      console.warn("No se pudo sincronizar pasaporte con el servidor:", err);
+    }
   };
 
   const handleLinkCard = async (e: React.FormEvent) => {
@@ -132,17 +224,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
-  const totalTrips = bookingsCount > 0 ? bookingsCount : profile.tripsCount;
-
   return (
     <div style={styles.viewWrapper} className="animate-fade-in">
       {/* CABECERA AZUL AOMORI (Figma Mockup aomoritrips_perfil.png) */}
       <section style={styles.headerSection}>
         <div className="container" style={styles.headerContainer}>
           <div style={styles.userRow}>
-            {/* Avatar Kanji 花 */}
+            {/* Avatar Kanji 花 o Inicial */}
             <div style={styles.avatarCircle} title="Avatar de Viajero">
-              <span style={styles.avatarKanji}>{profile.avatarKanji}</span>
+              <span style={styles.avatarKanji}>{displayAvatar}</span>
             </div>
 
             <div style={styles.userInfo}>
@@ -150,7 +240,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <div style={styles.nameEditRow}>
                   <input
                     type="text"
-                    value={nameInput}
+                    placeholder="Invitado"
+                    value={
+                      nameInput === "Hana Yamamoto" ? "Invitado" : nameInput
+                    }
                     onChange={(e) => setNameInput(e.target.value)}
                     style={styles.nameInput}
                     autoFocus
@@ -161,7 +254,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <button
                     style={styles.nameCancelBtn}
                     onClick={() => {
-                      setNameInput(profile.name);
+                      setNameInput(displayName);
                       setIsEditingName(false);
                     }}
                   >
@@ -170,11 +263,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
               ) : (
                 <div style={styles.nameDisplayRow}>
-                  <h1 style={styles.userName}>{profile.name}</h1>
+                  <h1 style={styles.userName}>{displayName}</h1>
                   <button
                     style={styles.editIconBtn}
                     onClick={() => {
-                      setNameInput(profile.name);
+                      setNameInput(displayName);
                       setIsEditingName(true);
                     }}
                     title="Editar nombre"
@@ -185,23 +278,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               )}
 
               <div style={styles.badgeRow}>
-                <span style={styles.statusBadge}>{profile.statusLevel}</span>
+                <span style={styles.statusBadge}>{displayLevel}</span>
               </div>
             </div>
           </div>
 
-          {/* 3 Estadísticas del Viajero */}
+          {/* 3 Estadísticas Dinámicas del Viajero */}
           <div style={styles.statsGrid}>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{totalTrips}</div>
+              <div style={styles.statNumber}>{displayTrips}</div>
               <div style={styles.statLabel}>Viajes</div>
             </div>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{profile.countriesCount}</div>
+              <div style={styles.statNumber}>{displayCountries}</div>
               <div style={styles.statLabel}>Países</div>
             </div>
             <div style={styles.statCard}>
-              <div style={styles.statNumber}>{profile.kilometersCount}</div>
+              <div style={styles.statNumber}>{displayKilometers}</div>
               <div style={styles.statLabel}>km</div>
             </div>
           </div>
@@ -223,6 +316,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* CUERPO CON TARJETAS DE CONFIGURACIÓN */}
       <main className="container" style={styles.contentContainer}>
+        {/* Banner de Invitado si no está autenticado */}
+        {!user && (
+          <div style={styles.authBanner}>
+            <div style={styles.authBannerContent}>
+              <span style={styles.authBannerIcon}>🔐</span>
+              <div>
+                <div style={styles.authBannerTitle}>
+                  Modo Explorador Invitado
+                </div>
+                <div style={styles.authBannerDesc}>
+                  Inicia sesión o crea tu cuenta para vincular tus reservas,
+                  pasaporte y sumar kilómetros reales de viaje a tu perfil.
+                </div>
+              </div>
+            </div>
+            <button
+              style={styles.authBannerBtn}
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Iniciar Sesión / Registro
+            </button>
+          </div>
+        )}
+
         {saveFeedback && (
           <div style={styles.feedbackToast} className="animate-fade-in">
             <span>{saveFeedback}</span>
@@ -236,10 +353,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <span style={styles.cardIcon}>💳</span>
               <span>Método de Pago (Bóveda Segura)</span>
             </div>
-            <button
-              style={styles.addCardBtn}
-              onClick={() => setIsAddCardOpen(true)}
-            >
+            <button style={styles.addCardBtn} onClick={handleAddCardClick}>
               + Vincular Tarjeta
             </button>
           </div>
@@ -373,7 +487,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 { id: "JA", label: "日本語" },
               ] as const
             ).map((lang) => {
-              const isActive = profile.language === lang.id;
+              const isActive = language === lang.id;
               return (
                 <button
                   key={lang.id}
@@ -538,11 +652,72 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       )}
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingOpenCard(false); // Si cancela el login, limpiar la intención
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
+  authBanner: {
+    backgroundColor: "#EFF6FF",
+    border: "1px solid #BFDBFE",
+    borderRadius: "12px",
+    padding: "16px 20px",
+    marginBottom: "24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "16px",
+    flexWrap: "wrap",
+    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.08)",
+  },
+  authBannerContent: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    flex: 1,
+    minWidth: "260px",
+  },
+  authBannerIcon: {
+    fontSize: "1.8rem",
+    backgroundColor: "#DBEAFE",
+    padding: "8px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authBannerTitle: {
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    color: "#1E40AF",
+    marginBottom: "2px",
+  },
+  authBannerDesc: {
+    fontSize: "0.82rem",
+    color: "#3B82F6",
+    lineHeight: "1.4",
+  },
+  authBannerBtn: {
+    backgroundColor: "#1C4F7C",
+    color: "#FFFFFF",
+    border: "none",
+    padding: "10px 18px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(28, 79, 124, 0.25)",
+    whiteSpace: "nowrap",
+  },
   viewWrapper: {
     minHeight: "100vh",
     backgroundColor: "var(--color-washi-cream)",
@@ -866,7 +1041,7 @@ const styles: Record<string, React.CSSProperties> = {
   currencyPillActive: {
     backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    borderColor: "var(--color-aomori-blue)",
+    border: "1px solid var(--color-aomori-blue)",
     boxShadow: "0 2px 8px rgba(28, 79, 124, 0.25)",
   },
   securityNotice: {
@@ -887,13 +1062,12 @@ const styles: Record<string, React.CSSProperties> = {
   securityNoticeText: {
     fontSize: "0.78rem",
     color: "#0369A1",
-    lineHeight: 1.45,
+    lineHeight: 1.5,
   },
   languageRow: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "12px",
-    paddingTop: "6px",
+    gap: "10px",
   },
   langBtn: {
     padding: "14px",
@@ -910,7 +1084,7 @@ const styles: Record<string, React.CSSProperties> = {
   langBtnActive: {
     backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    borderColor: "var(--color-aomori-blue)",
+    border: "1px solid var(--color-aomori-blue)",
     boxShadow: "0 4px 14px rgba(28, 79, 124, 0.3)",
     transform: "translateY(-1px)",
   },

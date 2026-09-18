@@ -3,11 +3,17 @@
 import React, { useState } from "react";
 import { CharacterDisplay } from "./CharacterDisplay";
 
+export type BudgetFilter = "all" | "under2500" | "2500-3000" | "over3000";
+
 interface HeroBannerProps {
   selectedSeason: string;
   setSelectedSeason: (season: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  selectedBudget: BudgetFilter;
+  setSelectedBudget: (budget: BudgetFilter) => void;
+  travelers: string;
+  setTravelers: (travelers: string) => void;
   onOpenSensei: () => void;
   favoritesCount?: number;
 }
@@ -17,11 +23,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   setSelectedSeason,
   searchQuery,
   setSearchQuery,
+  selectedBudget,
+  setSelectedBudget,
+  travelers,
+  setTravelers,
   onOpenSensei,
   favoritesCount = 0,
 }) => {
-  const [travelers, setTravelers] = useState<string>("2 adultos");
-
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const catalogElem = document.getElementById("catalog-section");
@@ -109,20 +117,21 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
           <div style={styles.segmentDivider} className="search-divider" />
 
-          {/* Segmento 2: Fechas / Temporada */}
+          {/* Segmento 2: Presupuesto por persona */}
           <div style={styles.searchSegment} className="search-segment">
-            <span style={styles.segmentLabel}>Temporada</span>
+            <span style={styles.segmentLabel}>Presupuesto</span>
             <select
-              value={selectedSeason}
-              onChange={(e) => setSelectedSeason(e.target.value)}
+              value={selectedBudget}
+              onChange={(e) =>
+                setSelectedBudget(e.target.value as BudgetFilter)
+              }
               style={styles.segmentSelect}
-              aria-label="Seleccionar temporada"
+              aria-label="Seleccionar rango de presupuesto"
             >
-              <option value="all">Todas las fechas</option>
-              <option value="sakura">🌸 Primavera (Sakura)</option>
-              <option value="nebuta">🏮 Verano (Nebuta)</option>
-              <option value="koyo">🍁 Otoño (Koyo)</option>
-              <option value="snow">❄️ Invierno (Nieve)</option>
+              <option value="all">Cualquier presupuesto</option>
+              <option value="under2500">Hasta $2.500 USD</option>
+              <option value="2500-3000">$2.500 - $3.000 USD</option>
+              <option value="over3000">Más de $3.000 USD (VIP)</option>
             </select>
           </div>
 
@@ -137,10 +146,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               style={styles.segmentSelect}
               aria-label="Cantidad de viajeros"
             >
-              <option value="1 adulto">1 adulto</option>
-              <option value="2 adultos">2 adultos</option>
-              <option value="Grupo (3-5)">Grupo (3-5)</option>
-              <option value="Familia">Familia</option>
+              <option value="all">Cualquier grupo</option>
+              <option value="1">1 adulto (Solo)</option>
+              <option value="2">2 adultos (Pareja)</option>
+              <option value="group">Grupo o Familia (3+)</option>
             </select>
           </div>
 

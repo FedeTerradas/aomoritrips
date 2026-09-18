@@ -1,11 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n/I18nContext";
+import { AuthModal } from "./AuthModal";
 
 interface NavbarProps {
-  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz";
+  activeTab: "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin";
   setActiveTab: (
-    tab: "explore" | "agent" | "wallet" | "profile" | "quiz"
+    tab: "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   ) => void;
   bookingsCount: number;
   favoritesCount: number;
@@ -21,6 +24,38 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoToFavorites,
   onOpenAuditModal,
 }) => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
+  const { t, language, setLanguage } = useI18n();
+
+  // Cerrar el menú desplegable al hacer clic fuera o presionar Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDropdownOpen]);
+
   return (
     <header style={styles.header}>
       <div className="container" style={styles.container}>
@@ -32,9 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               Aomori
               <span style={{ color: "var(--color-sun-orange)" }}>Trips</span>
             </div>
-            <div style={styles.brandTagline}>
-              Rutas Secretas del Japón Inexplorado
-            </div>
+            <div style={styles.brandTagline}>{t.nav.brandTagline}</div>
           </div>
         </div>
 
@@ -47,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("explore")}
           >
-            Packs
+            {t.nav.packs}
           </button>
 
           <button
@@ -57,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("agent")}
           >
-            Sensei IA
+            {t.nav.sensei}
           </button>
 
           <button
@@ -67,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("wallet")}
           >
-            Mis Billetes
+            {t.nav.wallet}
             {bookingsCount > 0 && (
               <span style={styles.badgeCount}>{bookingsCount}</span>
             )}
@@ -80,20 +113,119 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             onClick={() => setActiveTab("profile")}
           >
-            Perfil
+            {t.nav.profile}
           </button>
 
-          {/* Links a páginas independientes de Capa 1 & 2 */}
-          <a href="/quiz" style={{ ...styles.navLink, textDecoration: "none" }}>
-            🌸 Mi Japón
-          </a>
+          {/* Menú Desplegable "Más ▾" (🌸 Mi Japón, 🗺️ Armar Viaje, ⚙️ Admin) */}
+          <div ref={dropdownRef} style={{ position: "relative" }}>
+            <button
+              style={{
+                ...styles.navLink,
+                ...(activeTab === "admin"
+                  ? styles.navLinkActive
+                  : isDropdownOpen
+                    ? styles.navLinkDropdownOpen
+                    : {}),
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              aria-haspopup="true"
+              aria-expanded={isDropdownOpen}
+              title={t.nav.more}
+            >
+              <span>
+                {activeTab === "admin" ? `⚙️ ${t.nav.admin}` : t.nav.more}
+              </span>
+              <span
+                style={{
+                  display: "inline-block",
+                  fontSize: "0.6rem",
+                  transition: "transform 180ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                }}
+              >
+                ▼
+              </span>
+            </button>
 
-          <a
-            href="/itinerary-builder"
-            style={{ ...styles.navLink, textDecoration: "none" }}
-          >
-            🗺️ Armar Viaje
-          </a>
+            {isDropdownOpen && (
+              <div
+                style={styles.dropdownMenu}
+                role="menu"
+                className="animate-fade-in"
+              >
+                {/* 1. Mi Japón (Quiz interactivo) */}
+                <a
+                  href="/quiz"
+                  style={styles.dropdownItem}
+                  className="nav-dropdown-item"
+                  role="menuitem"
+                  onClick={() => setIsDropdownOpen(false)}
+                >
+                  <span style={styles.dropdownItemIcon}>🌸</span>
+                  <div style={styles.dropdownItemContent}>
+                    <div style={styles.dropdownItemTitle}>{t.nav.myJapan}</div>
+                    <div style={styles.dropdownItemDesc}>
+                      {t.nav.moreDescQuiz}
+                    </div>
+                  </div>
+                </a>
+
+                {/* 2. Armar Viaje (Itinerary Builder) */}
+                <a
+                  href="/itinerary-builder"
+                  style={styles.dropdownItem}
+                  className="nav-dropdown-item"
+                  role="menuitem"
+                  onClick={() => setIsDropdownOpen(false)}
+                >
+                  <span style={styles.dropdownItemIcon}>🗺️</span>
+                  <div style={styles.dropdownItemContent}>
+                    <div style={styles.dropdownItemTitle}>
+                      {t.nav.buildTrip}
+                    </div>
+                    <div style={styles.dropdownItemDesc}>
+                      {t.nav.moreDescBuilder}
+                    </div>
+                  </div>
+                </a>
+
+                {/* 3. Panel de Administración (Solo para rol ADMIN) */}
+                {user?.role === "ADMIN" && (
+                  <>
+                    <div style={styles.dropdownDivider} />
+                    <button
+                      style={{
+                        ...styles.dropdownItem,
+                        ...(activeTab === "admin"
+                          ? styles.dropdownItemActive
+                          : {}),
+                      }}
+                      className="nav-dropdown-item"
+                      role="menuitem"
+                      onClick={() => {
+                        setActiveTab("admin");
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      <span style={styles.dropdownItemIcon}>⚙️</span>
+                      <div style={styles.dropdownItemContent}>
+                        <div style={styles.dropdownItemTitleAdmin}>
+                          <span>{t.nav.admin}</span>
+                          <span style={styles.adminBadge}>ADMIN</span>
+                        </div>
+                        <div style={styles.dropdownItemDesc}>
+                          {t.nav.moreDescAdmin}
+                        </div>
+                      </div>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Acceso a Favoritos & Información Técnica / Rúbrica UTN */}
@@ -107,6 +239,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <span>❤️</span>
               <span style={styles.favNavCount}>{favoritesCount}</span>
+            </button>
+          )}
+
+          {/* Botón de Usuario o Login */}
+          {user ? (
+            <div style={styles.userChip}>
+              <button
+                style={styles.userProfileBtn}
+                onClick={() => setActiveTab("profile")}
+                title={`Perfil de ${user.name}`}
+              >
+                <span style={styles.userAvatarBadge}>
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span style={styles.userNameText}>
+                  {user.name.split(" ")[0]}
+                </span>
+              </button>
+              <button
+                style={styles.logoutBtn}
+                onClick={logout}
+                title="Cerrar sesión"
+              >
+                ↪
+              </button>
+            </div>
+          ) : (
+            <button
+              style={styles.loginBtn}
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Ingresar
             </button>
           )}
 
@@ -130,6 +294,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </header>
   );
 };
@@ -218,6 +387,98 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
     fontWeight: 700,
   },
+  navLinkDropdownOpen: {
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    color: "#FFFFFF",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "calc(100% + 10px)",
+    right: 0,
+    minWidth: "250px",
+    backgroundColor: "rgba(11, 34, 57, 0.97)",
+    backdropFilter: "blur(20px) saturate(180%)",
+    WebkitBackdropFilter: "blur(20px) saturate(180%)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    borderRadius: "14px",
+    padding: "8px",
+    boxShadow:
+      "0 18px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    zIndex: 150,
+  },
+  dropdownItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "9px 12px",
+    borderRadius: "10px",
+    textDecoration: "none",
+    color: "#F1F5F9",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    textAlign: "left",
+    width: "100%",
+    transition: "all 150ms ease",
+    boxSizing: "border-box",
+  },
+  dropdownItemActive: {
+    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    border: "1px solid rgba(56, 189, 248, 0.3)",
+  },
+  dropdownItemIcon: {
+    fontSize: "1.2rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "32px",
+    height: "32px",
+    borderRadius: "8px",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    flexShrink: 0,
+  },
+  dropdownItemContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+    flex: 1,
+  },
+  dropdownItemTitle: {
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color: "#FFFFFF",
+  },
+  dropdownItemTitleAdmin: {
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color: "#FCD34D",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  adminBadge: {
+    fontSize: "0.62rem",
+    fontWeight: 800,
+    letterSpacing: "0.5px",
+    backgroundColor: "rgba(245, 158, 11, 0.25)",
+    color: "#FDE68A",
+    border: "1px solid rgba(245, 158, 11, 0.5)",
+    padding: "1px 5px",
+    borderRadius: "4px",
+  },
+  dropdownItemDesc: {
+    fontSize: "0.72rem",
+    color: "#94A3B8",
+    lineHeight: 1.2,
+  },
+  dropdownDivider: {
+    height: "1px",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    margin: "4px 0",
+  },
   badgeCount: {
     backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
@@ -282,5 +543,65 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: "#34D399",
     boxShadow: "0 0 8px #34D399",
     flexShrink: 0,
+  },
+  loginBtn: {
+    backgroundColor: "var(--color-sun-orange)",
+    color: "#FFFFFF",
+    border: "none",
+    padding: "6px 16px",
+    borderRadius: "var(--radius-pill)",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(249, 115, 22, 0.3)",
+    transition: "transform 0.15s ease",
+  },
+  userChip: {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    borderRadius: "var(--radius-pill)",
+    padding: "3px 4px 3px 6px",
+    gap: "6px",
+  },
+  userProfileBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    background: "none",
+    border: "none",
+    color: "#FFFFFF",
+    cursor: "pointer",
+    padding: 0,
+  },
+  userAvatarBadge: {
+    width: "24px",
+    height: "24px",
+    borderRadius: "50%",
+    backgroundColor: "var(--color-sun-orange)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    color: "#FFFFFF",
+  },
+  userNameText: {
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    maxWidth: "80px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  logoutBtn: {
+    background: "none",
+    border: "none",
+    color: "rgba(255, 255, 255, 0.7)",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    padding: "2px 4px",
+    borderRadius: "4px",
   },
 };

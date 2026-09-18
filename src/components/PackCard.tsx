@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useProfile } from "@/hooks/useProfile";
+import { formatCurrencyPrice } from "@/lib/currency";
 
 export interface TravelPackData {
   id: string;
@@ -27,7 +29,12 @@ interface PackCardProps {
 
 export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { profile } = useProfile();
   const [isExpanded, setIsExpanded] = useState(false);
+  const priceMeta = formatCurrencyPrice(
+    pack.priceBaseUsd,
+    profile?.currency || "USD"
+  );
   const [favoriteAnim, setFavoriteAnim] = useState(false);
 
   const favActive = isFavorite(pack.id);
@@ -196,8 +203,8 @@ export const PackCard: React.FC<PackCardProps> = ({ pack, onSelectPack }) => {
           <div style={styles.priceContainer}>
             <span style={styles.priceLabel}>Precio por persona (Final):</span>
             <div style={styles.priceValue} className="pack-price-val-mobile">
-              ${pack.priceBaseUsd.toLocaleString()}{" "}
-              <span style={styles.currency}>USD</span>
+              {priceMeta.formatted}{" "}
+              <span style={styles.currency}>{priceMeta.suffix}</span>
             </div>
             <span style={styles.noHiddenFees}>
               ✓ Garantía sin costos ocultos

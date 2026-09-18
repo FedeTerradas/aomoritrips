@@ -5,20 +5,25 @@ import { TravelPackData } from "./PackCard";
 import { toolCalculatePricing } from "@/lib/agent/tools";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { formatCurrencyPrice } from "@/lib/currency";
 
 interface BookingModalProps {
   pack: TravelPackData | null;
   onClose: () => void;
-  onBookingSuccess: (booking: unknown) => void;
+  onBookingSuccess: (bookingData: unknown) => void;
+  onGoToProfile?: () => void;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   pack,
   onClose,
   onBookingSuccess,
+  onGoToProfile,
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { profile } = useProfile();
+  const { user, notifyAuthChange } = useAuth();
   const [travelersCount, setTravelersCount] = useState(2);
   const [travelDate, setTravelDate] = useState("2026-10-15");
   const [travelerName, setTravelerName] = useState("");
@@ -27,12 +32,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (profile?.name && !travelerName) {
+    if (user) {
+      if (!travelerName && user.name) setTravelerName(user.name);
+      if (!travelerEmail && user.email) setTravelerEmail(user.email);
+    } else if (profile?.name && !travelerName) {
       setTravelerName(profile.name);
     }
-  }, [profile]);
+  }, [user, profile]);
 
   if (!pack) return null;
+
+  // Guard: verificar si hay método de pago vinculado (industria estándar: Booking.com / AirBnb)
+  const hasPaymentMethod = Boolean(
+    profile?.paymentMethods?.length || profile?.paymentMethod?.vaultToken
+  );
 
   // Cálculo en vivo
   const quote = toolCalculatePricing(
@@ -52,6 +65,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const sessionToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("aomori_session_token") ||
+            "sess_default_traveler"
+          : "sess_default_traveler";
+
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,6 +83,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           travelDate,
           seasonSelected: pack.seasonLabel,
           totalPriceUsd: quote.grandTotalUsd,
+          sessionToken,
         }),
       });
 
@@ -72,6 +92,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         throw new Error(data.error || "No se pudo procesar la reserva.");
       }
 
+      notifyAuthChange();
       onBookingSuccess(data.data);
     } catch (err: unknown) {
       setErrorMessage(
@@ -193,7 +214,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div style={styles.breakdownBox}>
                 <div style={styles.breakdownRow}>
                   <span>Precio base por persona:</span>
-                  <strong>${quote.pricePerPersonUsd} USD</strong>
+                  <strong>
+                    {
+                      formatCurrencyPrice(
+                        quote.pricePerPersonUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.pricePerPersonUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
+                  </strong>
                 </div>
                 {quote.groupDiscountApplied !== "0%" && (
                   <div style={styles.breakdownRowDiscount}>
@@ -203,16 +237,53 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 )}
                 <div style={styles.breakdownRow}>
                   <span>Subtotal experiencias ({travelersCount} pax):</span>
-                  <span>${quote.subtotalUsd} USD</span>
+                  <span>
+                    {
+                      formatCurrencyPrice(
+                        quote.subtotalUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.subtotalUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
+                  </span>
                 </div>
                 <div style={styles.breakdownRow}>
                   <span>Tasas aéreas e impuestos locales (8%):</span>
-                  <span>${quote.taxesAndTransfersUsd} USD</span>
+                  <span>
+                    {
+                      formatCurrencyPrice(
+                        quote.taxesAndTransfersUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.taxesAndTransfersUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
+                  </span>
                 </div>
                 <div style={styles.totalRow}>
                   <span>TOTAL FINAL:</span>
                   <span style={styles.grandTotal}>
-                    ${quote.grandTotalUsd} USD
+                    {
+                      formatCurrencyPrice(
+                        quote.grandTotalUsd,
+                        profile?.currency || "USD"
+                      ).formatted
+                    }{" "}
+                    {
+                      formatCurrencyPrice(
+                        quote.grandTotalUsd,
+                        profile?.currency || "USD"
+                      ).suffix
+                    }
                   </span>
                 </div>
                 <div style={styles.guaranteeNote}>
@@ -259,17 +330,51 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   />
                 </div>
 
+                {/* Guard de pago: requiere tarjeta vinculada antes de confirmar */}
+                {!hasPaymentMethod && (
+                  <div style={styles.paymentGuardAlert}>
+                    <span>💳</span>
+                    <div>
+                      <strong>Método de pago requerido</strong>
+                      <p style={{ margin: "2px 0 0", fontSize: "0.78rem" }}>
+                        Vinculá una tarjeta en tu Perfil para poder confirmar la
+                        reserva.
+                      </p>
+                    </div>
+                    {onGoToProfile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onGoToProfile();
+                        }}
+                        style={styles.goToProfileBtn}
+                      >
+                        Ir a Perfil →
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !hasPaymentMethod}
                   style={{
                     ...styles.submitBtn,
+                    ...(!hasPaymentMethod ? styles.submitBtnDisabled : {}),
                     ...(isSubmitting ? { opacity: 0.6 } : {}),
                   }}
+                  title={
+                    !hasPaymentMethod
+                      ? "Vinculá una tarjeta en tu Perfil para continuar"
+                      : undefined
+                  }
                 >
                   {isSubmitting
                     ? "Generando Vouchers Offline..."
-                    : `Confirmar Reserva · $${quote.grandTotalUsd} USD`}
+                    : !hasPaymentMethod
+                      ? "Vinculá una tarjeta para continuar"
+                      : `Confirmar Reserva · $${quote.grandTotalUsd} USD`}
                 </button>
               </form>
             </div>
@@ -578,5 +683,35 @@ const styles: Record<string, React.CSSProperties> = {
     border: "none",
     cursor: "pointer",
     transition: "transform 150ms ease",
+  },
+  submitBtnDisabled: {
+    backgroundColor: "#94A3B8",
+    boxShadow: "none",
+    cursor: "not-allowed",
+  },
+  paymentGuardAlert: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+    backgroundColor: "#FFFBEB",
+    border: "1px solid #FCD34D",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    marginTop: "10px",
+    fontSize: "0.82rem",
+    color: "#92400E",
+  },
+  goToProfileBtn: {
+    marginLeft: "auto",
+    whiteSpace: "nowrap" as const,
+    backgroundColor: "#1C4F7C",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: "8px",
+    padding: "6px 12px",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    flexShrink: 0,
   },
 };

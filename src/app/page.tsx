@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
-import { HeroBanner } from "@/components/HeroBanner";
+import { HeroBanner, BudgetFilter } from "@/components/HeroBanner";
 import { PackCard, TravelPackData } from "@/components/PackCard";
 import { BookingModal } from "@/components/BookingModal";
 import { AgentView } from "@/components/AgentView";
@@ -13,21 +13,34 @@ import { BottomNav } from "@/components/BottomNav";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { FaqSection } from "@/components/FaqSection";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
 import { CharacterDisplay } from "@/components/CharacterDisplay";
+import { AdminPacksView } from "@/components/AdminPacksView";
+import { BookingsProvider, useBookings } from "@/lib/bookings-context";
 
 export default function HomePage() {
+  return (
+    <BookingsProvider>
+      <HomePageInner />
+    </BookingsProvider>
+  );
+}
+
+function HomePageInner() {
+  const { user } = useAuth();
+  const { confirmedCount, refresh: refreshBookings } = useBookings();
   const [activeTab, setActiveTab] = useState<
-    "explore" | "agent" | "wallet" | "profile" | "quiz"
+    "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   >("explore");
   const [packs, setPacks] = useState<TravelPackData[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("all");
+  const [selectedBudget, setSelectedBudget] = useState<BudgetFilter>("all");
+  const [travelers, setTravelers] = useState<string>("2 adultos");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPack, setSelectedPack] = useState<TravelPackData | null>(null);
-  const [bookingsCount, setBookingsCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { favorites, favoritesCount } = useFavorites();
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
 
   const fetchPacks = async () => {
     setIsLoading(true);
@@ -50,42 +63,54 @@ export default function HomePage() {
     }
   };
 
-  const fetchBookingsCount = async () => {
-    try {
-      const res = await fetch("/api/bookings");
-      const json = await res.json();
-      if (json.success && json.data) {
-        setBookingsCount(json.data.length);
-      }
-    } catch (e) {
-      console.error("Error al consultar reservas:", e);
+  useEffect(() => {
+    if (activeTab === "explore") {
+      fetchPacks();
     }
-  };
+  }, [activeTab, selectedSeason, searchQuery]);
 
+  // Garantizar que al cambiar de sección la vista comience siempre en la cima
   useEffect(() => {
-    fetchPacks();
-  }, [selectedSeason, searchQuery]);
-
-  useEffect(() => {
-    fetchBookingsCount();
-  }, []);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [activeTab]);
 
   const handleBookingSuccess = () => {
     setSelectedPack(null);
-    fetchBookingsCount();
+    refreshBookings();
     setActiveTab("wallet");
   };
 
   const handleGoToFavorites = () => {
     setActiveTab("explore");
     setSelectedSeason("favorites");
-    window.scrollTo({ top: 400, behavior: "smooth" });
+    setTimeout(() => {
+      const catalogEl = document.getElementById("catalog-section");
+      if (catalogEl) {
+        catalogEl.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.scrollTo({ top: 400, behavior: "smooth" });
+      }
+    }, 50);
   };
 
-  const displayedPacks =
-    selectedSeason === "favorites"
-      ? packs.filter((p) => favorites.includes(p.id))
-      : packs;
+  // Filtrado multi-dimensional dinámico: Temporada + Presupuesto + Favoritos
+  const displayedPacks = packs.filter((p) => {
+    if (selectedSeason === "favorites") {
+      if (!favorites.includes(p.id)) return false;
+    } else if (selectedSeason !== "all") {
+      if (p.seasonTag !== selectedSeason) return false;
+    }
+
+    if (selectedBudget === "under2500" && p.priceBaseUsd >= 2500) return false;
+    if (
+      selectedBudget === "2500-3000" &&
+      (p.priceBaseUsd < 2500 || p.priceBaseUsd > 3000)
+    )
+      return false;
+    if (selectedBudget === "over3000" && p.priceBaseUsd <= 3000) return false;
+
+    return true;
+  });
 
   return (
     <div style={styles.appWrapper} className="app-main-wrapper">
@@ -93,7 +118,7 @@ export default function HomePage() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        bookingsCount={bookingsCount}
+        bookingsCount={confirmedCount}
         favoritesCount={favoritesCount}
         onGoToFavorites={handleGoToFavorites}
         onOpenAuditModal={() => setIsAuditModalOpen(true)}
@@ -107,6 +132,10 @@ export default function HomePage() {
             setSelectedSeason={setSelectedSeason}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            selectedBudget={selectedBudget}
+            setSelectedBudget={setSelectedBudget}
+            travelers={travelers}
+            setTravelers={setTravelers}
             onOpenSensei={() => setActiveTab("agent")}
             favoritesCount={favoritesCount}
           />
@@ -187,6 +216,7 @@ export default function HomePage() {
                       style={styles.resetFiltersBtn}
                       onClick={() => {
                         setSelectedSeason("all");
+                        setSelectedBudget("all");
                         setSearchQuery("");
                       }}
                     >
@@ -263,8 +293,79 @@ export default function HomePage() {
         <ProfileView
           onGoToWallet={() => setActiveTab("wallet")}
           onGoToExploreFavorites={handleGoToFavorites}
-          bookingsCount={bookingsCount}
+          bookingsCount={confirmedCount}
         />
+      )}
+
+      {/* VISTA 5: Panel de Administración de Paquetes (Protegido por Rol) */}
+      {activeTab === "admin" && user?.role === "ADMIN" && (
+        <AdminPacksView
+          onBackToExplore={() => setActiveTab("explore")}
+          onPackCreated={() => {
+            fetchPacks();
+            setActiveTab("explore");
+          }}
+        />
+      )}
+
+      {/* Pantalla de Acceso Restringido para usuarios sin rol ADMIN */}
+      {activeTab === "admin" && user?.role !== "ADMIN" && (
+        <section
+          className="container animate-fade-in"
+          style={{ padding: "80px 24px", textAlign: "center" }}
+        >
+          <div
+            style={{
+              maxWidth: "520px",
+              margin: "0 auto",
+              backgroundColor: "#FFFFFF",
+              padding: "40px 32px",
+              borderRadius: "16px",
+              boxShadow: "var(--shadow-card)",
+              border: "1px solid var(--border-light)",
+            }}
+          >
+            <span style={{ fontSize: "3.2rem" }}>🛡️</span>
+            <h2
+              style={{
+                color: "var(--color-aomori-blue)",
+                marginTop: "16px",
+                marginBottom: "8px",
+                fontWeight: 800,
+              }}
+            >
+              Acceso Restringido (403)
+            </h2>
+            <p
+              style={{
+                color: "var(--color-text-muted)",
+                fontSize: "0.92rem",
+                lineHeight: 1.6,
+                marginBottom: "24px",
+              }}
+            >
+              Esta sección está reservada exclusivamente para el equipo de{" "}
+              <strong>Administración de AomoriTrips</strong>. Como usuario
+              estándar o invitado, no tienes permisos para dar de alta o
+              eliminar paquetes oficiales del catálogo.
+            </p>
+            <button
+              onClick={() => setActiveTab("explore")}
+              style={{
+                backgroundColor: "var(--color-aomori-blue)",
+                color: "#FFFFFF",
+                padding: "12px 28px",
+                borderRadius: "var(--radius-pill)",
+                fontWeight: 700,
+                fontSize: "0.9rem",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              ← Volver a Explorar Paquetes
+            </button>
+          </div>
+        </section>
       )}
 
       {/* Modal de Detalle y Checkout */}
@@ -272,6 +373,7 @@ export default function HomePage() {
         pack={selectedPack}
         onClose={() => setSelectedPack(null)}
         onBookingSuccess={handleBookingSuccess}
+        onGoToProfile={() => setActiveTab("profile")}
       />
 
       {/* Modal Académico UTN.BA */}
@@ -342,7 +444,7 @@ export default function HomePage() {
       <BottomNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        bookingsCount={bookingsCount}
+        bookingsCount={confirmedCount}
         onOpenAuditModal={() => setIsAuditModalOpen(true)}
       />
     </div>

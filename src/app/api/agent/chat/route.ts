@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { executeTravelAgent } from "@/lib/agent/orchestrator";
 import { z } from "zod";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
 const ChatRequestSchema = z.object({
   sessionToken: z.string().min(1, "Se requiere sessionToken"),
@@ -10,6 +11,25 @@ const ChatRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  // Rate limiting: máx 15 consultas al agente por IP por minuto
+  // (cada llamada invoca LLM + DB: la más costosa de la plataforma)
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(ip, "chat", { max: 15 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Límite de consultas alcanzado. Espera un momento.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const parsed = ChatRequestSchema.safeParse(body);

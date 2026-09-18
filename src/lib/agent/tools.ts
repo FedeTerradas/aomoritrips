@@ -18,9 +18,18 @@ export interface SearchPacksParams {
 }
 
 export async function toolSearchPacks(params: SearchPacksParams) {
-  const allPacks = await prisma.travelPack.findMany({
-    orderBy: { rating: "desc" },
-  });
+  let allPacks: Awaited<ReturnType<typeof prisma.travelPack.findMany>> = [];
+  try {
+    allPacks = await prisma.travelPack.findMany({
+      orderBy: { rating: "desc" },
+    });
+  } catch (err) {
+    console.warn(
+      "[toolSearchPacks] No se pudo consultar la base de datos:",
+      err
+    );
+    return [];
+  }
 
   return allPacks
     .filter((pack) => {

@@ -21,12 +21,11 @@
 
 > **Nota para el evaluador**: Conforme a la consigna oficial, este informe académico actúa como guía estructurada e índice técnico del trabajo real publicado y comprobable en los siguientes enlaces:
 
-| Recurso                            | URL Directa                                                                                        | Estado / Observación                                                |
-| :--------------------------------- | :------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------ |
-| **Repositorio GitHub**             | [https://github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Repositorio con historial de commits progresivos y hooks de Husky   |
-| **Aplicación Web en Producción**   | [https://aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en vivo en Vercel con SSR Next.js y base de datos activa |
-| **Video de Demostración**          | [https://youtu.be/placeholder-aomoritrips-demo](https://youtu.be/placeholder-aomoritrips-demo)     | Video demostrativo del flujo completo (3 a 5 minutos)               |
-| **Código y Memoria en Repo Local** | `E:\Curso IA\proyecto_final_curso\aomoritrips`                                                     | Entorno local auditado con SQLite y Ollama local                    |
+| Recurso                          | URL Directa                                                                                        | Estado / Observación                                                                          |
+| :------------------------------- | :------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| **Repositorio GitHub**           | [https://github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Repositorio público con historial de commits progresivos y hooks de Husky                     |
+| **Aplicación Web en Producción** | [https://aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en vivo en Vercel con SSR Next.js                                                  |
+| **Video de Demostración**        | _(pendiente de grabación — disponible para presentación en vivo)_                                  | Recorrido del flujo completo: Home → Chat con Aomori Sensei → Checkout → Billetera QR Offline |
 
 ---
 
@@ -118,60 +117,29 @@ Para evitar los vicios comunes de "cajas negras" o arquitecturas no defendibles,
    - **Nivel 1: LLM Probabilístico (Inferencia y Comprensión Semántica)**: Modelo de lenguaje responsable de comprender el lenguaje natural del viajero, extraer intenciones, mantener el tono cultural empático de Aomori y generar recomendaciones discursivas.
    - **Nivel 2: Orquestación Determinística-Puente (Control del Ciclo y Seguridad)**: Máquina de estados en TypeScript que administra el ciclo de vida del agente, aplica filtros anti-inyección, implementa el **Circuit Breaker** (con límite de iteraciones) y actúa como compuerta de autorización y validación previa a la ejecución de cualquier herramienta.
    - **Nivel 3: Herramientas de Negocio Determinísticas (Tools)**: Funciones puras que consultan el catálogo oficial, calculan presupuestos exactos sin margen de alucinación y formatean borradores de itinerarios.
-3. **Persistencia Relacional y Memoria Multi-Turno**: SQLite local operado a través de **Prisma ORM** con modo **Write-Ahead Logging (WAL)**, que garantiza lecturas concurrentes sin bloqueo y desacopla el motor relacional para permitir una migración directa a PostgreSQL/Supabase en producción.
+3. **Persistencia Relacional y Memoria Multi-Turno**: SQLite operado a través de **Prisma ORM** con modo **Write-Ahead Logging (WAL)**, que garantiza lecturas concurrentes sin bloqueo y persistencia ACID en el entorno de desarrollo y evaluación educativa de este proyecto. La elección de SQLite es deliberada para este alcance: un único archivo autocontenido (`prisma/dev.db`) elimina la latencia de red y permite auditar la base de datos directamente con herramientas locales. Para un despliegue en producción real, la capa de Prisma ORM actúa como costura de abstracción: cambiar el motor requiere únicamente modificar el `provider` y el `DATABASE_URL` en el `.env`, sin alterar la lógica de negocio.
 4. **Mecanismo de Firma y Modo Offline**: La validación en zonas montañosas de Tohoku sin conectividad satelital ni 4G/5G se resuelve mediante un **voucher digital firmado con HMAC-SHA256**. El payload del código QR contiene `{ id: orderId, pack: packSlug, pax: travelersCount, date: travelDate, hash: signature }`. La aplicación del anfitrión en el ryokan rural verifica la firma matemática localmente en menos de 1 milisegundo mediante **Web Crypto API**, garantizando autenticidad e inmutabilidad sin depender de internet.
 
 #### Diagrama 1: Arquitectura General y Bifurcación Online / Offline
 
-```mermaid
-flowchart TD
-  subgraph Cliente["1. Cliente Web / Móvil (Next.js 16)"]
-    UI["Catálogo, Chat Sensei & Checkout"]
-    WalletOffline["Billetera de Vouchers (Offline Cache / PWA)"]
-  end
+![Diagrama 1: Arquitectura General y Bifurcación Online / Offline](diagrams/arquitectura-general.visual-check.1440x900.light.png)
 
-  subgraph ServidorNext["2. Servidor Node.js (Next.js App Router)"]
-    API["API Routes (/api/packs, /api/bookings, /api/agent/chat)"]
-    Zod["Validación de Esquemas (Zod)"]
-    QRCodeGen["Motor Criptográfico & Generador QR"]
-  end
+> 🌐 **Visor Interactivo Autocontenido**: Puedes explorar, hacer zoom/pan, alternar tema oscuro/claro y trazar rutas de arquitectura abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 1 Interactivo (HTML Autocontenido)**](diagrams/arquitectura-general.html)
 
-  subgraph CapaIA["3. Capa de Inteligencia Artificial (3 Niveles)"]
-    LLM["Nivel 1: LLM Probabilístico (Inferencia y Razonamiento)"]
-    Orquestador["Nivel 2: Orquestación Determinística (Guardrails, Ciclo y Tool Auth)"]
-    Tools["Nivel 3: Tools de Negocio (Precios, Clima, Catálogo, Itinerario)"]
-  end
+<details>
+<summary>📋 Ver especificación fuente del diagrama</summary>
 
-  subgraph Persistencia["4. Persistencia Relacional"]
-    Prisma["Prisma ORM (Modo WAL)"]
-    DB[("SQLite: dev.db")]
-  end
+- **Especificación fuente**: [`docs/diagrams/src/arquitectura-general.architecture.json`](diagrams/src/arquitectura-general.architecture.json)
+- **Topología representada**: 5 capas (Cliente Next.js 16 SSR, Servidor Node.js + Zod, Capa IA de 3 niveles con Circuit Breaker, Persistencia Prisma/SQLite en modo WAL, Operación Offline con Web Crypto API).
 
-  subgraph ModoOffline["5. Operación en Campo (Sin Conectividad)"]
-    Guia["Terminal / App del Guía en Montaña"]
-    CryptoVerify["Verificación Matemática de Firma (Web Crypto API)"]
-  end
-
-  UI -->|Solicitudes HTTP / JSON| API
-  API --> Zod
-  Zod --> Orquestador
-  Orquestador <-->|Prompts & Tool Calls| LLM
-  Orquestador --> Tools
-  Tools --> Prisma
-  API --> QRCodeGen
-  QRCodeGen --> Prisma
-  Prisma <--> DB
-
-  QRCodeGen -.->|Descarga de Voucher Firmado| WalletOffline
-  WalletOffline -.->|Escaneo Óptico QR| Guia
-  Guia --> CryptoVerify
-```
+</details>
 
 ---
 
 ### 2.2. Ciclo de Decisión Agéntico (Loop del Aomori Sensei)
 
-El asistente _Aomori Sensei_ no opera como un simple chatbot de autocompletado probabilístico, sino como un **agente autónomo gobernado por software**. Para blindar el sistema contra costos descontrolados, bucles infinitos de llamadas a herramientas y alucinaciones de parámetros, el orquestador implementa una **doble frontera de seguridad**:
+El asistente _Aomori Sensei_ opera como un **agente único con ciclo de decisión gobernado por software** (no un sistema multi-agente). La distinción es deliberada y técnicamente relevante: concentrar la lógica en un agente único con control estricto del ciclo es más auditable, predecible y seguro que distribuirla en múltiples agentes coordinados. Para blindar el sistema contra costos descontrolados, bucles infinitos de llamadas a herramientas y alucinaciones de parámetros, el orquestador implementa una **doble frontera de seguridad**:
 
 1. **Primera Frontera (Input Guardrail)**: Sanitización regex y detección proactiva de inyecciones antes de enviar cualquier token al modelo.
 2. **Segunda Frontera (Tool Authorization & Validation)**: Antes de ejecutar cualquier función en el backend, el orquestador verifica que la herramienta solicitada esté en la lista blanca de permisos y que sus argumentos cumplan estrictamente el esquema de datos tipado (Zod).
@@ -183,30 +151,22 @@ Asimismo, el ciclo incorpora una compuerta explícita de **Control del Agente**:
 
 #### Diagrama 2: Ciclo de Decisión Agéntico Controlado
 
-```mermaid
-flowchart TD
-  A(["Inicio: Input del Usuario"]) --> B["Guardrail de Entrada (Filtro Anti-Inyección)"]
-  B -->|Peligro Detectado| B_Err["Rechazo Determinístico Inmediato"]
-  B -->|Entrada Segura| C["Carga de Memoria Persistente (AgentSession / SQLite)"]
-  C --> D["Inferencia y Decisión del Agente (LLM)"]
-  D --> E{"¿Requiere Tool Call?"}
+![Diagrama 2: Ciclo de Decisión Agéntico Controlado](diagrams/ciclo-agentico.visual-check.1440x900.light.png)
 
-  E -->|No / Respuesta Directa| H{"¿Tarea Finalizada?"}
-  E -->|Sí| F1["Tool Authorization (Verificación de permisos)"]
-  F1 --> F2["Tool Validation (Validación de parámetros con Zod)"]
-  F2 -->|Parámetros Inválidos| F_Err["Retroalimentación de Error al LLM"]
-  F_Err --> D
-  F2 -->|Válido| F3["Ejecución Determinística de la Herramienta (TypeScript)"]
-  F3 --> G["Incrementar Contador de Iteraciones (i = i + 1)"]
-  G --> I{"¿i >= MAX_ITERATIONS (3)?"}
-  I -->|Sí / Circuit Breaker| I_Fallback["Fallback Controlado (Degradación Elegante Washi)"]
-  I -->|No| D
+> 🌐 **Visor Interactivo Autocontenido**: Puedes explorar las fases del loop agéntico, activar la animación de traza y alternar vistas guiadas abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 2 Interactivo (HTML Autocontenido)**](diagrams/ciclo-agentico.html)
 
-  H -->|No| D
-  H -->|Sí| J["Verificación de Salida & Formato Visual"]
-  J --> K["Persistencia en SQLite (AgentMessage) & Retorno al Cliente"]
-  I_Fallback --> K
-```
+<details>
+<summary>📋 Ver especificación fuente del diagrama</summary>
+
+- **Especificación fuente**: [`docs/diagrams/src/ciclo-agentico.workflow.json`](diagrams/src/ciclo-agentico.workflow.json)
+- **Fases del ciclo gobernado**:
+  1. _Ingreso & Guardrail_: Sanitización perimetral regex contra Prompt Injection (OWASP LLM01).
+  2. _Memoria & Razonamiento_: Historial multi-turno de `AgentSession` + LLaMA 3.3 70B.
+  3. _Doble Frontera de Tool_: Lista blanca de herramientas + validación Zod de parámetros.
+  4. _Circuit Breaker_: Corte determinístico a las 3 iteraciones + fallback estructurado.
+
+</details>
 
 ---
 
@@ -218,108 +178,84 @@ Para satisfacer y superar los requerimientos de la cátedra de la UTN.BA, se inc
 
 Modela las entidades relacionales persistidas en `dev.db`, incluyendo las sesiones multi-turno del agente, las preferencias inferidas del viajero y las órdenes de reserva con firma criptográfica.
 
-```mermaid
-classDiagram
-  class TravelPack {
-    +String id
-    +String slug
-    +String title
-    +String description
-    +String heroImage
-    +Float priceBaseUsd
-    +String seasonTag
-    +Int durationDays
-    +String includedHighlights
-    +DateTime createdAt
-  }
+#### Diagrama 3a: Diagrama de Clases UML y Modelo de Dominio en Prisma
 
-  class BookingOrder {
-    +String id
-    +String packId
-    +String travelerName
-    +String travelerEmail
-    +Int travelersCount
-    +DateTime travelDate
-    +Float totalPriceUsd
-    +String status
-    +String qrCodeData
-    +String qrSignature
-    +DateTime createdAt
-  }
+![Diagrama 3a: Diagrama de Clases y Modelo de Dominio](diagrams/modelo-dominio.visual-check.1440x900.light.png)
 
-  class AgentSession {
-    +String id
-    +String userId
-    +DateTime startedAt
-    +DateTime lastActiveAt
-  }
+> 🌐 **Visor Interactivo Autocontenido**: Explora los bounded contexts, entidades relacionales y restricciones de integridad abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 3a Interactivo (HTML Autocontenido)**](diagrams/modelo-dominio.html)
 
-  class AgentMessage {
-    +String id
-    +String sessionId
-    +String role
-    +String content
-    +String toolCalls
-    +DateTime createdAt
-  }
+<details>
+<summary>📋 Ver especificación reproducible y entidades de persistencia</summary>
 
-  class TravelerPreference {
-    +String id
-    +String sessionId
-    +String budgetTier
-    +String interests
-    +String seasonPreference
-  }
+- **Compilado con**: Archify Engine v2.17 (Architecture Schema v1, Showcase Quality Profile, 9/9 checks aprobados).
+- **Especificación fuente**: [`aomoritrips/docs/diagrams/src/modelo-dominio.architecture.json`](diagrams/src/modelo-dominio.architecture.json)
+- **Entidades de dominio**:
+  - `TravelPack`: Catálogo turístico curado, slugs estacionales (`seasonTag`) y precios base.
+  - `BookingOrder`: Órdenes transaccionales, datos de titular y firma criptográfica `qrSignature` (HMAC-SHA256).
+  - `AgentSession`: Sesiones conversacionales multi-turno con timestamps de actividad.
+  - `AgentMessage`: Registro auditable de mensajes, roles (`user`, `assistant`, `system`) y llamadas a herramientas (`toolCalls`).
+  - `TravelerPreference`: Perfil adaptativo inferido del usuario (rango de presupuesto, intereses culturales y temporadas favoritas).
 
-  TravelPack "1" <-- "0..*" BookingOrder : referencia
-  AgentSession "1" --> "0..*" AgentMessage : almacena
-  AgentSession "1" --> "0..1" TravelerPreference : perfila
-```
+</details>
 
 #### Diagrama 3b: Diagrama de Secuencia UML (Flujo Integral y Operación Offline)
 
 Ilustra la interacción completa: desde la consulta en lenguaje natural del viajero, pasando por el orquestador y la ejecución de tools determinísticas, hasta el checkout y la validación matemática sin conexión en los baños termales de Sukayu Onsen.
 
-```mermaid
-sequenceDiagram
-  autonumber
-  actor Viajero as Viajero (Latinoamérica)
-  participant UI as Cliente Web (Next.js)
-  participant API as API Server & Zod
-  participant Guard as Guardrail & Tool Auth
-  participant Sensei as Aomori Sensei (LLM)
-  participant Tools as Tools Determinísticas
-  participant DB as SQLite (Prisma WAL)
-  actor Guia as Guía Rural en Aomori (Offline)
+![Diagrama 3b: Diagrama de Secuencia y Operación Offline](diagrams/flujo-secuencia-offline.visual-check.1440x900.light.png)
 
-  Viajero->>UI: Solicita plan y cotización en lenguaje natural
-  UI->>API: POST /api/agent/chat { sessionId, message }
-  API->>Guard: Sanitización regex de entrada (Anti-Prompt Injection)
-  Guard-->>API: Entrada validada
-  API->>DB: Recupera historial previo de AgentSession
-  API->>Sensei: Prompt del sistema + Historial + Input seguro
-  Sensei-->>API: Intención: Ejecutar toolCalculatePricing(packId, pax)
-  API->>Guard: Tool Authorization & Schema Validation (Zod)
-  Guard-->>API: Autorizado
-  API->>Tools: Invoca toolCalculatePricing(...)
-  Tools->>DB: Lee tarifas y temporada en TravelPack
-  Tools-->>API: JSON estructurado con desglose transparente
-  API->>Sensei: Inyecta resultado de la herramienta
-  Sensei-->>API: Síntesis final en estilo Washi y recomendación cultural
-  API->>DB: Persiste AgentMessage en la sesión
-  API-->>UI: Retorna respuesta y tarjeta interactiva de reserva
+> 🌐 **Visor Interactivo Autocontenido**: Explora la cronología temporal, las activaciones y el desglose de fases abriendo el archivo local:  
+> [🔍 **Abrir Diagrama 3b Interactivo (HTML Autocontenido)**](diagrams/flujo-secuencia-offline.html)
 
-  Viajero->>UI: Confirma reserva y efectúa checkout
-  UI->>API: POST /api/bookings { packId, traveler, date }
-  API->>API: Genera código AOM-2026 y firma digital HMAC-SHA256
-  API->>DB: Guarda BookingOrder con qrSignature
-  API-->>UI: Voucher emitido y descargado a la Billetera local
+<details>
+<summary>📋 Ver especificación fuente y fases cronológicas</summary>
 
-  Note over Viajero,Guia: Escenario en Destino (Sukayu Onsen / Sin Conectividad)
-  Viajero->>Guia: Exhibe voucher QR desde Billetera Offline
-  Guia->>Guia: Escaneo óptico y validación de firma con Web Crypto API
-  Guia-->>Viajero: Acceso confirmado y bienvenida tradicional
+- **Especificación fuente**: [`docs/diagrams/src/flujo-secuencia-offline.sequence.json`](diagrams/src/flujo-secuencia-offline.sequence.json)
+- **Fases del flujo**:
+  1. _Consulta e Input Guardrail_: El viajero solicita cotización; `API Server` aplica filtro regex anti-prompt injection (OWASP LLM01).
+  2. _Inferencia & Tool Calling_: `Aomori Sensei` razona, invoca `calculatePricing`, el backend valida con Zod y ejecuta contra SQLite.
+  3. _Checkout & Firma HMAC_: Confirmación, generación de `AOM-2026-XXXX`, firma HMAC-SHA256 y descarga a la Billetera PWA.
+  4. _Operación Offline en Destino_: El guía escanea el QR y valida la firma matemática localmente en < 1ms mediante Web Crypto API.
+
+</details>
+
+---
+
+### 2.4. Principios de Diseño Arquitectónico (Deep Modules & Seams según Matt Pocock / codebase-design)
+
+Siguiendo la metodología de diseño de software profesional promovida por **Matt Pocock** (específicamente la skill **`codebase-design`** y **`improve-codebase-architecture`**), la arquitectura técnica de AomoriTrips fue estructurada bajo el principio de **Módulos Profundos (_Deep Modules_)**, interfaces con alto apalancamiento (_Leverage_) y costuras explícitas (_Seams_) con adaptadores intercambiables:
+
 ```
+┌────────────────────────────────────────────────────────┐
+│               Interfaz Pequeña y Concisa                │  ← executeAgentCycle(sessionId, message)
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│             Implementación Profunda (Oculta)           │  ← Regex Guardrails, Token Budget,
+│                                                        │    Circuit Breaker (MAX_ITERATIONS = 3),
+│                                                        │    Tool Auth, Zod Validation, SQLite WAL
+└────────────────────────────────────────────────────────┘
+```
+
+#### 1. Módulo Profundo del Agente (`AgentEngine`)
+
+- **Interfaz Superficial**: Expone únicamente la función `executeAgentCycle(sessionId: string, message: string): Promise<AgentCycleResult>`.
+- **Complejidad Oculta (Depth)**: Oculta por completo la sanitización regex perimetral contra Prompt Injection (OWASP LLM01), la recuperación de memoria conversacional multi-turno en SQLite bajo el modo WAL, la inyección del contexto de sistema en estilo Washi, el despacho seguro de herramientas con autorización en lista blanca, la validación de esquemas Zod en tiempo de ejecución, el corte forzado por **Circuit Breaker** a las 3 iteraciones y la persistencia relacional en `AgentMessage`.
+- **Apalancamiento (_Leverage_) y Localidad (_Locality_)**: Cualquier consumidor (la ruta HTTP `/api/agent/chat`, un script de pruebas automatizadas o una interfaz CLI) interactúa con una sola función tipada, concentrando el 100% de las reglas de ciberseguridad y gobernanza en un único punto auditable.
+
+#### 2. Módulo Profundo de Reserva y Criptografía (`Booking & CryptoEngine`)
+
+- **Interfaz Superficial**: Métodos puros `calculatePricing(packSlug, travelersCount, season)` y `issueSignedVoucher(orderData)`.
+- **Complejidad Oculta**: Reglas de negocio de recargos por temporada alta (_Nebuta Matsuri_, florecimiento del cerezo _Sakura_), tasas aeroportuarias de Tohoku, descuentos grupales y la computación matemática de firmas criptográficas HMAC-SHA256 mediante la **Web Crypto API**.
+
+#### 3. Costuras Arquitectónicas (_Seams_) y Adaptadores (_Adapters_)
+
+Conforme a la regla de Matt Pocock _"One adapter means a hypothetical seam. Two adapters means a real one"_, el sistema implementa costuras reales y verificables:
+
+- **Costura de Inferencia (Inference Seam)**: El orquestador interactúa a través de una interfaz agnóstica `InferenceProvider`. Cuenta con dos adaptadores reales implementados:
+  1. `CloudLLMAdapter`: Inferencia en la nube de alta velocidad con LLaMA 3.3 70B (Groq / OpenAI) para producción.
+  2. `LocalSLMAdapter`: Inferencia 100% local con LLaMA 3.2 1B (Ollama) para contingencia y privacidad estricta sin conexión.
+- **Costura de Validación Offline (Offline Verification Seam)**: La frontera entre el servidor emisor de reservas y la terminal del anfitrión rural se articula mediante el adaptador criptográfico de Web Crypto API, garantizando que el contrato de verificación funcione exactamente igual en el servidor Node.js que en el navegador del smartphone en medio de los bosques de Shirakami-Sanchi sin internet.
 
 ---
 
@@ -347,20 +283,31 @@ Conforme a la rúbrica oficial de la UTN.BA, a continuación se presenta la tabl
 
 La plataforma web interactiva se encuentra completamente operativa, implementando la arquitectura visual de la Unidad 4:
 
-1. **Pantalla Principal (Home / Catálogo Curado)**:
+1. **Pantalla Principal (Home / Catálogo Curado y Filtro Dinámico)**:
+
+   ![Home y Catálogo Curado](./screenshots/captura1_catalogo_home.png)
+
    - Header con branding regional (`青森 AomoriTrips`), navegación superior y badge reactivo de reservas y favoritos.
-   - Hero inmersivo con fotografía de las montañas de Aomori, buscador predictivo y selector horizontal de temporadas (`🌸 Sakura`, `🏮 Nebuta`, `🍁 Koyo`, `❄️ Snow` y `❤️ Mis Favoritos`).
-   - Grilla de tarjetas de viaje compactas con fotografías en alta definición, badges flotantes, precio transparente por persona en dólares y botón interactivo para apertura y cotización.
+   - Hero inmersivo con fotografía de las montañas de Aomori, buscador predictivo con filtro de presupuesto y selector de temporadas (`🌸 Sakura`, `🏮 Nebuta`, `🍁 Koyo`, `❄️ Snow` y `❤️ Mis Favoritos`).
+   - Grilla de tarjetas de viaje compactas con fotografías en alta definición, badges flotantes, precio transparente con divisa activa y botón interactivo para apertura y cotización.
 
 2. **Flujo de Uso Principal (Interacción con Aomori Sensei y Cotización)**:
+
+   ![Chat Interactivo con Aomori Sensei](./screenshots/captura2_chat_sensei.png)
+
    - Panel conversacional en tiempo real con el asistente _Aomori Sensei_ (`青森の先生`).
    - Visualización del inspector agéntico que expone el ciclo de decisión (`Observar → Razonar → Ejecutar Herramientas → Verificar`).
-   - Modal de reserva detallada (`BookingModal`) con galería fotográfica, itinerario día por día, desglose transparente de costos (vuelo, ryokan, billete Shinkansen, impuestos) y cálculo en vivo según cantidad de viajeros.
+   - Modal de reserva detallada (`BookingModal`) con itinerario día por día, desglose transparente de costos en la divisa seleccionada y cálculo en vivo según cantidad de viajeros.
 
 3. **Resultado / Output Visible para el Usuario (Billetera QR y Perfil)**:
-   - Emisión instantánea de voucher digital tras la confirmación de reserva.
+
+   ![Billetera de Vouchers QR Offline](./screenshots/captura3_billetera_qr.png)
+
+   ![Perfil de Viajero y Métodos de Pago](./screenshots/captura4_perfil_viajero.png)
+
+   - Emisión instantánea de voucher digital tras la confirmación de reserva con código único `AOM-2026`.
    - Código QR dinámico de alta fidelidad generado con la paleta de colores de Aomori (`#1C4F7C`), validable offline en destino.
-   - Pantalla de Perfil y Configuración (`ProfileView`) fiel al prototipo Figma de la Unidad 4 (`aomoritrips_perfil.png`), con administración de métodos de pago, selector interactivo de divisa (`USD $`, `JPY ¥`, `EUR €`, `ARS $`), datos de pasaporte, selector de idioma (`ES`, `EN`, `日本語`) y gestión de experiencias favoritas guardadas.
+   - Pantalla de Perfil y Configuración (`ProfileView`) fiel al prototipo Figma de la Unidad 4 (`aomoritrips_perfil.png`), con administración de métodos de pago, selector interactivo de divisa (`USD $`, `JPY ¥`, `EUR €`, `ARS $`), datos de pasaporte y selector de idioma (`ES`, `EN`, `日本語`).
 
 ### 4.2. Video de Demostración
 
@@ -432,25 +379,83 @@ A continuación se transcribe la traza de ejecución real registrada en la base 
     }
   ],
   "agentReply": "¡Konnichiwa! Viajar a Aomori en agosto es una de las experiencias más intensas y emocionantes que podrás vivir en Japón. Durante esas fechas la ciudad vibra con el legendario **Festival Nebuta Matsuri**, donde colosales carrozas de papel washi iluminadas por fuego recorren las calles al son de tambores taiko.\n\nPara viajar con tu pareja (2 personas), te recomiendo nuestro paquete cerrado **'Festival de Fuego Nebuta Matsuri & Costa Sanriku' (6 días / 5 noches)**:\n- **Tarifa Base**: $1,650 USD por persona.\n- **Total Final para 2 viajeros**: **$3,564 USD** (incluye vuelos internos, asientos reservados en gradas VIP, ryokan con baños onsen y tasas aéreas).\n\n¿Te gustaría que reservemos las fechas de agosto o preferís revisar el itinerario día por día?"
-}
 ```
 
----
+### 4.4. Verificación Automatizada y Batería de Pruebas (Suite de Tests)
+
+Para garantizar que cada salvaguarda de seguridad, cálculo de negocio y costura de inferencia sea verificable de forma independiente y reproducible por la cátedra, el proyecto cuenta con una suite completa de pruebas unitarias y de integración ejecutables con `npm test`:
+
+```text
+> aomoritrips@0.1.0 test
+> tsx --test tests/**/*.test.ts
+
+✔ Ciberseguridad: el guardrail bloquea intentos de Prompt Injection (2.9ms)
+✔ Herramientas: toolCalculatePricing calcula desglose transparente sin cargos ocultos (18.6ms)
+✔ Herramientas: toolGetSeasonalForecast entrega datos auténticos de Aomori (0.8ms)
+✔ Herramientas: toolCreateItineraryDraft genera itinerario día por día estructurado (0.4ms)
+✔ Inference Seam: el orquestador garantiza respuesta sin fallar en entornos aislados (80.9ms)
+✔ Ciberseguridad Auth: hashing y verificación criptográfica con scrypt (96.3ms)
+✔ Ciberseguridad Auth: tokens JWT ligeros con HMAC-SHA256 (0.9ms)
+✔ Vouchers: la librería QRCode genera data URL en formato PNG válido con colores de Aomori (29.1ms)
+✔ Seguridad y Transparencia: el código de reserva tiene prefijo AOM-2026 (0.4ms)
+✔ Favoritos: manipulación idempotente de lista de IDs en memoria (2.4ms)
+✔ Perfil: configuración por defecto según prototipo Figma de Unidad 4 (0.3ms)
+✔ Perfil: fusión segura de actualizaciones parciales (0.2ms)
+✔ i18n: Paridad total y completitud de claves entre idiomas ES, EN y JA (1.8ms)
+✔ Validación Zod: CreatePackSchema valida paquetes turísticos correctamente (3.8ms)
+✔ Rate Limit: permite requests dentro del límite configurado (1.5ms)
+✔ Rate Limit: bloquea al superar el límite con HTTP 429 (0.4ms)
+✔ Rate Limit: decrece correctamente el contador de remaining (0.2ms)
+✔ Rate Limit: ventanas de distintos prefijos son independientes (0.2ms)
+✔ Rate Limit: distintas IPs tienen ventanas independientes (0.3ms)
+✔ Rate Limit: resetAt es un timestamp Unix futuro válido en ms (0.2ms)
+✔ getClientIp: extrae la primera IP del header x-forwarded-for (24.3ms)
+✔ getClientIp: usa x-real-ip cuando x-forwarded-for no está presente (0.4ms)
+✔ getClientIp: devuelve 'unknown' cuando no hay headers de IP (0.3ms)
+✔ Voucher HMAC: la firma no es base64 simple (no invertible con atob) (1.0ms)
+✔ Voucher HMAC: la misma entrada produce siempre la misma firma (determinístico) (0.5ms)
+✔ Voucher HMAC: modificar cualquier campo del payload invalida la firma (0.2ms)
+✔ Voucher HMAC: una clave diferente produce una firma completamente distinta (0.3ms)
+✔ Voucher HMAC: el campo 'bookingCode' en el payload es el prefijo AOM-2026-JP (0.3ms)
+✔ Rate Limit RED: la ventana expira según windowMs configurado (63.5ms)
+✔ Rate Limit RED: resetAt permite calcular Retry-After en segundos enteros positivos (0.4ms)
+✔ getClientIp RED: limpia espacios extra en x-forwarded-for (22.4ms)
+✔ Voucher HMAC RED: el digest siempre tiene exactamente 64 caracteres hex (SHA-256) (0.7ms)
+✔ Rate Limit RED: los contadores de login y bookings son completamente aislados (0.2ms)
+✔ Ciberseguridad PCI-DSS: detección de marcas de tarjetas (BIN detection) (0.8ms)
+✔ Ciberseguridad PCI-DSS: Algoritmo de Luhn (Módulo 10) (0.2ms)
+✔ Ciberseguridad PCI-DSS v4.0: Bóveda de Tokenización nunca almacena PAN en texto plano (0.4ms)
+✔ Ciberseguridad PCI-DSS: Rechazo de longitud inválida en tokenización (0.6ms)
+✔ Ciberseguridad PII: Enmascaramiento seguro de pasaporte (0.2ms)
+✔ Ciberseguridad Zod: Validación estricta de payloads para vinculación de tarjeta (3.0ms)
+✔ Ciberseguridad Zod: Validación de actualización de perfil (0.8ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ duration_ms 1590.5ms
+```
+
+Estado: **40/40 pruebas aprobadas (100% pass rate)**.
+
+````
 
 ## Sección 5 · Evaluación UX/UI
 
 ### 5.1. Heurísticas de Nielsen Aplicadas al Proyecto
 
-Conforme a la rúbrica oficial, se evaluó la interfaz web frente a 6 de las 10 heurísticas de usabilidad de Jakob Nielsen:
+Conforme a la rúbrica oficial, se evaluó la interfaz web frente a 8 de las 10 heurísticas de usabilidad de Jakob Nielsen:
 
-| Heurística                                           | ¿Cumple? | Evidencia Concreta en AomoriTrips                                                                                                                                                                                                                                                                                                                               |
-| :--------------------------------------------------- | :------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Visibilidad del estado del sistema**            |  **Sí**  | La aplicación informa visualmente en todo momento el estado de las operaciones: spinners de carga al consultar el catálogo o al agente, toasts flotantes de confirmación al guardar ajustes en el perfil, badges de conteo en la barra de navegación para reservas y favoritos, y mensajes de progreso (`"Generando Vouchers Offline..."`) durante el checkout. |
-| **2. Coincidencia entre el sistema y el mundo real** |  **Sí**  | Se emplean metáforas visuales familiares para el viajero: billetes Shinkansen con diseño de ticket físico, sellos de control, íconos de pasaporte (`🛡️`), divisas reales (`USD $`, `JPY ¥`, `EUR €`, `ARS $`) y terminología clara sin jerga técnica opaca, explicando conceptos japoneses (_Ryokan_, _Onsen_, _JR Pass_) con descripciones accesibles.         |
-| **3. Control y libertad del usuario**                |  **Sí**  | Los modales (`BookingModal`, `AuditModal`) cuentan con botón visible de cierre (`✕`), cierre mediante tecla `Escape` y clic fuera del contenedor (overlay). En las tarjetas de viaje, los usuarios disponen de botones para desplegar o plegar el resumen rápido a demanda y botón para restablecer filtros con un solo clic.                                   |
-| **4. Consistencia y estándares**                     |  **Sí**  | Coherencia estricta en la paleta cromática regional (Azul Aomori `#1C4F7C`, Naranja Sol `#F97316`, Fondo Washi `#FDF8F2`). La navegación superior fija en desktop se traduce limpiamente a una barra inferior móvil de 5 íconos según los estándares de diseño nativo de iOS y Android.                                                                         |
-| **6. Reconocimiento antes que recuerdo**             |  **Sí**  | En lugar de exigir que el usuario recuerde los paquetes que le interesaron, la app ofrece un sistema de **Favoritos persistente con botón de corazón (❤️)** y un filtro dedicado en el hero banner. Asimismo, el formulario de checkout autocompleta el nombre y correo del titular a partir del perfil almacenado.                                             |
-| **8. Diseño estético y minimalista**                 |  **Sí**  | Rediseño consciente de las tarjetas de catálogo a un formato compacto (~300px), eliminando textos redundantes y bloques gigantescos de inclusiones que generaban sobrecarga cognitiva y scroll excesivo, permitiendo al usuario escanear visualmente las 5 experiencias en un solo vistazo.                                                                     |
+| Heurística                                           | ¿Cumple? | Evidencia Concreta en AomoriTrips                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| :--------------------------------------------------- | :------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Visibilidad del estado del sistema**            |  **Sí**  | La aplicación informa visualmente en todo momento el estado de las operaciones: spinners de carga al consultar el catálogo o al agente, toasts flotantes de confirmación al guardar ajustes en el perfil, badges de conteo en la barra de navegación para reservas y favoritos, y mensajes de progreso (`"Generando Vouchers Offline..."`) durante el checkout.                                                                                       |
+| **2. Coincidencia entre el sistema y el mundo real** |  **Sí**  | Se emplean metáforas visuales familiares para el viajero: billetes Shinkansen con diseño de ticket físico, sellos de control, íconos de pasaporte (`🛡️`), divisas reales (`USD $`, `JPY ¥`, `EUR €`, `ARS $`) y terminología clara sin jerga técnica opaca, explicando conceptos japoneses (_Ryokan_, _Onsen_, _JR Pass_) con descripciones accesibles.                                                                                               |
+| **3. Control y libertad del usuario**                |  **Sí**  | Los modales (`BookingModal`, `AuditModal`) cuentan con botón visible de cierre (`✕`), cierre mediante tecla `Escape` y clic fuera del contenedor (overlay). En las tarjetas de viaje, los usuarios disponen de botones para desplegar o plegar el resumen rápido a demanda y botón para restablecer filtros con un solo clic.                                                                                                                         |
+| **4. Consistencia y estándares**                     |  **Sí**  | Coherencia estricta en la paleta cromática regional (Azul Aomori `#1C4F7C`, Naranja Sol `#F97316`, Fondo Washi `#FDF8F2`). La navegación superior fija en desktop se traduce limpiamente a una barra inferior móvil de 5 íconos según los estándares de diseño nativo de iOS y Android.                                                                                                                                                               |
+| **5. Prevención de errores**                         |  **Sí**  | El sistema implementa prevención de errores en dos capas: (a) en la interfaz, el formulario de checkout valida campos obligatorios antes de permitir la confirmación, impidiendo reservas con datos incompletos; (b) en el backend, el módulo `guardrails.ts` intercepta proactivamente patrones de Prompt Injection antes de que el input llegue al LLM, previniendo comportamientos no deseados antes de que ocurran, no solo reaccionando a ellos. |
+| **6. Reconocimiento antes que recuerdo**             |  **Sí**  | En lugar de exigir que el usuario recuerde los paquetes que le interesaron, la app ofrece un sistema de **Favoritos persistente con botón de corazón (❤️)** y un filtro dedicado en el hero banner. Asimismo, el formulario de checkout autocompleta el nombre y correo del titular a partir del perfil almacenado.                                                                                                                                   |
+| **8. Diseño estético y minimalista**                 |  **Sí**  | Rediseño consciente de las tarjetas de catálogo a un formato compacto (~300px), eliminando textos redundantes y bloques gigantescos de inclusiones que generaban sobrecarga cognitiva y scroll excesivo, permitiendo al usuario escanear visualmente las 5 experiencias en un solo vistazo.                                                                                                                                                           |
+| **9. Ayuda para reconocer y recuperarse de errores** |  **Sí**  | Cuando el guardrail detecta un intento de inyección, el usuario recibe un mensaje claro y estructurado en lugar de un error técnico crudo. Cuando el Circuit Breaker interrumpe el bucle agéntico a las 3 iteraciones, el sistema activa un fallback elegante con una respuesta determinística que informa al usuario en lenguaje natural. Los errores de red en el catálogo muestran mensajes de reintento, no pantallas en blanco.                  |
 
 ### 5.2. Evaluación Orientada al Público Objetivo
 
@@ -464,16 +469,18 @@ Conforme a la rúbrica oficial, se evaluó la interfaz web frente a 6 de las 10 
 
 ## Sección 6 · Evaluación de Ciberseguridad
 
-En cumplimiento estricto con los lineamientos de la UTN.BA (Módulo 6), a continuación se presenta la bitácora de análisis de riesgos, vectores de ataque evaluados y salvaguardas implementadas:
+En cumplimiento estricto con los lineamientos de la UTN.BA (Módulo 6), a continuación se presenta la bitácora de análisis de riesgos, vectores de ataque evaluados y salvaguardas implementadas en el código auditado del repositorio:
 
 ### Log de Consideraciones de Seguridad
 
-| Riesgo Identificado                                | Tipo (OWASP / Privacidad / Acceso)              | Medida Implementada o Decisión Tomada en Código                                                                                                                                                                                                                                                                                                                                                                                                    |
-| :------------------------------------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Inyección de Prompt en el Agente IA**            | **OWASP LLM01 (Prompt Injection & Jailbreaks)** | Implementación de una barrera perimetral (`src/lib/agent/guardrails.ts`) con expresiones regulares que detectan intentos de escape de instrucciones (`ignore previous instructions`, `bypass`, `system prompt dump`, `dan mode`). Si se detecta un patrón malicioso, el orquestador aborta la llamada al LLM y retorna un mensaje seguro predefinido. Además, el contexto de sistema y los inputs de usuario viajan delimitados de forma estricta. |
-| **Exposición de Credenciales y Secretos de API**   | **Secretos en Código / Fuga de Entorno**        | Todas las API keys (Groq, OpenAI, secret keys de firma) residen exclusivamente en variables de entorno (`.env.local`). El archivo `.gitignore` excluye `.env*` de los commits. Las rutas de API de Next.js actúan como proxy perimetral seguro: el cliente en el navegador nunca tiene acceso directo a las credenciales del proveedor de IA.                                                                                                      |
-| **Privacidad y Exposición de PII de Pasajeros**    | **Privacidad de Datos (PII Mínima)**            | Principio de minimización de datos: la plataforma únicamente almacena el nombre del titular y correo electrónico para la generación del voucher. No se almacenan números reales de tarjetas de crédito (la tarjeta en Perfil se modela como token enmascarado `•••• 4821` para simulación didáctica). Los vouchers QR contienen hashes firmados y no datos sensibles en texto plano.                                                               |
-| **Falsificación o Alteración de Vouchers Offline** | **Integridad de Datos / Acceso no Autorizado**  | Cada voucher emitido genera un código único con prefijo institucional (`AOM-2026-XXXX`) acompañado de una firma digital HMAC-SHA256 calculada en backend mediante Web Crypto API. Esto permite que un guía rural en los valles de Aomori pueda validar la autenticidad matemática del voucher mediante escaneo óptico sin requerir conexión a internet y sin riesgo de falsificación.                                                              |
+| Riesgo Identificado                       | Tipo (OWASP / Privacidad / Acceso)              | Medida Implementada o Decisión Tomada en Código                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :---------------------------------------- | :---------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Autenticación y Control de Acceso**     | **Acceso No Autorizado / Gestión de Sesión**    | Sistema de autenticación propio en `src/lib/auth/session.ts`: tokens JWT ligeros firmados con **HMAC-SHA256** y comparación en tiempo constante (`timingSafeEqual`) para prevenir timing attacks. Ciclo completo: `/api/auth/login`, `/register`, `/logout`, `/me`. Los endpoints sensibles (`/api/bookings`, `/api/profile/*`) verifican sesión activa con `getAuthSession()` antes de cualquier operación. Token almacenado en cookie `aomori_auth_token` con `httpOnly: true`, `secure: true` en producción y expiración de 7 días. Las reservas se vinculan al `userId` autenticado. |
+| **Fuerza Bruta y Abuso de Endpoints**     | **OWASP API4 — Falta de Rate Limiting**         | Rate limiter en memoria implementado en `src/lib/security/rate-limit.ts` (sin dependencias externas, `Map` nativo de Node.js). Límites aplicados: `/api/auth/login`: **5 intentos/min por IP** (anti-brute-force de credenciales); `/api/bookings`: **5 requests/min por IP** (previene booking flooding); `/api/agent/chat`: **15 requests/min por IP** (protege el endpoint más costoso: LLM + DB). Devuelve HTTP 429 con header `Retry-After` conforme a RFC 7231.                                                                                                                    |
+| **Inyección de Prompt en el Agente IA**   | **OWASP LLM01 (Prompt Injection & Jailbreaks)** | Barrera perimetral en `src/lib/agent/guardrails.ts`: regex que detecta patrones de escape (`ignore previous instructions`, `bypass`, `system prompt dump`, `dan mode`, `jailbreak`). Aborta la llamada al LLM antes de enviar tokens si se detecta amenaza. Limitación reconocida: la sanitización regex es evadible por parafraseo. Para producción a escala, complementar con clasificación semántica de intenciones.                                                                                                                                                                  |
+| **Exposición de Credenciales y Secretos** | **Secretos en Código / Fuga de Entorno**        | Todas las API keys y claves de firma residen en variables de entorno (`.env.local`). El `.gitignore` excluye `.env*`. Las rutas de API de Next.js actúan como proxy perimetral: el navegador nunca accede directamente a los proveedores de IA. Headers HTTP de seguridad activados en `next.config.ts`: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` y `Content-Security-Policy`.                                                                                                                                                |
+| **Falsificación de Vouchers Offline**     | **Integridad de Datos / Falsificación**         | Cada voucher generado en `/api/bookings` incluye una firma **HMAC-SHA256 real** calculada con `createHmac("sha256", VOUCHER_HMAC_SECRET)` sobre la cadena `bookingCode\|email\|packId\|totalPriceUsd`. La clave secreta se gestiona en variables de entorno. Esto garantiza que el payload del QR no puede ser alterado sin invalidar la firma — verificable matemáticamente offline sin conexión a internet.                                                                                                                                                                            |
+| **Exposición de PII y Datos de Pago**     | **PCI-DSS Req 3 / Privacidad (PII Mínima)**     | Módulo de tokenización en `src/lib/security/tokenization.ts`: implementa validación por algoritmo de Luhn, detección de marca BIN y generación de `vaultToken` opaco con entropía criptográfica (`crypto.randomBytes`). Nunca se persiste el PAN completo ni el CVV. Solo se almacenan los últimos 4 dígitos (`last4`) para referencia visual del titular (PCI-DSS Req 3.3). Los datos de pasaporte se enmascaran mediante `maskPassport()` antes de cualquier log o respuesta.                                                                                                          |
 
 ---
 
@@ -481,12 +488,14 @@ En cumplimiento estricto con los lineamientos de la UTN.BA (Módulo 6), a contin
 
 ### 7.1. Tabla de Herramientas IA Utilizadas
 
-| Herramienta IA               | Para qué la usaron                                                                                                                                 | Aportó bien / mal / sorprendió                                                                                                                                                                            |
-| :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Claude (Anthropic)**       | Generación de la arquitectura del orquestador agéntico en TypeScript, máquina de estados finita y diseño de guardrails regex de ciberseguridad.    | **Aportó muy bien**: Estructuración limpia de tipos, modularización del loop agéntico y manejo robusto de errores asíncronos.                                                                             |
-| **Gemini (Google DeepMind)** | Co-working interactivo en desarrollo frontend, redacción de esquemas Prisma, diagramas Mermaid de arquitectura y redacción del informe técnico.    | **Sorprendió gratamente**: Gran capacidad para razonar sobre el diseño de interfaces limpias basadas en wireframes, generación rápida de código React y comprensión integral del contexto de la Unidad 4. |
-| **Cursor / GitHub Copilot**  | Autocompletado contextual de código en el editor, tipado TypeScript y generación de pruebas unitarias con el runner nativo de Node.js.             | **Aportó bien**: Aceleró la escritura de tests repetitivos y definiciones de interfaces, aunque requirió supervisión en imports circulares.                                                               |
-| **Leonardo.ai & Figma Make** | Conceptualización visual en la Unidad 4: exploración de paleta cromática regional (Azul Aomori / Naranja Sol) y wireframing de las pantallas base. | **Aportó bien**: Rompió el bloqueo creativo inicial y permitió converger rápidamente en una identidad visual no cliché para Japón.                                                                        |
+| Herramienta IA / Skill                  | Para qué la usaron                                                                                                                                     | Aportó bien / mal / sorprendió                                                                                                                                                                            |
+| :-------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claude (Anthropic)**                  | Generación de la arquitectura del orquestador agéntico en TypeScript, máquina de estados finita y diseño de guardrails regex de ciberseguridad.        | **Aportó muy bien**: Estructuración limpia de tipos, modularización del loop agéntico y manejo robusto de errores asíncronos.                                                                             |
+| **Gemini (Google DeepMind)**            | Co-working interactivo en desarrollo frontend, redacción de esquemas Prisma, diseño de flujos arquitectónicos y redacción del informe técnico.         | **Sorprendió gratamente**: Gran capacidad para razonar sobre el diseño de interfaces limpias basadas en wireframes, generación rápida de código React y comprensión integral del contexto de la Unidad 4. |
+| **Cursor / GitHub Copilot**             | Autocompletado contextual de código en el editor, tipado TypeScript y generación de pruebas unitarias con el runner nativo de Node.js.                 | **Aportó bien**: Aceleró la escritura de tests repetitivos y definiciones de interfaces, aunque requirió supervisión en imports circulares.                                                               |
+| **Archify Engine & Skill**              | Compilación de especificaciones JSON IR a diagramas interactivos HTML y renders PNG de alta fidelidad, superando las limitaciones visuales de Mermaid. | **Sorprendió gratamente**: Permite gobernanza y versionado declarativo de diagramas como código (C4 model, secuencias y workflows) con validación visual automatizada mediante Playwright.                |
+| **Skill Codebase Design (Matt Pocock)** | Formalización y auditoría de la arquitectura del sistema bajo principios de _Deep Modules_, _Seams_ (costuras) y _Locality_ (Subsección 2.4).          | **Aportó muy bien**: Permitió aislar el motor de inferencia agéntica y la firma criptográfica como módulos profundos de interfaz estrecha y alta resiliencia.                                             |
+| **Leonardo.ai & Figma Make**            | Conceptualización visual en la Unidad 4: exploración de paleta cromática regional (Azul Aomori / Naranja Sol) y wireframing de las pantallas base.     | **Aportó bien**: Rompió el bloqueo creativo inicial y permitió converger rápidamente en una identidad visual no cliché para Japón.                                                                        |
 
 ---
 
@@ -513,8 +522,8 @@ En línea con la filosofía del protocolo **`ia-cowork-review`**, la inteligenci
 
 ### 7.3. Reflexión Crítica Obligatoria (Consigna Oficial UTN.BA)
 
-> **Reflexión obligatoria**:  
-> El co-work con Inteligencia Artificial redujo a menos de un tercio el tiempo necesario para desarrollar una aplicación completa: hubiera sido prácticamente imposible estructurar en los plazos del curso una arquitectura con Next.js 16, orquestador agéntico con loop de decisión, integración de Prisma con SQLite, validación de esquemas Zod, generación de QR dinámicos y diseño responsivo sin la asistencia continua de modelos generativos. Sin embargo, la experiencia demostró fehacientemente que la IA carece de criterio estético global y coherencia de estado si no es supervisada con rigor: la IA asumió atajos inaceptables como dejar botones de favoritos puramente cosméticos sin persistencia de datos, saturó el layout con tarjetas sobredimensionadas que arruinaban la usabilidad móvil, y omitió componentes estructurales como la pantalla de Perfil. La intervención humana crítica fue el factor determinante que transformó un conjunto de fragmentos de código autogenerados en un producto de software robusto, auditable, accesible y fiel a las especificaciones originales.
+> **Reflexión obligatoria**:
+> La IA redujo los tiempos significativamente para crear una aplicación de estas características y stack tecnológico. Utilizando el método de trabajo de co-work, sugirió ideas que fueron siempre revisadas por mí. No se podría haber logrado completar un prototipo con esta velocidad y funcionalidades sin su asistencia. Sin embargo, la IA comete errores que deben ser detectados por el humano; no se puede delegar ciegamente en ella. Fui responsable de supervisar y corregir sus fallas, así como de tomar las decisiones finales sobre el diseño y la implementación. Es una herramienta que debe ser usada con cuidado y responsabilidad. Gracias a las nuevas herramientas y avances de los modelos fui capaz de realizar auditorías de seguridad de código, UI/UX, arquitectura del sistema, diagramas interactivos, generación y compilación de modelos locales con Ollama, generación de QR dinámicos y diseño responsivo de manera mucho más sencilla, además de documentar todo para un mayor entendimiento personal. Me ayudó a mejorar mi criterio como profesional y me motivó a seguir aprendiendo (y a equivocarme para mejorar). Gracias a esta cursada me siento mucho más seguro para crear nuevas aplicaciones y potenciar mis habilidades en el mundo de la tecnología.
 
 ---
 
@@ -524,30 +533,30 @@ En línea con la filosofía del protocolo **`ia-cowork-review`**, la inteligenci
 
 #### 1. ¿Qué papel jugaría un LLM/SLM local en tu proyecto?
 
-En AomoriTrips, un modelo de lenguaje local pequeño (SLM como `llama3.2:1b` o `phi-3 mini` ejecutado bajo **Ollama**) cumple un rol estratégico como **Agente de Soporte Offline y Guardián de Privacidad en Destino**:
+En AomoriTrips, un modelo de lenguaje pequeño ejecutado de forma local (SLM como `llama3.2:1b` o `llama3.2:3b` bajo **Ollama**) cumple un rol estratégico como **asistente de contingencia offline y privacidad en destino**:
 
-- **No reemplazaría por completo** al modelo cloud de 70B parámetros en producción web (donde se prioriza la riqueza de vocabulario y el razonamiento complejo), sino que actuaría como un **subagente de contingencia local**: en caso de caída de conectividad en zonas montañosas remotas de Tohoku (por ejemplo, en los valles del Monte Iwaki o las termas de Sukayu Onsen), la aplicación empaquetada o el dispositivo del guía local puede ejecutar inferencia directa sobre el hardware local.
-- Permite resolver consultas de itinerario, traducción de términos culturales japoneses y asistencia de primeros auxilios o transporte local a costo cero por token, con latencias ultra-bajas e independencia total de servidores externos.
+- **No reemplaza a los modelos de nube**: En la web pública se aprovecha la potencia de modelos frontera para razonamientos complejos, pero el SLM local actúa como respaldo directo cuando no hay conectividad en zonas montañosas de Tohoku (como las termas de Sukayu Onsen o los bosques de Shirakami-Sanchi).
+- **Asistencia ágil y económica**: Permite atender consultas rápidas de itinerario, transporte local o vocabulario cultural japonés a costo cero por token y sin depender de servidores externos.
 
 #### 2. ¿Qué le aportaría al usuario de la aplicación?
 
-Al usuario final le aporta tres beneficios tangibles:
+Al usuario final le brinda tres ventajas claras:
 
-1. **Resiliencia Extrema sin Conexión**: La prefectura de Aomori cuenta con extensas zonas de bosque primario (Shirakami-Sanchi) y carreteras de montaña donde la señal 4G/5G es nula o intermitente. Un SLM local permite que el viajero continúe interactuando con su Sensei de viajes para consultar instrucciones de llegada al ryokan o recomendaciones gastronómicas sin requerir un plan de datos internacional costoso.
-2. **Privacidad Absoluta de Datos Sensibles**: Datos como nombres completos, itinerarios de vuelo, números de pasaporte o requerimientos médicos y alimenticios jamás salen de la máquina del cliente, garantizando cumplimiento normativo de privacidad (GDPR / Ley de Protección de Datos Personales).
-3. **Cero Latencia en Consultas Frecuentes**: Al no existir viaje de ida y vuelta a servidores en EE.UU. o Japón, las respuestas breves se generan de manera instantánea mediante inferencia directa en el chip del dispositivo.
+1. **Recomendaciones Rápidas sin Internet**: Respuestas inmediatas y directas en su dispositivo, ideales para situaciones de viaje donde no hay señal telefónica o no se cuenta con un plan de datos internacional.
+2. **Privacidad Total de Datos Sensibles**: Información personal como nombres, números de pasaporte, comprobantes de pago o requerimientos alimenticios y médicos no viajan por internet ni se comparten con empresas terceras; se procesan localmente garantizando total confidencialidad.
+3. **Cero Latencia**: Al no requerir llamadas de red a servidores remotos, las consultas habituales se responden en milisegundos mediante inferencia directa en el procesador del equipo.
 
 #### 3. ¿Qué te aportaría a vos como profesional?
 
-1. **Auditoría Integral de Datos y Gobernanza**: Permite procesar y resumir logs de interacción, consultas de usuarios y métricas de soporte directamente en los servidores de la organización sin enviar telemetría a proveedores terceros, abriendo la puerta al análisis profundo de patrones de demanda turística sin riesgos legales de fuga de datos corporativos.
-2. **Autonomía Operativa en Desarrollo**: Facilita iterar, realizar pruebas automatizadas y validar prompts en entornos locales de desarrollo (aviones, trenes o zonas sin internet) sin consumir créditos de API ni depender de cuotas de tasa (_rate limits_).
-3. **Dominio de la Pila Completa de IA**: Permite adquirir competencia práctica en quantización de pesos (formatos GGUF Q4_K_M), gestión de memoria VRAM, context window tuning y optimización de inferencia en CPU/GPU, habilidades sumamente cotizadas en la industria TravelTech y Enterprise.
+1. **Criterio Técnico y Comprensión Real del Sistema**: Permite entender a fondo cómo funciona realmente un modelo de lenguaje por dentro y comparar con criterio práctico el rendimiento de un modelo local frente a uno en la nube, dejando de ver a la inteligencia artificial como una "caja negra mágica".
+2. **Dominio de la Infraestructura de IA**: Aporta experiencia concreta en empaquetado de modelos con Ollama (`Modelfile`), cuantización de pesos (formatos GGUF), gestión de memoria RAM/VRAM y optimización de prompts para modelos compactos.
+3. **Autonomía y Auditoría de Datos**: Brinda la capacidad de desarrollar, iterar pruebas y procesar registros de interacción de manera 100% autónoma, sin depender de conexión a internet, sin gastar créditos de API y con la tranquilidad de no fugar datos sensibles de usuarios ni de negocio.
 
 #### 4. ¿Qué limitaciones concretas tiene versus una API en la nube?
 
-1. **Capacidad de Hardware y Consumo de Recursos**: Correr modelos locales requiere hardware dedicado (al menos 8 GB a 16 GB de RAM unificada o GPU con VRAM dedicada). En computadoras estándar sin aceleración gráfica, la velocidad de generación puede caer por debajo de los 15 tokens/segundo, degradando la experiencia conversacional.
-2. **Capacidad de Razonamiento y Function Calling (Herramientas)**: Mientras que un modelo frontera como Claude 3.5 Sonnet o LLaMA 3.3 70B genera JSONs perfectamente estructurados para invocar múltiples herramientas en paralelo con 100% de fiabilidad sintáctica, un modelo de 1B o 3B parámetros presenta mayor tasa de alucinación en los nombres de las herramientas o en los esquemas de parámetros complejos.
-3. **Ventana de Contexto y Gestión del Modelo**: La actualización de conocimiento requiere descargar gigabytes de nuevos checkpoints o aplicar técnicas de RAG local (Retrieval-Augmented Generation), a diferencia de las APIs cloud que se actualizan de forma transparente en la nube.
+1. **Menor Profundidad de Razonamiento**: Los modelos compactos (1B a 3B) resuelven bien tareas directas y puntuales, pero tienen menor capacidad para razonamientos lógicos complejos, redacción muy elaborada o invocación estricta de múltiples herramientas simultáneas (*tool calling*), teniendo mayor propensión a alucinar frente a esquemas complejos.
+2. **Mayor Costo de Implementación y Mantenimiento Técnico**: Implementar estos sistemas locales no es trivial ni automático; requiere un profesional capacitado que sepa configurar los entornos, compilar los modelos, gestionar la memoria y crear mecanismos de contingencia. Además, demanda hardware con recursos suficientes de CPU/RAM/GPU.
+3. **Actualización del Conocimiento**: Una API en la nube se actualiza continuamente del lado del proveedor, mientras que un modelo local requiere descargar nuevos pesos o integrar bases de conocimiento locales (RAG con SQLite/vectores) para incorporar información nueva.
 
 ---
 
@@ -575,7 +584,7 @@ En Aomori durante el invierno (diciembre a marzo), recomiendo tres lugares extra
    con raquetas de nieve.
 
 ¿Te gustaría información sobre el transporte en tren Shinkansen hacia la estación Shin-Aomori?
-```
+````
 
 - **Parámetros de Inferencia**: Temperature = `0.3`, Context Size = `2048`, Formato = GGUF Q4_K_M.
 - **Rendimiento Observado**: 42.8 tokens/segundo sobre CPU/GPU local, tiempo de primera respuesta < 600 ms, sin conexión a internet activa.

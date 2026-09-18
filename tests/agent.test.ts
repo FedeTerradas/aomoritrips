@@ -59,3 +59,31 @@ test("Herramientas: toolCreateItineraryDraft genera itinerario día por día est
   assert.equal(draft.days[0].day, 1);
   assert.equal(draft.days[6].day, 7);
 });
+
+test("Inference Seam: el orquestador garantiza respuesta sin fallar en entornos aislados", async () => {
+  const { inferenceOrchestrator, DeterministicFallbackAdapter } =
+    await import("../src/lib/agent/inference");
+
+  const fallback = new DeterministicFallbackAdapter();
+  const isAvail = await fallback.isAvailable();
+  assert.equal(isAvail, true);
+
+  const res = await fallback.generate([
+    {
+      role: "user",
+      content:
+        "¿Cuándo es la mejor época para viajar a ver los cerezos en Hirosaki?",
+    },
+  ]);
+  assert.equal(res.provider, "fallback-rules");
+  assert.ok(res.text.includes("Hirosaki"));
+  assert.ok(res.latencyMs >= 0);
+
+  const orchRes = await inferenceOrchestrator.runInference([
+    { role: "user", content: "Hola Sensei, ¿qué es el festival Nebuta?" },
+  ]);
+  assert.ok(orchRes.text.length > 10);
+  assert.ok(
+    ["ollama-slm", "cloud-llm", "fallback-rules"].includes(orchRes.provider)
+  );
+});

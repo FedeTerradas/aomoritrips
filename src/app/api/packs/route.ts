@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { CreatePackSchema } from "@/lib/validation/pack-schema";
+import { getAuthSession } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
   try {
@@ -8,7 +10,7 @@ export async function GET(request: Request) {
     const query = searchParams.get("q");
 
     const packs = await prisma.travelPack.findMany({
-      orderBy: { rating: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const filtered = packs.filter((p) => {
@@ -42,6 +44,143 @@ export async function GET(request: Request) {
     console.error("Error en GET /api/packs:", error);
     return NextResponse.json(
       { success: false, error: "Error al consultar los paquetes turísticos" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    // RBAC: Solo usuarios con rol ADMIN pueden publicar paquetes
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No autorizado. Inicia sesión como administrador.",
+        },
+        { status: 401 }
+      );
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Acceso denegado. Se requieren permisos de Administrador.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const parsed = CreatePackSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Datos de paquete inválidos",
+          details: parsed.error.format(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const data = parsed.data;
+
+    // Generar slug URL-friendly
+    const baseSlug =
+      data.slug ||
+      data.title
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+
+    const uniqueSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+
+    const newPack = await prisma.travelPack.create({
+      data: {
+        slug: uniqueSlug,
+        title: data.title,
+        japaneseTitle: data.japaneseTitle,
+        description: data.description,
+        heroImage: data.heroImage,
+        priceBaseUsd: data.priceBaseUsd,
+        seasonTag: data.seasonTag,
+        seasonLabel: data.seasonLabel,
+        durationDays: data.durationDays,
+        highlights: JSON.stringify(data.highlights),
+        itinerarySummary: JSON.stringify(data.itinerarySummary),
+        rating: 5.0,
+        reviewsCount: 1,
+        isFeatured: true,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...newPack,
+        highlights: data.highlights,
+        itinerarySummary: data.itinerarySummary,
+      },
+    });
+  } catch (error) {
+    console.error("Error en POST /api/packs:", error);
+    return NextResponse.json(
+      { success: false, error: "Error al crear el paquete turístico" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // RBAC: Solo usuarios con rol ADMIN pueden eliminar paquetes
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No autorizado. Inicia sesión como administrador.",
+        },
+        { status: 401 }
+      );
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Acceso denegado. Se requieren permisos de Administrador.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Se requiere el parámetro id" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.travelPack.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Paquete eliminado exitosamente",
+    });
+  } catch (error) {
+    console.error("Error en DELETE /api/packs:", error);
+    return NextResponse.json(
+      { success: false, error: "Error al eliminar el paquete turístico" },
       { status: 500 }
     );
   }
