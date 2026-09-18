@@ -5,7 +5,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useTravelerDisplay } from "@/hooks/useTravelerDisplay";
 import { useI18n } from "@/i18n/I18nContext";
 import { AuthModal } from "./AuthModal";
-import { PaymentCardInfo } from "@/lib/profile";
+import { PaymentCardInfo, Currency } from "@/lib/profile";
+import { useBookings } from "@/lib/bookings-context";
 
 interface ProfileViewProps {
   onGoToWallet: () => void;
@@ -16,8 +17,9 @@ interface ProfileViewProps {
 export const ProfileView: React.FC<ProfileViewProps> = ({
   onGoToWallet,
   onGoToExploreFavorites,
-  bookingsCount = 0,
 }) => {
+  // Fuente única de verdad: mismo contexto que WalletView
+  const { confirmedCount } = useBookings();
   const {
     isGuest,
     displayName,
@@ -31,7 +33,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     resetProfile,
     user,
     stats,
-  } = useTravelerDisplay(bookingsCount);
+  } = useTravelerDisplay(confirmedCount);
   const { favoritesCount } = useFavorites();
   const { t, language, setLanguage } = useI18n();
 
@@ -48,6 +50,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   >("Mensual");
   const [isTokenizing, setIsTokenizing] = useState(false);
   const [cardError, setCardError] = useState("");
+
+  // Estado para abrir el form de tarjeta post-login
+  const [pendingOpenCard, setPendingOpenCard] = useState(false);
+
+  // Handler para el botón de vincular tarjeta: requiere login (industria turismo)
+  const handleAddCardClick = () => {
+    if (!user) {
+      // Guardar intención de abrir el form luego del login
+      setPendingOpenCard(true);
+      setIsAuthModalOpen(true);
+    } else {
+      setIsAddCardOpen(true);
+    }
+  };
+
+  // Callback post-login: si tenía pendiente abrir el form de tarjeta, abrirlo
+  const handleAuthSuccess = () => {
+    if (pendingOpenCard) {
+      setPendingOpenCard(false);
+      setIsAddCardOpen(true);
+    }
+  };
 
   const showFeedback = (msg: string) => {
     setSaveFeedback(msg);
@@ -79,7 +103,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
-  const handleCurrencyChange = async (curr: string) => {
+  const handleCurrencyChange = async (curr: Currency) => {
     updateProfile({ currency: curr });
     showFeedback(`Divisa preferida: ${curr}`);
 
@@ -329,10 +353,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <span style={styles.cardIcon}>💳</span>
               <span>Método de Pago (Bóveda Segura)</span>
             </div>
-            <button
-              style={styles.addCardBtn}
-              onClick={() => setIsAddCardOpen(true)}
-            >
+            <button style={styles.addCardBtn} onClick={handleAddCardClick}>
               + Vincular Tarjeta
             </button>
           </div>
@@ -634,7 +655,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingOpenCard(false); // Si cancela el login, limpiar la intención
+        }}
+        onSuccess={handleAuthSuccess}
       />
     </div>
   );

@@ -41,6 +41,9 @@ export interface QuizResultData {
 // ─── Capa 2: Itinerario Grupal ────────────────────────────────────────────────
 
 export type GroupType = "solo" | "couple" | "friends" | "family";
+export type Season = "sakura" | "nebuta" | "koyo" | "snow";
+export type DietaryRestriction =
+  "none" | "vegetarian" | "vegan" | "halal" | "gluten-free";
 export type MealType = "breakfast" | "lunch" | "dinner";
 export type ActivityCategory =
   "cultural" | "nature" | "festival" | "onsen" | "gastronomy";
@@ -50,8 +53,8 @@ export interface GroupProfile {
   type: GroupType;
   durationDays: number;
   budgetPerPersonUsd: number;
-  season: string;
-  dietaryRestrictions: string[]; // "vegetarian" | "vegan" | "halal" | "gluten-free" | "none"
+  season: Season;
+  dietaryRestrictions: DietaryRestriction[];
 }
 
 export interface Activity {

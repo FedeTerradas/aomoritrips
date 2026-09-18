@@ -16,9 +16,19 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
 import { CharacterDisplay } from "@/components/CharacterDisplay";
 import { AdminPacksView } from "@/components/AdminPacksView";
+import { BookingsProvider, useBookings } from "@/lib/bookings-context";
 
 export default function HomePage() {
+  return (
+    <BookingsProvider>
+      <HomePageInner />
+    </BookingsProvider>
+  );
+}
+
+function HomePageInner() {
   const { user } = useAuth();
+  const { confirmedCount, refresh: refreshBookings } = useBookings();
   const [activeTab, setActiveTab] = useState<
     "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   >("explore");
@@ -28,11 +38,9 @@ export default function HomePage() {
   const [travelers, setTravelers] = useState<string>("2 adultos");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPack, setSelectedPack] = useState<TravelPackData | null>(null);
-  const [bookingsCount, setBookingsCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { favorites, favoritesCount } = useFavorites();
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
 
   const fetchPacks = async () => {
     setIsLoading(true);
@@ -55,27 +63,11 @@ export default function HomePage() {
     }
   };
 
-  const fetchBookingsCount = async () => {
-    try {
-      const res = await fetch("/api/bookings");
-      const json = await res.json();
-      if (json.success && json.data) {
-        setBookingsCount(json.data.length);
-      }
-    } catch (e) {
-      console.error("Error al consultar reservas:", e);
-    }
-  };
-
   useEffect(() => {
     if (activeTab === "explore") {
       fetchPacks();
     }
   }, [activeTab, selectedSeason, searchQuery]);
-
-  useEffect(() => {
-    fetchBookingsCount();
-  }, []);
 
   // Garantizar que al cambiar de sección la vista comience siempre en la cima
   useEffect(() => {
@@ -84,7 +76,7 @@ export default function HomePage() {
 
   const handleBookingSuccess = () => {
     setSelectedPack(null);
-    fetchBookingsCount();
+    refreshBookings();
     setActiveTab("wallet");
   };
 
@@ -126,7 +118,7 @@ export default function HomePage() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        bookingsCount={bookingsCount}
+        bookingsCount={confirmedCount}
         favoritesCount={favoritesCount}
         onGoToFavorites={handleGoToFavorites}
         onOpenAuditModal={() => setIsAuditModalOpen(true)}
@@ -301,7 +293,7 @@ export default function HomePage() {
         <ProfileView
           onGoToWallet={() => setActiveTab("wallet")}
           onGoToExploreFavorites={handleGoToFavorites}
-          bookingsCount={bookingsCount}
+          bookingsCount={confirmedCount}
         />
       )}
 
@@ -381,6 +373,7 @@ export default function HomePage() {
         pack={selectedPack}
         onClose={() => setSelectedPack(null)}
         onBookingSuccess={handleBookingSuccess}
+        onGoToProfile={() => setActiveTab("profile")}
       />
 
       {/* Modal Académico UTN.BA */}
@@ -451,7 +444,7 @@ export default function HomePage() {
       <BottomNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        bookingsCount={bookingsCount}
+        bookingsCount={confirmedCount}
         onOpenAuditModal={() => setIsAuditModalOpen(true)}
       />
     </div>

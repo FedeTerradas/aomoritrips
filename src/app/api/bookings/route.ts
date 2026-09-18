@@ -15,6 +15,7 @@ const CreateBookingSchema = z.object({
   travelDate: z.string().min(4),
   seasonSelected: z.string().min(2),
   totalPriceUsd: z.number().positive(),
+  sessionToken: z.string().min(1).optional(), // Para verificar método de pago vinculado
 });
 
 export async function GET(request: Request) {
@@ -85,7 +86,35 @@ export async function POST(request: Request) {
       travelDate,
       seasonSelected,
       totalPriceUsd,
+      sessionToken,
     } = parsed.data;
+
+    // ——— Guardia de Método de Pago (Backend) ———
+    // Verificar que exista un PaymentMethodToken registrado antes de emitir voucher.
+    // Esta validación cierra el bypass posible saltando la UI.
+    // Pendiente producción: integrar con pasarela de cobro real (Stripe / MercadoPago)
+    // para transicionar de "reserva" a "pago capturado".
+    const effectiveSessionToken = sessionToken || "sess_default_traveler";
+    const profileWithPayment = await prisma.travelerProfile.findUnique({
+      where: { sessionToken: effectiveSessionToken },
+      include: { paymentMethods: { where: { isDefault: true }, take: 1 } },
+    });
+
+    const hasPaymentMethod =
+      profileWithPayment && profileWithPayment.paymentMethods.length > 0;
+
+    if (!hasPaymentMethod) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Se requiere un método de pago válido vinculado antes de confirmar la reserva.",
+          code: "PAYMENT_METHOD_REQUIRED",
+        },
+        { status: 402 } // 402 Payment Required
+      );
+    }
+    // ————————————————————————————
 
     // Generar código de voucher único
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -159,6 +188,94 @@ export async function POST(request: Request) {
     console.error("Error en POST /api/bookings:", error);
     return NextResponse.json(
       { success: false, error: "Error al procesar la reserva" },
+      { status: 500 }
+    );
+  }
+}
+
+// ─── PATCH: Cancelar una reserva ──────────────────────────────────────────────
+
+const CancelBookingSchema = z.object({
+  bookingId: z.string().uuid("ID de reserva inválido"),
+});
+
+export async function PATCH(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(ip, "bookings-cancel", { max: 10 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Demasiadas solicitudes. Intenta en un momento.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = CancelBookingSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "ID de reserva inválido",
+          details: parsed.error.format(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const { bookingId } = parsed.data;
+
+    const booking = await prisma.bookingOrder.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) {
+      return NextResponse.json(
+        { success: false, error: "Reserva no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    if (booking.status === "CANCELLED") {
+      return NextResponse.json(
+        { success: false, error: "Esta reserva ya fue cancelada" },
+        { status: 409 }
+      );
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `No se puede cancelar una reserva en estado "${booking.status}"`,
+        },
+        { status: 422 }
+      );
+    }
+
+    const updatedBooking = await prisma.bookingOrder.update({
+      where: { id: bookingId },
+      data: { status: "CANCELLED" },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Reserva cancelada exitosamente.",
+      data: updatedBooking,
+    });
+  } catch (error) {
+    console.error("Error en PATCH /api/bookings:", error);
+    return NextResponse.json(
+      { success: false, error: "Error al cancelar la reserva" },
       { status: 500 }
     );
   }

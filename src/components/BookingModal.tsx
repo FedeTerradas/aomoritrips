@@ -12,12 +12,14 @@ interface BookingModalProps {
   pack: TravelPackData | null;
   onClose: () => void;
   onBookingSuccess: (bookingData: unknown) => void;
+  onGoToProfile?: () => void;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   pack,
   onClose,
   onBookingSuccess,
+  onGoToProfile,
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { profile } = useProfile();
@@ -40,6 +42,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   if (!pack) return null;
 
+  // Guard: verificar si hay método de pago vinculado (industria estándar: Booking.com / AirBnb)
+  const hasPaymentMethod = Boolean(
+    profile?.paymentMethods?.length || profile?.paymentMethod?.vaultToken
+  );
+
   // Cálculo en vivo
   const quote = toolCalculatePricing(
     pack.priceBaseUsd,
@@ -58,6 +65,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const sessionToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("aomori_session_token") ||
+            "sess_default_traveler"
+          : "sess_default_traveler";
+
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,6 +83,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           travelDate,
           seasonSelected: pack.seasonLabel,
           totalPriceUsd: quote.grandTotalUsd,
+          sessionToken,
         }),
       });
 
@@ -316,17 +330,51 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   />
                 </div>
 
+                {/* Guard de pago: requiere tarjeta vinculada antes de confirmar */}
+                {!hasPaymentMethod && (
+                  <div style={styles.paymentGuardAlert}>
+                    <span>💳</span>
+                    <div>
+                      <strong>Método de pago requerido</strong>
+                      <p style={{ margin: "2px 0 0", fontSize: "0.78rem" }}>
+                        Vinculá una tarjeta en tu Perfil para poder confirmar la
+                        reserva.
+                      </p>
+                    </div>
+                    {onGoToProfile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onGoToProfile();
+                        }}
+                        style={styles.goToProfileBtn}
+                      >
+                        Ir a Perfil →
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !hasPaymentMethod}
                   style={{
                     ...styles.submitBtn,
+                    ...(!hasPaymentMethod ? styles.submitBtnDisabled : {}),
                     ...(isSubmitting ? { opacity: 0.6 } : {}),
                   }}
+                  title={
+                    !hasPaymentMethod
+                      ? "Vinculá una tarjeta en tu Perfil para continuar"
+                      : undefined
+                  }
                 >
                   {isSubmitting
                     ? "Generando Vouchers Offline..."
-                    : `Confirmar Reserva · $${quote.grandTotalUsd} USD`}
+                    : !hasPaymentMethod
+                      ? "Vinculá una tarjeta para continuar"
+                      : `Confirmar Reserva · $${quote.grandTotalUsd} USD`}
                 </button>
               </form>
             </div>
@@ -635,5 +683,35 @@ const styles: Record<string, React.CSSProperties> = {
     border: "none",
     cursor: "pointer",
     transition: "transform 150ms ease",
+  },
+  submitBtnDisabled: {
+    backgroundColor: "#94A3B8",
+    boxShadow: "none",
+    cursor: "not-allowed",
+  },
+  paymentGuardAlert: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+    backgroundColor: "#FFFBEB",
+    border: "1px solid #FCD34D",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    marginTop: "10px",
+    fontSize: "0.82rem",
+    color: "#92400E",
+  },
+  goToProfileBtn: {
+    marginLeft: "auto",
+    whiteSpace: "nowrap" as const,
+    backgroundColor: "#1C4F7C",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: "8px",
+    padding: "6px 12px",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    flexShrink: 0,
   },
 };

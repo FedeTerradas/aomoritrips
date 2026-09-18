@@ -2,6 +2,8 @@
 
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import type { TravelerProfile } from "@/lib/profile";
+import type { UserSession, UserStats } from "@/hooks/useAuth";
 
 export interface TravelerDisplayData {
   isGuest: boolean;
@@ -11,12 +13,12 @@ export interface TravelerDisplayData {
   displayCountries: number;
   displayKilometers: string;
   displayLevel: string;
-  profile: ReturnType<typeof useProfile>["profile"];
-  updateProfile: ReturnType<typeof useProfile>["updateProfile"];
-  resetProfile: ReturnType<typeof useProfile>["resetProfile"];
+  profile: TravelerProfile;
+  updateProfile: (partial: Partial<TravelerProfile>) => TravelerProfile;
+  resetProfile: () => TravelerProfile;
   isLoaded: boolean;
-  user: ReturnType<typeof useAuth>["user"];
-  stats: ReturnType<typeof useAuth>["stats"];
+  user: UserSession | null;
+  stats: UserStats;
 }
 
 /**

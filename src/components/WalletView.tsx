@@ -1,23 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useTravelerDisplay } from "@/hooks/useTravelerDisplay";
-
-export interface BookingData {
-  id: string;
-  bookingCode: string;
-  packId: string;
-  packTitle: string;
-  travelerName: string;
-  travelerEmail: string;
-  travelersCount: number;
-  travelDate: string;
-  seasonSelected: string;
-  totalPriceUsd: number;
-  status: string;
-  qrData: string;
-  createdAt: string;
-}
+import { useBookings } from "@/lib/bookings-context";
+export type { BookingData, BookingStatus } from "@/lib/bookings-context";
 
 interface WalletViewProps {
   onGoToExplore: () => void;
@@ -28,8 +14,10 @@ export const WalletView: React.FC<WalletViewProps> = ({
   onGoToExplore,
   onGoToProfile,
 }) => {
-  const [bookings, setBookings] = useState<BookingData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { bookings, confirmedCount, isLoading, cancelFeedback, cancelBooking } =
+    useBookings();
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
 
   const {
     displayName,
@@ -38,34 +26,26 @@ export const WalletView: React.FC<WalletViewProps> = ({
     displayCountries,
     displayKilometers,
     displayLevel,
-  } = useTravelerDisplay(bookings.length);
+  } = useTravelerDisplay(confirmedCount);
 
-  const fetchBookings = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/bookings");
-      const json = await res.json();
-      if (json.success && json.data) {
-        setBookings(json.data);
-      }
-    } catch (e) {
-      console.error("Error al cargar reservas:", e);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleCancelBooking = async (bookingId: string) => {
+    setCancellingId(bookingId);
+    await cancelBooking(bookingId);
+    setCancellingId(null);
+    setConfirmCancelId(null);
   };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
 
   const handlePrint = () => {
     window.print();
   };
 
+  const isCancelled = (
+    status: import("@/lib/bookings-context").BookingStatus
+  ): boolean => status === "CANCELLED";
+
   return (
     <div style={styles.viewWrapper} className="animate-fade-in">
-      {/* CABECERA AZUL AOMORI (Idéntica a Figma Mockup aomoritrips_mis_viajes.png) */}
+      {/* CABECERA AZUL AOMORI */}
       <section style={styles.headerSection}>
         <div className="container" style={styles.headerContainer}>
           <div style={styles.userRow}>
@@ -98,7 +78,7 @@ export const WalletView: React.FC<WalletViewProps> = ({
         </div>
       </section>
 
-      {/* BARRA DE SUB-PESTAÑAS (Figma: [ Mis Viajes | Perfil ]) */}
+      {/* BARRA DE SUB-PESTAÑAS */}
       <div style={styles.subTabBar}>
         <div className="container" style={styles.subTabContainer}>
           <button style={styles.subTabActive}>
@@ -129,6 +109,13 @@ export const WalletView: React.FC<WalletViewProps> = ({
           </button>
         </div>
 
+        {/* Toast de feedback */}
+        {cancelFeedback && (
+          <div style={styles.feedbackToast} className="animate-fade-in">
+            <span>{cancelFeedback}</span>
+          </div>
+        )}
+
         {isLoading ? (
           <div style={styles.loadingBox}>
             <span>Cargando tus vouchers de viaje seguros...</span>
@@ -149,9 +136,20 @@ export const WalletView: React.FC<WalletViewProps> = ({
         ) : (
           <div style={styles.vouchersGrid}>
             {bookings.map((b) => (
-              <div key={b.id} style={styles.ticketCard}>
+              <div
+                key={b.id}
+                style={{
+                  ...styles.ticketCard,
+                  ...(isCancelled(b.status) ? styles.ticketCardCancelled : {}),
+                }}
+              >
                 {/* Encabezado del Ticket */}
-                <div style={styles.ticketTop}>
+                <div
+                  style={{
+                    ...styles.ticketTop,
+                    ...(isCancelled(b.status) ? styles.ticketTopCancelled : {}),
+                  }}
+                >
                   <div style={styles.ticketBrand}>
                     <span style={styles.torii}>⛩️</span>
                     <div>
@@ -164,14 +162,34 @@ export const WalletView: React.FC<WalletViewProps> = ({
                     </div>
                   </div>
 
-                  <div style={styles.statusPill}>
-                    <span style={styles.greenDot}></span>
-                    <span>{b.status} · PAGO CONFIRMADO</span>
+                  <div
+                    style={{
+                      ...styles.statusPill,
+                      ...(isCancelled(b.status)
+                        ? styles.statusPillCancelled
+                        : {}),
+                    }}
+                  >
+                    <span
+                      style={
+                        isCancelled(b.status) ? styles.redDot : styles.greenDot
+                      }
+                    ></span>
+                    <span>
+                      {isCancelled(b.status)
+                        ? "CANCELADO"
+                        : `${b.status} · PAGO CONFIRMADO`}
+                    </span>
                   </div>
                 </div>
 
                 {/* Cuerpo del Ticket */}
-                <div style={styles.ticketBody}>
+                <div
+                  style={{
+                    ...styles.ticketBody,
+                    ...(isCancelled(b.status) ? { opacity: 0.55 } : {}),
+                  }}
+                >
                   <div style={styles.ticketDetails}>
                     <div style={styles.packTitleBig}>{b.packTitle}</div>
                     <div style={styles.seasonTagline}>
@@ -223,24 +241,76 @@ export const WalletView: React.FC<WalletViewProps> = ({
                       <img
                         src={b.qrData}
                         alt={`Voucher QR ${b.bookingCode}`}
-                        style={styles.qrImg}
+                        style={{
+                          ...styles.qrImg,
+                          ...(isCancelled(b.status)
+                            ? { filter: "grayscale(1) opacity(0.4)" }
+                            : {}),
+                        }}
                       />
                     </div>
                     <span style={styles.qrHelp}>
-                      Escaneable en torniquetes JR East y recepción de Ryokan
+                      {isCancelled(b.status)
+                        ? "QR invalidado por cancelación"
+                        : "Escaneable en torniquetes JR East y recepción de Ryokan"}
                     </span>
-                    <span style={styles.offlineGuaranteed}>
-                      📶 100% Funcional sin conexión
-                    </span>
+                    {!isCancelled(b.status) && (
+                      <span style={styles.offlineGuaranteed}>
+                        📶 100% Funcional sin conexión
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Pie de Página del Ticket */}
+                {/* Pie de Página del Ticket + Botón Cancelar */}
                 <div style={styles.ticketFooter}>
                   <span>
                     🛡️ Asistencia bilingüe 24/7 en Japón: +81 (0)17-700-AOMORI
                   </span>
-                  <span>ID Sistema: {b.id.slice(0, 8)}...</span>
+
+                  <div style={styles.footerActions}>
+                    <span>ID Sistema: {b.id.slice(0, 8)}...</span>
+
+                    {!isCancelled(b.status) && (
+                      <>
+                        {confirmCancelId === b.id ? (
+                          <div style={styles.confirmCancelRow}>
+                            <span style={styles.confirmCancelText}>
+                              ¿Cancelar esta reserva?
+                            </span>
+                            <button
+                              style={styles.confirmYesBtn}
+                              onClick={() => handleCancelBooking(b.id)}
+                              disabled={cancellingId === b.id}
+                            >
+                              {cancellingId === b.id
+                                ? "Cancelando..."
+                                : "Sí, cancelar"}
+                            </button>
+                            <button
+                              style={styles.confirmNoBtn}
+                              onClick={() => setConfirmCancelId(null)}
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            style={styles.cancelBookingBtn}
+                            onClick={() => setConfirmCancelId(b.id)}
+                          >
+                            ✕ Cancelar Reserva
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    {isCancelled(b.status) && (
+                      <span style={styles.cancelledLabel}>
+                        Reserva cancelada
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -271,6 +341,8 @@ export const WalletView: React.FC<WalletViewProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Modal de confirmación overlay (solo visible cuando hay confirmación pendiente) */}
     </div>
   );
 };
@@ -445,6 +517,17 @@ const styles: Record<string, React.CSSProperties> = {
     color: "var(--aomori-blue)",
     boxShadow: "var(--shadow-sm)",
   },
+  feedbackToast: {
+    backgroundColor: "#10B981",
+    color: "#FFFFFF",
+    padding: "12px 20px",
+    borderRadius: "var(--radius-md, 14px)",
+    marginBottom: "20px",
+    fontSize: "0.9rem",
+    fontWeight: 700,
+    textAlign: "center",
+    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+  },
   loadingBox: {
     padding: "60px 20px",
     textAlign: "center",
@@ -497,6 +580,11 @@ const styles: Record<string, React.CSSProperties> = {
     border: "2px solid var(--color-aomori-blue, #1C4F7C)",
     overflow: "hidden",
     boxShadow: "var(--shadow-floating)",
+    transition: "opacity 200ms ease",
+  },
+  ticketCardCancelled: {
+    borderColor: "#94A3B8",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
   },
   ticketTop: {
     backgroundColor: "var(--color-aomori-blue, #1C4F7C)",
@@ -507,6 +595,9 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     flexWrap: "wrap",
     gap: "12px",
+  },
+  ticketTopCancelled: {
+    backgroundColor: "#64748B",
   },
   ticketBrand: {
     display: "flex",
@@ -542,11 +633,21 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.5px",
     border: "1px solid rgba(255, 255, 255, 0.3)",
   },
+  statusPillCancelled: {
+    backgroundColor: "rgba(239, 68, 68, 0.25)",
+    borderColor: "rgba(239, 68, 68, 0.4)",
+  },
   greenDot: {
     width: "8px",
     height: "8px",
     borderRadius: "50%",
     backgroundColor: "#34D399",
+  },
+  redDot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    backgroundColor: "#EF4444",
   },
   ticketBody: {
     display: "grid",
@@ -554,6 +655,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "24px",
     gap: "24px",
     borderBottom: "1px dashed #CBD5E1",
+    transition: "opacity 200ms ease",
   },
   ticketDetails: {
     display: "flex",
@@ -631,6 +733,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "160px",
     height: "160px",
     display: "block",
+    transition: "filter 200ms ease",
   },
   qrHelp: {
     fontSize: "0.7rem",
@@ -656,6 +759,63 @@ const styles: Record<string, React.CSSProperties> = {
     color: "var(--text-muted)",
     flexWrap: "wrap",
     gap: "8px",
+  },
+  footerActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+  cancelBookingBtn: {
+    backgroundColor: "transparent",
+    color: "#DC2626",
+    border: "1.5px solid #FECACA",
+    borderRadius: "var(--radius-pill, 9999px)",
+    padding: "6px 14px",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 150ms ease",
+  },
+  confirmCancelRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    backgroundColor: "#FEF2F2",
+    padding: "6px 12px",
+    borderRadius: "var(--radius-md, 14px)",
+    border: "1px solid #FECACA",
+  },
+  confirmCancelText: {
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color: "#991B1B",
+  },
+  confirmYesBtn: {
+    backgroundColor: "#DC2626",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: "var(--radius-pill, 9999px)",
+    padding: "4px 12px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  confirmNoBtn: {
+    backgroundColor: "transparent",
+    color: "#64748B",
+    border: "1px solid #CBD5E1",
+    borderRadius: "var(--radius-pill, 9999px)",
+    padding: "4px 12px",
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  cancelledLabel: {
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color: "#94A3B8",
+    fontStyle: "italic",
   },
   travelTipsCard: {
     backgroundColor: "var(--surface-white)",

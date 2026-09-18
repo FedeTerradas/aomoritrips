@@ -4,11 +4,14 @@
  * y cumplimiento de seguridad PCI-DSS v4.0.
  */
 
+export type BillingCycle = "Mensual" | "Por Reserva";
+export type Currency = "USD" | "JPY" | "EUR" | "ARS";
+
 export interface PaymentCardInfo {
   id?: string;
   cardBrand: string;
   last4: string;
-  billingCycle: string; // "Mensual" | "Por Reserva"
+  billingCycle: BillingCycle;
   vaultToken?: string;
   isDefault?: boolean;
 }
@@ -22,7 +25,7 @@ export interface TravelerProfile {
   kilometersCount: string;
   paymentMethod: PaymentCardInfo;
   paymentMethods?: PaymentCardInfo[];
-  currency: string; // "USD" | "JPY" | "EUR" | "ARS"
+  currency: Currency;
   passport: {
     number: string;
     expiry: string;
