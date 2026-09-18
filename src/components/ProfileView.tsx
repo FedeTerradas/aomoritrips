@@ -33,13 +33,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     resetProfile,
     user,
     stats,
+    notifyAuthChange,
   } = useTravelerDisplay(confirmedCount);
   const { favoritesCount } = useFavorites();
   const { t, language, setLanguage } = useI18n();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(profile.name);
+  const [nameInput, setNameInput] = useState("");
   const [saveFeedback, setSaveFeedback] = useState("");
 
   // Estado para modal de vinculación de tarjeta segura (PCI-DSS)
@@ -97,6 +98,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             fullName: trimmed,
           }),
         });
+        // Sincronizar en tiempo real el modelo de usuario y la sesión
+        notifyAuthChange();
       } catch (err) {
         console.warn("No se pudo sincronizar nombre con el servidor:", err);
       }
@@ -240,10 +243,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <div style={styles.nameEditRow}>
                   <input
                     type="text"
-                    placeholder="Invitado"
-                    value={
-                      nameInput === "Hana Yamamoto" ? "Invitado" : nameInput
-                    }
+                    placeholder="Tu nombre"
+                    value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     style={styles.nameInput}
                     autoFocus
@@ -254,7 +255,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <button
                     style={styles.nameCancelBtn}
                     onClick={() => {
-                      setNameInput(displayName);
                       setIsEditingName(false);
                     }}
                   >
@@ -267,7 +267,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <button
                     style={styles.editIconBtn}
                     onClick={() => {
-                      setNameInput(displayName);
+                      setNameInput(
+                        displayName === "Invitado" ? "" : displayName
+                      );
                       setIsEditingName(true);
                     }}
                     title="Editar nombre"

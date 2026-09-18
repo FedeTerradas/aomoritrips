@@ -1,27 +1,43 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileSchema } from "@/lib/security/tokenization";
+import { getAuthSession } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
   try {
+    const authSession = await getAuthSession();
     const { searchParams } = new URL(request.url);
     const sessionToken =
       searchParams.get("sessionToken") || "sess_default_traveler";
 
-    let profile = await prisma.travelerProfile.findUnique({
-      where: { sessionToken },
-      include: {
-        paymentMethods: {
-          orderBy: { createdAt: "desc" },
+    let profile = authSession
+      ? await prisma.travelerProfile.findUnique({
+          where: { userId: authSession.userId },
+          include: {
+            paymentMethods: {
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        })
+      : null;
+
+    if (!profile) {
+      profile = await prisma.travelerProfile.findUnique({
+        where: { sessionToken },
+        include: {
+          paymentMethods: {
+            orderBy: { createdAt: "desc" },
+          },
         },
-      },
-    });
+      });
+    }
 
     if (!profile) {
       // Inicializar perfil seguro con método de pago pre-tokenizado
       profile = await prisma.travelerProfile.create({
         data: {
           sessionToken,
+          userId: authSession?.userId,
           fullName: "Hana Yamamoto",
           passportNumberMasked: "ES · A4829311",
           passportExpiry: "Jun 2030",
@@ -59,6 +75,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const authSession = await getAuthSession();
     const body = await request.json();
     const parsed = UpdateProfileSchema.safeParse(body);
 
@@ -83,6 +100,37 @@ export async function PUT(request: Request) {
       preferredLanguage,
     } = parsed.data;
 
+    // Si el usuario está autenticado, actualizar su modelo User
+    if (authSession?.userId && fullName) {
+      await prisma.user.update({
+        where: { id: authSession.userId },
+        data: { name: fullName },
+      });
+    }
+
+    // Actualizar TravelerProfile vinculado al usuario o por sessionToken
+    if (authSession?.userId) {
+      const existing = await prisma.travelerProfile.findUnique({
+        where: { userId: authSession.userId },
+      });
+
+      if (existing) {
+        const updated = await prisma.travelerProfile.update({
+          where: { id: existing.id },
+          data: {
+            ...(fullName ? { fullName } : {}),
+            ...(passportNumber ? { passportNumberMasked: passportNumber } : {}),
+            ...(passportExpiry ? { passportExpiry } : {}),
+            ...(nationality ? { nationality } : {}),
+            ...(preferredCurrency ? { preferredCurrency } : {}),
+            ...(preferredLanguage ? { preferredLanguage } : {}),
+          },
+          include: { paymentMethods: true },
+        });
+        return NextResponse.json({ success: true, data: updated });
+      }
+    }
+
     const updated = await prisma.travelerProfile.upsert({
       where: { sessionToken },
       update: {
@@ -95,6 +143,7 @@ export async function PUT(request: Request) {
       },
       create: {
         sessionToken,
+        userId: authSession?.userId,
         fullName: fullName || "Hana Yamamoto",
         passportNumberMasked: passportNumber || "ES · A4829311",
         passportExpiry: passportExpiry || "Jun 2030",

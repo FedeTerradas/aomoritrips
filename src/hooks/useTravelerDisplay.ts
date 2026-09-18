@@ -19,6 +19,7 @@ export interface TravelerDisplayData {
   isLoaded: boolean;
   user: UserSession | null;
   stats: UserStats;
+  notifyAuthChange: () => void;
 }
 
 /**
@@ -29,21 +30,32 @@ export function useTravelerDisplay(
   bookingsCount: number = 0
 ): TravelerDisplayData {
   const { profile, updateProfile, resetProfile, isLoaded } = useProfile();
-  const { user, stats } = useAuth();
+  const { user, stats, notifyAuthChange } = useAuth();
 
-  const isGuest =
-    !user &&
-    (!profile.name ||
-      profile.name === "Hana Yamamoto" ||
-      profile.name === "Invitado");
+  const isGuest = !user;
 
-  const displayName = user ? user.name : isGuest ? "Invitado" : profile.name;
+  // Verificar si el usuario personalizó su nombre
+  const hasCustomProfileName =
+    Boolean(profile.name) &&
+    profile.name !== "Hana Yamamoto" &&
+    profile.name !== "Invitado";
 
-  const displayAvatar = user
-    ? user.name.charAt(0).toUpperCase()
-    : isGuest
-      ? "客"
-      : profile.avatarKanji || "花";
+  const displayName = user
+    ? hasCustomProfileName
+      ? profile.name
+      : user.name
+    : hasCustomProfileName
+      ? profile.name
+      : "Invitado";
+
+  const displayAvatar =
+    displayName && displayName !== "Invitado"
+      ? displayName.charAt(0).toUpperCase()
+      : user
+        ? user.name.charAt(0).toUpperCase()
+        : isGuest
+          ? "客"
+          : profile.avatarKanji || "花";
 
   const displayTrips = user ? stats.tripsCount : bookingsCount;
 
@@ -83,5 +95,6 @@ export function useTravelerDisplay(
     isLoaded,
     user,
     stats,
+    notifyAuthChange,
   };
 }
