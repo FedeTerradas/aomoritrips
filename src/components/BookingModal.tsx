@@ -22,7 +22,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onGoToProfile,
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { profile } = useProfile();
+  const { profile, updateProfile } = useProfile();
   const { user, notifyAuthChange } = useAuth();
   const [travelersCount, setTravelersCount] = useState(2);
   const [travelDate, setTravelDate] = useState("2026-10-15");
@@ -90,6 +90,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "No se pudo procesar la reserva.");
+      }
+
+      if (travelerName.trim()) {
+        updateProfile({ name: travelerName.trim() });
       }
 
       notifyAuthChange();

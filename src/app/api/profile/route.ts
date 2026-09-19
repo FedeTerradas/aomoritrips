@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { UpdateProfileSchema } from "@/lib/security/tokenization";
-import { getAuthSession } from "@/lib/auth/session";
+import {
+  getAuthSession,
+  signAuthToken,
+  AUTH_COOKIE_NAME,
+} from "@/lib/auth/session";
 
 export async function GET(request: Request) {
   try {
@@ -102,11 +106,37 @@ export async function PUT(request: Request) {
 
     // Si el usuario está autenticado, actualizar su modelo User
     if (authSession?.userId && fullName) {
-      await prisma.user.update({
-        where: { id: authSession.userId },
-        data: { name: fullName },
-      });
+      try {
+        await prisma.user.update({
+          where: { id: authSession.userId },
+          data: { name: fullName },
+        });
+      } catch (userErr) {
+        console.warn(
+          "No se pudo actualizar el nombre en el modelo User:",
+          userErr
+        );
+      }
     }
+
+    const setRefreshedCookie = (response: NextResponse) => {
+      if (authSession?.userId && fullName) {
+        const refreshedToken = signAuthToken({
+          id: authSession.userId,
+          email: authSession.email,
+          name: fullName,
+          role: authSession.role,
+        });
+        response.cookies.set(AUTH_COOKIE_NAME, refreshedToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7,
+          path: "/",
+        });
+      }
+      return response;
+    };
 
     // Actualizar TravelerProfile vinculado al usuario o por sessionToken
     if (authSession?.userId) {
@@ -127,7 +157,9 @@ export async function PUT(request: Request) {
           },
           include: { paymentMethods: true },
         });
-        return NextResponse.json({ success: true, data: updated });
+        return setRefreshedCookie(
+          NextResponse.json({ success: true, data: updated })
+        );
       }
     }
 
@@ -156,7 +188,9 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    return setRefreshedCookie(
+      NextResponse.json({ success: true, data: updated })
+    );
   } catch (error) {
     console.error("Error al actualizar perfil:", error);
     return NextResponse.json(

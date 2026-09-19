@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTravelerDisplay } from "@/hooks/useTravelerDisplay";
 import { useI18n } from "@/i18n/I18nContext";
 import { AuthModal } from "./AuthModal";
 
@@ -27,8 +28,40 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
+  const { user, displayName, displayAvatar, profile } =
+    useTravelerDisplay(bookingsCount);
   const { t, language, setLanguage } = useI18n();
+
+  // Determinar si el usuario personalizó su nombre o tiene un nombre registrado
+  const hasCustomName =
+    Boolean(
+      profile?.name &&
+      profile.name !== "Hana Yamamoto" &&
+      profile.name !== "Invitado"
+    ) ||
+    Boolean(
+      user?.name && user.name !== "Hana Yamamoto" && user.name !== "Invitado"
+    );
+
+  // Nombre que el usuario efectivamente puso (o fallback limpio sin 'Hana')
+  const effectiveUserName = hasCustomName
+    ? profile?.name &&
+      profile.name !== "Hana Yamamoto" &&
+      profile.name !== "Invitado"
+      ? profile.name
+      : user?.name || displayName
+    : user
+      ? "Viajero"
+      : "";
+
+  const displayFirstName = effectiveUserName
+    ? effectiveUserName.trim().split(" ")[0]
+    : "";
+
+  const avatarBadge = effectiveUserName
+    ? effectiveUserName.trim().charAt(0).toUpperCase()
+    : displayAvatar || "旅";
 
   // Cerrar el menú desplegable al hacer clic fuera o presionar Escape
   useEffect(() => {
@@ -243,27 +276,33 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {/* Botón de Usuario o Login */}
-          {user ? (
+          {effectiveUserName ? (
             <div style={styles.userChip}>
               <button
                 style={styles.userProfileBtn}
                 onClick={() => setActiveTab("profile")}
-                title={`Perfil de ${user.name}`}
+                title={`Perfil de ${effectiveUserName}`}
               >
-                <span style={styles.userAvatarBadge}>
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-                <span style={styles.userNameText}>
-                  {user.name.split(" ")[0]}
-                </span>
+                <span style={styles.userAvatarBadge}>{avatarBadge}</span>
+                <span style={styles.userNameText}>{displayFirstName}</span>
               </button>
-              <button
-                style={styles.logoutBtn}
-                onClick={logout}
-                title="Cerrar sesión"
-              >
-                ↪
-              </button>
+              {user ? (
+                <button
+                  style={styles.logoutBtn}
+                  onClick={logout}
+                  title="Cerrar sesión"
+                >
+                  ↪
+                </button>
+              ) : (
+                <button
+                  style={styles.loginChipBtn}
+                  onClick={() => setIsAuthModalOpen(true)}
+                  title="Iniciar sesión con cuenta"
+                >
+                  🔑
+                </button>
+              )}
             </div>
           ) : (
             <button
@@ -590,7 +629,7 @@ const styles: Record<string, React.CSSProperties> = {
   userNameText: {
     fontSize: "0.82rem",
     fontWeight: 700,
-    maxWidth: "80px",
+    maxWidth: "120px",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -603,5 +642,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "0.9rem",
     padding: "2px 4px",
     borderRadius: "4px",
+  },
+  loginChipBtn: {
+    background: "none",
+    border: "none",
+    color: "rgba(255, 255, 255, 0.8)",
+    cursor: "pointer",
+    fontSize: "0.85rem",
+    padding: "2px 4px",
+    borderRadius: "var(--radius-pill)",
+    display: "flex",
+    alignItems: "center",
   },
 };

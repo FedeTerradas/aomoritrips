@@ -268,7 +268,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     style={styles.editIconBtn}
                     onClick={() => {
                       setNameInput(
-                        displayName === "Invitado" ? "" : displayName
+                        displayName === "Invitado" ||
+                          displayName === "Hana Yamamoto" ||
+                          displayName === "Viajero"
+                          ? ""
+                          : displayName
                       );
                       setIsEditingName(true);
                     }}

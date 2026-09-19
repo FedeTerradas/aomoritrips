@@ -40,22 +40,33 @@ export function useTravelerDisplay(
     profile.name !== "Hana Yamamoto" &&
     profile.name !== "Invitado";
 
+  const hasCustomUserName =
+    Boolean(user?.name) &&
+    user?.name !== "Hana Yamamoto" &&
+    user?.name !== "Invitado";
+
   const displayName = user
     ? hasCustomProfileName
       ? profile.name
-      : user.name
+      : hasCustomUserName
+        ? user.name
+        : "Viajero"
     : hasCustomProfileName
       ? profile.name
       : "Invitado";
 
   const displayAvatar =
-    displayName && displayName !== "Invitado"
+    displayName && displayName !== "Invitado" && displayName !== "Viajero"
       ? displayName.charAt(0).toUpperCase()
       : user
-        ? user.name.charAt(0).toUpperCase()
+        ? hasCustomUserName
+          ? user.name.charAt(0).toUpperCase()
+          : "旅"
         : isGuest
           ? "客"
-          : profile.avatarKanji || "花";
+          : profile.avatarKanji && profile.avatarKanji !== "花"
+            ? profile.avatarKanji
+            : "旅";
 
   const displayTrips = user ? stats.tripsCount : bookingsCount;
 

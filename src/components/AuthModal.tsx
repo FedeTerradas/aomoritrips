@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { saveStoredProfile } from "@/lib/profile";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -38,9 +39,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (tab === "login") {
-        await login(email, password);
+        const res = await login(email, password);
+        if (res?.user?.name && res.user.name !== "Hana Yamamoto") {
+          saveStoredProfile({ name: res.user.name });
+        }
       } else {
         await register(name, email, password);
+        if (name.trim()) {
+          saveStoredProfile({ name: name.trim() });
+        }
       }
       onClose();
       if (onSuccess) onSuccess();
