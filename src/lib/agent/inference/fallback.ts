@@ -175,7 +175,43 @@ export class DeterministicFallbackAdapter implements InferenceProvider {
       );
     }
 
-    // 8. Mensaje de bienvenida general
+    // 8. Preguntas abiertas de recomendación ("¿qué me recomendás?", "no sé qué elegir", etc.)
+    if (
+      q.includes("recomiend") ||
+      q.includes("qué elegir") ||
+      q.includes("que elegir") ||
+      q.includes("no sé") ||
+      q.includes("no se") ||
+      q.includes("ayuda") ||
+      q.includes("empezar") ||
+      q.includes("por dónde") ||
+      q.includes("por donde") ||
+      q.includes("opciones") ||
+      q.includes("qué hay") ||
+      q.includes("que hay") ||
+      q.includes("cuál es") ||
+      q.includes("cual es")
+    ) {
+      return (
+        "¡Con mucho gusto te oriento! 🌸 En AomoriTrips tenemos **6 expediciones exclusivas** que cubren las 4 estaciones del norte de Japón:\n\n" +
+        "1. 🌸 **Hirosaki Samurái: Cerezos Ocultos** (Primavera · 7 días · Desde $2.890 USD)\n" +
+        "   _Castillo feudal, foso de pétalos Hanaikada y ceremonia del té con el clan Tsugaru._\n\n" +
+        "2. 🏮 **Nebuta Matsuri: Acceso a Cofradías** (Verano · 6 días · Desde $3.390 USD)\n" +
+        "   _Desfile de carrozas monumentales de fuego, danza Haneto y talleres de artesanos._\n\n" +
+        "3. 🍁 **Shirakami-Sanchi & Oirase: Bosque UNESCO** (Otoño · 8 días · Desde $2.790 USD)\n" +
+        "   _14 cascadas de follaje dorado, navegación en el Lago Towada y caza con Matagi._\n\n" +
+        "4. 🍁 **Osorezan & Acantilados de Shimokita** (Otoño · 7 días · Desde $3.450 USD)\n" +
+        "   _Monte sagrado de los espíritus, catas volcánicas y atún azul de Oma._\n\n" +
+        "5. 🍁 **Ruta Volcánica Hakkoda** (Otoño · 5 días · Desde $1.850 USD)\n" +
+        "   _Senderismo por turberas humeantes y onsen de alta montaña._\n\n" +
+        "6. ❄️ **Hitō Secretos de Hakkoda: Termas en Nieve Profunda** (Invierno · 7 días · Desde $2.980 USD)\n" +
+        "   _Baño Senninburo milenario, 'Monstruos de Nieve' y Tren con Estufa de Carbón._\n\n" +
+        "💡 Si no sabés cuál es el tuyo, hacé nuestro [🌸 Test Cultural 'Mi Japón'](/quiz): 7 preguntas y te decimos tu expedición ideal con personaje anime incluido.\n\n" +
+        "También podés contarme tu temporada preferida o cuántas personas viajan para cotizar en el momento."
+      );
+    }
+
+    // 9. Mensaje de bienvenida general (primera interacción)
     return (
       "¡Konnichiwa! Soy tu **Sensei de viajes de AomoriTrips** (青森の先生) ⛩️.\n\n" +
       "Estoy aquí para guiarte por los secretos más profundos y auténticos del norte de Japón (Tohoku).\n\n" +
@@ -184,7 +220,7 @@ export class DeterministicFallbackAdapter implements InferenceProvider {
       "• 🏮 **Verano**: Festival colosal de fuego Nebuta Matsuri (desde $3.390 USD)\n" +
       "• 🍁 **Otoño**: Garganta de Oirase, Lago Towada y Monte Osorezan (desde $1.850 USD)\n" +
       "• ❄️ **Invierno**: Termas milenarias bajo la nieve en Sukayu Onsen (desde $2.980 USD)\n\n" +
-      "Además, podés realizar nuestro [🌸 Test Cultural 'Mi Japón'](/quiz) para descubrir tu itinerario ideal en 7 preguntas, o pedirme una cotización personalizada con un solo mensaje."
+      "Podés realizar nuestro [🌸 Test Cultural 'Mi Japón'](/quiz) para descubrir tu itinerario ideal en 7 preguntas, o pedirme una cotización personalizada con un solo mensaje."
     );
   }
 }

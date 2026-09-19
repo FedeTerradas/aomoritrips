@@ -645,22 +645,33 @@ export async function executeTravelAgent(
   if (asksForSeason) {
     const sKey = detectedSeason || chosenPack?.seasonTag || "sakura";
     const f = toolGetSeasonalForecast(sKey);
+
+    // Fix #2: listar TODOS los paquetes de la temporada detectada con igual jerarquía
+    const seasonalPacks = detectedSeason
+      ? allSuggested.filter((p) => p.seasonTag === detectedSeason)
+      : allSuggested;
+    const packsToShow = seasonalPacks.length > 0 ? seasonalPacks : allSuggested;
+
     let seasonSection =
       `🌸 **Recomendación Estacional para Aomori (${f.season})**:\n\n${f.highlight}\n\n` +
       `- 🌡️ **Temperatura típica**: ${f.tempRange}\n` +
       `- 📅 **Mejor momento**: ${f.bestMonths}\n` +
-      `- 🎒 **Consejo de equipaje**: ${f.packingTips.join(", ")}.\n\n` +
-      `Te recomendamos especialmente nuestra expedición principal: **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru"}** (${chosenPack?.durationDays || 7} días · Desde $${(chosenPack?.priceBaseUsd || 2890).toLocaleString()} USD).`;
+      `- 🎒 **Consejo de equipaje**: ${f.packingTips.join(", ")}.`;
 
-    if (alternatePacks.length > 0) {
+    if (packsToShow.length > 0) {
       seasonSection +=
-        `\n\n🎒 **Otras expediciones afines para esta temporada**:\n` +
-        alternatePacks
+        `\n\n🗾 **Expediciones disponibles para esta temporada (${packsToShow.length})**:\n` +
+        packsToShow
           .map(
             (p) =>
-              `• **${p.title}** (${p.seasonLabel} · ${p.durationDays} días — Desde $${p.priceBaseUsd.toLocaleString()} USD)`
+              `• **${p.title}** (${p.seasonLabel} · ${p.durationDays} días · Desde $${p.priceBaseUsd.toLocaleString()} USD)` +
+              (p.highlights && p.highlights.length > 0
+                ? `\n  _${p.highlights.slice(0, 2).join(" · ")}_`
+                : "")
           )
-          .join("\n");
+          .join("\n\n");
+    } else {
+      seasonSection += `\n\nTe recomendamos nuestra expedición **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos"}** (${chosenPack?.durationDays || 7} días · Desde $${(chosenPack?.priceBaseUsd || 2890).toLocaleString()} USD).`;
     }
 
     seasonSection += `\n\n💡 *¿Querés saber qué viaje se adapta mejor a tu personalidad? Te invitamos a hacer nuestro [🌸 Test Cultural 'Mi Japón'](/quiz).*`;
@@ -701,22 +712,21 @@ export async function executeTravelAgent(
     responseSections.push(pricingSection);
   }
 
-  if (
-    asksForPacks &&
-    !asksForSeason &&
-    !asksForPricing &&
-    !asksForItinerary &&
-    allSuggested.length > 0
-  ) {
+  // Fix #1: eliminadas las guardias !asksForSeason y !asksForPricing que bloqueaban
+  // el listado del catálogo cuando la pregunta mencionaba temporada o precio.
+  // Ahora se muestra el catálogo siempre que el usuario pida paquetes.
+  if (asksForPacks && allSuggested.length > 0 && !asksForSeason) {
+    // Solo renderizamos el catálogo completo si no hay sección estacional ya generada
+    // (la sección estacional ya incluye los paquetes filtrados por temporada)
     let packsSection =
-      `🗾 **Catálogo de Expediciones de AomoriTrips**:\n\n` +
+      `🗾 **Catálogo Completo de Expediciones de AomoriTrips**:\n\n` +
       `Contamos con ${allSuggested.length} expediciones diseñadas para vivir el norte de Japón con máxima autenticidad:\n\n`;
 
     packsSection += allSuggested
       .map(
         (p) =>
           `• **${p.title}** (${p.seasonLabel} · ${p.durationDays} días · Desde $${p.priceBaseUsd.toLocaleString()} USD)\n` +
-          `  _Aspectos destacados_: ${p.highlights && p.highlights.length > 0 ? p.highlights.slice(0, 3).join(", ") : "Aguas termales onsen, tren bala Shinkansen y Ryokan histórico"}`
+          `  _${p.highlights && p.highlights.length > 0 ? p.highlights.slice(0, 3).join(" · ") : "Aguas termales onsen, tren bala Shinkansen y Ryokan histórico"}_`
       )
       .join("\n\n");
 
@@ -725,6 +735,23 @@ export async function executeTravelAgent(
       `🌸 *¿No sabés cuál elegir? Te recomendamos hacer nuestro [Test Cultural 'Mi Japón'](/quiz) para descubrir tu ruta ideal.*`;
 
     responseSections.push(packsSection);
+  } else if (asksForPacks && asksForSeason && allSuggested.length > 0) {
+    // Si preguntó por paquetes + temporada específica, la sección estacional ya los listó.
+    // Agregamos solo un resumen del resto del catálogo para que conozcan todas las opciones.
+    const otherSeasonPacks = allSuggested.filter(
+      (p) => p.seasonTag !== detectedSeason
+    );
+    if (otherSeasonPacks.length > 0) {
+      const otherSection =
+        `🗓️ **También disponibles en otras temporadas**:\n` +
+        otherSeasonPacks
+          .map(
+            (p) =>
+              `• **${p.title}** (${p.seasonLabel} · ${p.durationDays} días · Desde $${p.priceBaseUsd.toLocaleString()} USD)`
+          )
+          .join("\n");
+      responseSections.push(otherSection);
+    }
   }
 
   if (asksForItinerary && itineraryDraft) {

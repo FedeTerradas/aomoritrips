@@ -25,10 +25,133 @@ export async function toolSearchPacks(params: SearchPacksParams) {
     });
   } catch (err) {
     console.warn(
-      "[toolSearchPacks] No se pudo consultar la base de datos:",
+      "[toolSearchPacks] No se pudo consultar la base de datos, usando catálogo hardcodeado de contingencia:",
       err
     );
-    return [];
+    // Fix #5: Fallback con los 6 paquetes oficiales cuando la DB no está disponible
+    // Garantiza que el orquestador nunca trabaje con lista vacía
+    const fallbackPacks = [
+      {
+        id: "fb-1",
+        slug: "hirosaki-samurai-sakura",
+        title: "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru",
+        japaneseTitle: "弘前桜まつり",
+        priceBaseUsd: 2890,
+        seasonTag: "sakura",
+        seasonLabel: "Primavera / Sakura",
+        durationDays: 7,
+        rating: 4.9,
+        highlights: [
+          "Castillo feudal de Hirosaki",
+          "Foso de pétalos Hanaikada",
+          "Ceremonia del té matcha",
+        ],
+      },
+      {
+        id: "fb-2",
+        slug: "nebuta-matsuri-cofradia",
+        title: "Nebuta Matsuri: Acceso a Cofradías y Talleres de Maestros",
+        japaneseTitle: "ねぶた祭り",
+        priceBaseUsd: 3390,
+        seasonTag: "nebuta",
+        seasonLabel: "Verano / Nebuta",
+        durationDays: 6,
+        rating: 4.8,
+        highlights: [
+          "Desfile de carrozas monumentales de fuego",
+          "Danza Haneto con yukata",
+          "Taller de artesanos Nebuta",
+        ],
+      },
+      {
+        id: "fb-3",
+        slug: "shirakami-oirase-unescos",
+        title:
+          "Shirakami-Sanchi & Oirase: Expedición al Bosque Primario UNESCO",
+        japaneseTitle: "白神山地・奥入瀬渓流",
+        priceBaseUsd: 2790,
+        seasonTag: "koyo",
+        seasonLabel: "Otoño / Koyo",
+        durationDays: 8,
+        rating: 4.7,
+        highlights: [
+          "14 cascadas de follaje dorado Oirase",
+          "Senderismo con cazadores Matagi",
+          "Navegación Lago Towada",
+        ],
+      },
+      {
+        id: "fb-4",
+        slug: "osorezan-shimokita-mistico",
+        title:
+          "Osorezan & Acantilados de Shimokita: El Japón Místico Inexplorado",
+        japaneseTitle: "恐山・下北半島",
+        priceBaseUsd: 3450,
+        seasonTag: "koyo",
+        seasonLabel: "Otoño / Koyo",
+        durationDays: 7,
+        rating: 4.6,
+        highlights: [
+          "Monte sagrado Osorezan",
+          "Catas volcánicas Hotokegaura",
+          "Atún azul de Oma",
+        ],
+      },
+      {
+        id: "fb-5",
+        slug: "ruta-volcanica-hakkoda",
+        title: "Ruta Volcánica Hakkoda",
+        japaneseTitle: "八甲田山火山ルート",
+        priceBaseUsd: 1850,
+        seasonTag: "koyo",
+        seasonLabel: "Otoño / Koyo",
+        durationDays: 5,
+        rating: 4.5,
+        highlights: [
+          "Senderismo turberas humeantes",
+          "Teleférico panorámico Hakkoda",
+          "Onsen aguas minerales",
+        ],
+      },
+      {
+        id: "fb-6",
+        slug: "sukayu-onsen-nieve-profunda",
+        title:
+          "Hitō Secretos de Hakkoda: Termas Milenarias en la Nieve Profunda",
+        japaneseTitle: "秘湯八甲田・酸ヶ湯温泉",
+        priceBaseUsd: 2980,
+        seasonTag: "snow",
+        seasonLabel: "Invierno / Snow",
+        durationDays: 7,
+        rating: 4.8,
+        highlights: [
+          "Baño Senninburo milenario Sukayu",
+          "Árboles Monstruos de Nieve Juhyo",
+          "Tren con Estufa de Carbón",
+        ],
+      },
+    ];
+
+    // Aplicar los mismos filtros sobre el fallback
+    return fallbackPacks.filter((pack) => {
+      if (
+        params.season &&
+        params.season !== "all" &&
+        pack.seasonTag.toLowerCase() !== params.season.toLowerCase()
+      ) {
+        return false;
+      }
+      if (params.maxBudgetUsd && pack.priceBaseUsd > params.maxBudgetUsd) {
+        return false;
+      }
+      if (params.query) {
+        const q = params.query.toLowerCase();
+        const matchTitle = pack.title.toLowerCase().includes(q);
+        const matchSeason = pack.seasonLabel.toLowerCase().includes(q);
+        if (!matchTitle && !matchSeason) return false;
+      }
+      return true;
+    });
   }
 
   return allPacks
