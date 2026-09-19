@@ -470,6 +470,34 @@ export async function executeTravelAgent(
     lower.includes("cultura") ||
     lower.includes("costumbre");
 
+  const asksForPacks =
+    lower.includes("paquete") ||
+    lower.includes("paquetes") ||
+    lower.includes("pack") ||
+    lower.includes("packs") ||
+    lower.includes("viaje") ||
+    lower.includes("viajes") ||
+    lower.includes("opciones") ||
+    lower.includes("opcion") ||
+    lower.includes("catalogo") ||
+    lower.includes("catálogo") ||
+    lower.includes("tours") ||
+    lower.includes("tour") ||
+    lower.includes("recomiendan") ||
+    lower.includes("recomiendas") ||
+    lower.includes("recomendás") ||
+    lower.includes("recomendas");
+
+  const asksForQuiz =
+    lower.includes("quiz") ||
+    lower.includes("test") ||
+    lower.includes("personalidad") ||
+    lower.includes("mi japon") ||
+    lower.includes("mi japón") ||
+    lower.includes("diagnostico") ||
+    lower.includes("diagnóstico") ||
+    lower.includes("estilo de viaje");
+
   // Invocación Tool 1: Búsqueda de paquetes en DB
   toolsExecuted.push("search_packs");
 
@@ -580,24 +608,64 @@ export async function executeTravelAgent(
     });
   }
 
-  // 4. Síntesis y Redacción de Respuesta (Multi-objetivo: Temporada + Cotización + Itinerario)
-  const chosenPack = suggestedPacks[0] as
-    | {
-        title: string;
-        priceBaseUsd: number;
-        seasonLabel: string;
-        seasonTag: string;
-      }
-    | undefined;
+  // 4. Síntesis y Redacción de Respuesta (Multi-objetivo: Temporada + Cotización + Itinerario + Catálogo + Quiz)
+  interface PackItem {
+    id: string;
+    slug: string;
+    title: string;
+    japaneseTitle?: string;
+    priceBaseUsd: number;
+    seasonTag: string;
+    seasonLabel: string;
+    durationDays: number;
+    rating?: number;
+    highlights?: string[];
+  }
+
+  const allSuggested = (suggestedPacks || []) as PackItem[];
+  const chosenPack = allSuggested[0] || undefined;
+  const alternatePacks = allSuggested.slice(1, 4);
 
   const responseSections: string[] = [];
+
+  if (asksForQuiz) {
+    toolsExecuted.push("generate_quiz_recommendation");
+    responseSections.push(
+      `🌸 **Diagnóstico Cultural de Viaje: 'Mi Japón'** (Test Interactivo)\n\n` +
+        `Diseñamos un test interactivo de 7 preguntas para cruzar tus preferencias de anime, gastronomía tradicional, ritmo de viaje y clima con las rutas secretas de Tohoku.\n\n` +
+        `Al completarlo, descubrís tu arquetipo de viajero oficial y tu guía anime:\n` +
+        `• **🌸 Sakura (Poeta Contemplativo)**: Amantes de la contemplación floral, templos zen y jardines feudales en Hirosaki.\n` +
+        `• **🏮 Haruto (Espíritu Festivo)**: Viajeros con alta energía atraídos por el festival de fuego Nebuta Matsuri y los mercados nocturnos.\n` +
+        `• **🍃 Explorador Matagi**: Amantes del trekking en bosques vírgenes UNESCO (Shirakami-Sanchi) y la mística del Monte Osorezan.\n` +
+        `• **❄️ Buscador Onsen**: Quienes anhelan el silencio curativo de los baños termales milenarios bajo la nieve en Sukayu Onsen.\n\n` +
+        `👉 Podés realizar el test en cualquier momento desde [🌸 Mi Japón](/quiz) para obtener tu tarjeta personalizada.`
+    );
+  }
 
   if (asksForSeason) {
     const sKey = detectedSeason || chosenPack?.seasonTag || "sakura";
     const f = toolGetSeasonalForecast(sKey);
-    responseSections.push(
-      `🌸 **Recomendación Estacional para Aomori (${f.season})**:\n\n${f.highlight}\n\n- 🌡️ **Temperatura típica**: ${f.tempRange}\n- 📅 **Mejor momento**: ${f.bestMonths}\n- 🎒 **Consejo de equipaje**: ${f.packingTips.join(", ")}.\n\nPara esta época te recomendamos especialmente nuestra expedición: **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru"}**.`
-    );
+    let seasonSection =
+      `🌸 **Recomendación Estacional para Aomori (${f.season})**:\n\n${f.highlight}\n\n` +
+      `- 🌡️ **Temperatura típica**: ${f.tempRange}\n` +
+      `- 📅 **Mejor momento**: ${f.bestMonths}\n` +
+      `- 🎒 **Consejo de equipaje**: ${f.packingTips.join(", ")}.\n\n` +
+      `Te recomendamos especialmente nuestra expedición principal: **${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru"}** (${chosenPack?.durationDays || 7} días · Desde $${(chosenPack?.priceBaseUsd || 2890).toLocaleString()} USD).`;
+
+    if (alternatePacks.length > 0) {
+      seasonSection +=
+        `\n\n🎒 **Otras expediciones afines para esta temporada**:\n` +
+        alternatePacks
+          .map(
+            (p) =>
+              `• **${p.title}** (${p.seasonLabel} · ${p.durationDays} días — Desde $${p.priceBaseUsd.toLocaleString()} USD)`
+          )
+          .join("\n");
+    }
+
+    seasonSection += `\n\n💡 *¿Querés saber qué viaje se adapta mejor a tu personalidad? Te invitamos a hacer nuestro [🌸 Test Cultural 'Mi Japón'](/quiz).*`;
+
+    responseSections.push(seasonSection);
   }
 
   if (asksForPricing && calculatedQuote) {
@@ -609,9 +677,54 @@ export async function executeTravelAgent(
       grandTotalUsd: number;
       groupDiscountApplied: string;
     };
-    responseSections.push(
-      `💴 **Cotización Transparente AomoriTrips** (Sin cargos ocultos para ${q.travelersCount} persona${q.travelersCount > 1 ? "s" : ""}):\n\n- **Expedición seleccionada**: ${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos"}\n- **Cantidad de viajeros**: ${q.travelersCount} persona(s)\n- **Precio por persona**: $${q.pricePerPersonUsd} USD (descuento aplicado: ${q.groupDiscountApplied})\n- **Subtotal experiencias y Ryokan**: $${q.subtotalUsd} USD\n- **Tasas e impuestos de prefectura**: $${q.taxesAndTransfersUsd} USD\n- **TOTAL FINAL GARANTIZADO**: **$${q.grandTotalUsd} USD**\n\nTodos los paquetes incluyen vuelo internacional, JR East Tohoku Pass ilimitado, Ryokan tradicional con aguas termales y guía bilingüe.`
-    );
+    let pricingSection =
+      `💴 **Cotización Transparente AomoriTrips** (Sin cargos ocultos para ${q.travelersCount} persona${q.travelersCount > 1 ? "s" : ""}):\n\n` +
+      `- **Expedición seleccionada**: ${chosenPack?.title || "Hirosaki Samurái: Cerezos Ocultos"}\n` +
+      `- **Cantidad de viajeros**: ${q.travelersCount} persona(s)\n` +
+      `- **Precio por persona**: $${q.pricePerPersonUsd.toLocaleString()} USD (descuento aplicado: ${q.groupDiscountApplied})\n` +
+      `- **Subtotal experiencias y Ryokan**: $${q.subtotalUsd.toLocaleString()} USD\n` +
+      `- **Tasas e impuestos de prefectura**: $${q.taxesAndTransfersUsd.toLocaleString()} USD\n` +
+      `- **TOTAL FINAL GARANTIZADO**: **$${q.grandTotalUsd.toLocaleString()} USD**\n\n` +
+      `Todos los paquetes incluyen vuelo internacional, JR East Tohoku Pass ilimitado, Ryokan tradicional con aguas termales y guía bilingüe.`;
+
+    if (alternatePacks.length > 0) {
+      pricingSection +=
+        `\n\n✨ **Alternativas que también podés cotizar**:\n` +
+        alternatePacks
+          .map(
+            (p) =>
+              `• **${p.title}** (${p.durationDays} días) — Tarifa base: $${p.priceBaseUsd.toLocaleString()} USD/persona`
+          )
+          .join("\n");
+    }
+
+    responseSections.push(pricingSection);
+  }
+
+  if (
+    asksForPacks &&
+    !asksForSeason &&
+    !asksForPricing &&
+    !asksForItinerary &&
+    allSuggested.length > 0
+  ) {
+    let packsSection =
+      `🗾 **Catálogo de Expediciones de AomoriTrips**:\n\n` +
+      `Contamos con ${allSuggested.length} expediciones diseñadas para vivir el norte de Japón con máxima autenticidad:\n\n`;
+
+    packsSection += allSuggested
+      .map(
+        (p) =>
+          `• **${p.title}** (${p.seasonLabel} · ${p.durationDays} días · Desde $${p.priceBaseUsd.toLocaleString()} USD)\n` +
+          `  _Aspectos destacados_: ${p.highlights && p.highlights.length > 0 ? p.highlights.slice(0, 3).join(", ") : "Aguas termales onsen, tren bala Shinkansen y Ryokan histórico"}`
+      )
+      .join("\n\n");
+
+    packsSection +=
+      `\n\nTodos los paquetes incluyen vuelos, pase JR Shinkansen, estancia en Ryokan tradicional y guía especializado.\n\n` +
+      `🌸 *¿No sabés cuál elegir? Te recomendamos hacer nuestro [Test Cultural 'Mi Japón'](/quiz) para descubrir tu ruta ideal.*`;
+
+    responseSections.push(packsSection);
   }
 
   if (asksForItinerary && itineraryDraft) {
@@ -653,8 +766,28 @@ export async function executeTravelAgent(
     }> = [
       {
         role: "system",
-        content:
-          "Eres Aomori Sensei (青森の先生), sabio y hospitalario guía de viajes de AomoriTrips. Asesoras sobre aguas termales onsen (Sukayu, Koganezaki), castillos en Hirosaki, gastronomía auténtica (nokkedon, manzanas Tsugaru) y tren bala Shinkansen en Tohoku, Japón. Habla en español con calidez, respeto y hospitalidad japonesa (omotenashi). Sé conciso y utiliza emojis sutiles (⛩️, 🌸, 🏮, ❄️).",
+        content: `Eres Aomori Sensei (青森の先生), el sabio, hospitalario y experto guía de viajes de AomoriTrips.
+Tu misión es asesorar a los viajeros sobre la prefectura de Aomori y la región de Tohoku (Japón) con la máxima calidez y hospitalidad japonesa (omotenashi).
+Proporciona respuestas detalladas, completas, bien estructuradas e inspiradoras (nunca escuetas ni monosilábicas).
+
+Catálogo oficial de expediciones en AomoriTrips:
+1. 🌸 Hirosaki Samurái: Cerezos Ocultos y Casas de Té Clanes Tsugaru (Primavera / Sakura · 7 días · Desde $2.890 USD) - Castillo feudal, foso de pétalos rosados Hanaikada, residencias samurái y ceremonia del té.
+2. 🏮 Nebuta Matsuri: Acceso a Cofradías y Talleres de Maestros (Verano / Nebuta · 6 días · Desde $3.390 USD) - Carrozas monumentales de papel iluminadas por fuego, danza colectiva Haneto con yukata y acceso a talleres.
+3. 🍁 Shirakami-Sanchi & Oirase: Expedición al Bosque Primario UNESCO (Otoño / Koyo · 8 días · Desde $2.790 USD) - Follaje rojo y dorado en 14 cascadas de Oirase, senderismo con cazadores Matagi y navegación en el Lago Towada.
+4. 🍁 Osorezan & Acantilados de Shimokita: El Japón Místico Inexplorado (Otoño / Koyo · 7 días · Desde $3.450 USD) - El monte sagrado de los espíritus Osorezan, aguas termales sulfurosas y cata del atún azul de Oma.
+5. 🍁 Ruta Volcánica Hakkoda (Otoño / Koyo · 5 días · Desde $1.850 USD) - Senderismo por turberas humeantes y baños termales de alta montaña.
+6. ❄️ Hitō Secretos de Hakkoda: Termas Milenarias en la Nieve Profunda (Invierno / Snow · 7 días · Desde $2.980 USD) - Sukayu Onsen con el milenario baño Senninburo, árboles congelados 'Monstruos de Nieve' y Tren con Estufa de Carbón.
+
+Herramientas disponibles:
+- 🌸 Quiz Cultural 'Mi Japón' (/quiz): test interactivo de 7 preguntas para diagnosticar el viaje ideal según gustos de anime, comida, ritmo y clima.
+- 🗺️ Armador de Itinerario (/itinerary-builder): diseño a medida para grupos.
+- 🎫 Vouchers offline con QR firmado criptográficamente con HMAC.
+
+Instrucciones de estilo:
+- Habla en español con calidez, respeto y entusiasmo por Tohoku.
+- Usa emojis sutiles y evocadores (⛩️, 🌸, 🏮, 🍁, ❄️, 🍱, 🍵).
+- Cuando sugieras viajes, menciona al menos 2 o 3 opciones del catálogo con sus precios y diferenciales.
+- Invita siempre al viajero a descubrir su perfil en el Quiz (/quiz) si aún no tiene definida su época de viaje.`,
       },
     ];
 
@@ -670,7 +803,7 @@ export async function executeTravelAgent(
 
     const inferenceResult = await inferenceOrchestrator.runInference(
       promptMessages,
-      { temperature: 0.4, maxTokens: 450 }
+      { temperature: 0.4, maxTokens: 800 }
     );
 
     responseText = inferenceResult.text;
