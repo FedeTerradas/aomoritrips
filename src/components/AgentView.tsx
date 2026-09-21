@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AgentDecisionStep } from "@/lib/agent/types";
 import { CharacterDisplay } from "./CharacterDisplay";
+import { AgentMarkdown } from "./AgentMarkdown";
 
 interface ChatMessage {
   id: string;
@@ -230,11 +231,7 @@ export const AgentView: React.FC = () => {
                     </div>
 
                     <div style={styles.msgBody}>
-                      {m.content.split("\n\n").map((p, pi) => (
-                        <p key={pi} style={{ marginBottom: "8px" }}>
-                          {p}
-                        </p>
-                      ))}
+                      <AgentMarkdown content={m.content} isUser={isUser} />
                     </div>
 
                     {/* Tags sutiles de motor de inferencia y herramientas */}
@@ -498,7 +495,9 @@ const styles: Record<string, React.CSSProperties> = {
   assistantBox: {
     backgroundColor: "var(--color-washi-cream)",
     color: "var(--color-text-title)",
-    border: "1px solid #EADDCF",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#EADDCF",
     borderBottomLeftRadius: "4px",
   },
   msgHeader: {
@@ -516,7 +515,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginLeft: "8px",
   },
   msgBody: {
-    fontSize: "0.92rem",
+    fontSize: "0.93rem",
+    lineHeight: 1.62,
+    wordBreak: "break-word",
   },
   toolsBar: {
     marginTop: "12px",
@@ -568,7 +569,9 @@ const styles: Record<string, React.CSSProperties> = {
   miniSpinner: {
     width: "14px",
     height: "14px",
-    border: "2px solid #CBD5E1",
+    borderWidth: "2px",
+    borderStyle: "solid",
+    borderColor: "#CBD5E1",
     borderTopColor: "var(--color-sun-orange)",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
