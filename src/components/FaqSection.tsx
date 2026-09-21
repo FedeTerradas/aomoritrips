@@ -208,7 +208,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "14px",
   },
   faqCard: {
-    border: "1px solid var(--border-light)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
     borderRadius: "var(--radius-md)",
     overflow: "hidden",
     boxShadow: "var(--shadow-card)",

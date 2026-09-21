@@ -577,7 +577,9 @@ const styles: Record<string, React.CSSProperties> = {
   ticketCard: {
     backgroundColor: "var(--color-surface-pure, #FFFFFF)",
     borderRadius: "var(--radius-lg, 20px)",
-    border: "2px solid var(--color-aomori-blue, #1C4F7C)",
+    borderWidth: "2px",
+    borderStyle: "solid",
+    borderColor: "var(--color-aomori-blue, #1C4F7C)",
     overflow: "hidden",
     boxShadow: "var(--shadow-floating)",
     transition: "opacity 200ms ease",
@@ -631,7 +633,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "0.78rem",
     fontWeight: 700,
     letterSpacing: "0.5px",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   statusPillCancelled: {
     backgroundColor: "rgba(239, 68, 68, 0.25)",

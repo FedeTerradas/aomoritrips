@@ -232,7 +232,9 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     backgroundColor: "var(--color-surface-pure)",
     borderRadius: "var(--radius-md)",
-    border: "1px solid var(--border-light)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
     overflow: "hidden",
     boxShadow: "var(--shadow-card)",
     display: "flex",
@@ -276,7 +278,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   favoriteBtn: {
     backgroundColor: "rgba(255, 255, 255, 0.92)",
-    border: "1px solid rgba(255, 255, 255, 0.8)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(255, 255, 255, 0.8)",
     width: "34px",
     height: "34px",
     borderRadius: "var(--radius-xs)",

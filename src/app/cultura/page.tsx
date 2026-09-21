@@ -246,7 +246,9 @@ const styles: Record<string, React.CSSProperties> = {
   tabBtn: {
     padding: "10px 20px",
     backgroundColor: "var(--color-washi-cream)",
-    border: "1px solid var(--color-ice-border)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--color-ice-border)",
     borderRadius: "30px",
     fontSize: "0.95rem",
     fontWeight: 600,

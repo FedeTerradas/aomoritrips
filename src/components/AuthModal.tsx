@@ -366,7 +366,9 @@ const styles: Record<string, React.CSSProperties> = {
   demoBtn: {
     width: "100%",
     backgroundColor: "#FFF7ED",
-    border: "1px solid #FDBA74",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#FDBA74",
     color: "#C2410C",
     borderRadius: "8px",
     padding: "10px",
