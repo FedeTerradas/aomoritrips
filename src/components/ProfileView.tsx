@@ -74,6 +74,41 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
+  // Sincronizar métodos de pago según sesión
+  React.useEffect(() => {
+    if (user) {
+      fetch("/api/auth/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.profile?.paymentMethods?.length > 0) {
+            const methods: PaymentCardInfo[] = data.profile.paymentMethods;
+            const defaultCard = methods.find((m) => m.isDefault) || methods[0];
+            updateProfile({
+              paymentMethod: defaultCard,
+              paymentMethods: methods,
+            });
+          }
+        })
+        .catch(() => {});
+    } else {
+      // Si no hay usuario logueado, mantener perfil limpio sin tarjetas
+      if (profile.paymentMethod || profile.paymentMethods.length > 0) {
+        updateProfile({ paymentMethod: null, paymentMethods: [] });
+      }
+    }
+  }, [user]);
+
+  const handleUnlinkCard = async () => {
+    updateProfile({ paymentMethod: null, paymentMethods: [] });
+    showFeedback("Tarjeta desvinculada exitosamente.");
+    try {
+      await fetch("/api/profile/payment-methods", { method: "DELETE" });
+      notifyAuthChange();
+    } catch (err) {
+      console.warn("Error al desvincular tarjeta en backend:", err);
+    }
+  };
+
   const showFeedback = (msg: string) => {
     setSaveFeedback(msg);
     setTimeout(() => setSaveFeedback(""), 3500);
@@ -212,6 +247,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         paymentMethod: newCard,
         paymentMethods: updatedMethods,
       });
+      notifyAuthChange();
 
       setIsAddCardOpen(false);
       setCardNumberInput("");
@@ -359,31 +395,76 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <span style={styles.cardIcon}>💳</span>
               <span>Método de Pago (Bóveda Segura)</span>
             </div>
-            <button style={styles.addCardBtn} onClick={handleAddCardClick}>
-              + Vincular Tarjeta
-            </button>
+            {profile.paymentMethod && (
+              <button style={styles.addCardBtn} onClick={handleAddCardClick}>
+                + Cambiar Tarjeta
+              </button>
+            )}
           </div>
 
-          <div style={styles.settingItem}>
-            <span style={styles.settingLabel}>Tarjeta activa</span>
-            <div style={styles.cardActiveRow}>
-              <span style={styles.settingValue}>
-                {profile.paymentMethod.cardBrand} ••••{" "}
-                {profile.paymentMethod.last4}
-              </span>
-              <span style={styles.pciTag} title="Tokenizado bajo PCI-DSS v4.0">
-                🛡️ PCI-DSS Token
-              </span>
+          {!profile.paymentMethod ? (
+            <div style={styles.emptyCardBox}>
+              <div style={styles.emptyCardIcon}>💳</div>
+              <div style={styles.emptyCardInfo}>
+                <h4 style={styles.emptyCardTitle}>
+                  Ningún método de pago vinculado
+                </h4>
+                <p style={styles.emptyCardDesc}>
+                  Para realizar reservas y asegurar tus cupos en Aomori, vinculá
+                  una tarjeta de crédito o débito. La tarjeta se tokeniza bajo
+                  estricta norma PCI-DSS v4.0.
+                </p>
+              </div>
+              <button
+                type="button"
+                style={styles.emptyCardActionBtn}
+                onClick={handleAddCardClick}
+              >
+                + Vincular Tarjeta Ahora
+              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div style={styles.settingItem}>
+                <span style={styles.settingLabel}>Tarjeta activa</span>
+                <div style={styles.cardActiveRow}>
+                  <span style={styles.settingValue}>
+                    {profile.paymentMethod.cardBrand} ••••{" "}
+                    {profile.paymentMethod.last4}
+                  </span>
+                  <span
+                    style={styles.pciTag}
+                    title="Tokenizado bajo PCI-DSS v4.0"
+                  >
+                    🛡️ PCI-DSS Token
+                  </span>
+                  <button
+                    type="button"
+                    style={styles.unlinkBtn}
+                    onClick={handleUnlinkCard}
+                    title="Desvincular tarjeta de la cuenta"
+                  >
+                    Desvincular
+                  </button>
+                </div>
+              </div>
 
-          {profile.paymentMethod.vaultToken && (
-            <div style={styles.vaultTokenRow}>
-              <span style={styles.vaultTokenLabel}>Token de Bóveda:</span>
-              <code style={styles.vaultTokenCode}>
-                {profile.paymentMethod.vaultToken}
-              </code>
-            </div>
+              {profile.paymentMethod.vaultToken && (
+                <div style={styles.vaultTokenRow}>
+                  <span style={styles.vaultTokenLabel}>Token de Bóveda:</span>
+                  <code style={styles.vaultTokenCode}>
+                    {profile.paymentMethod.vaultToken}
+                  </code>
+                </div>
+              )}
+
+              <div style={styles.settingItem}>
+                <span style={styles.settingLabel}>Ciclo de Facturación</span>
+                <span style={styles.settingValue}>
+                  {profile.paymentMethod.billingCycle}
+                </span>
+              </div>
+            </>
           )}
 
           <div style={styles.settingItem}>
@@ -410,13 +491,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </button>
               ))}
             </div>
-          </div>
-
-          <div style={styles.settingItem}>
-            <span style={styles.settingLabel}>Ciclo de Facturación</span>
-            <span style={styles.settingValue}>
-              {profile.paymentMethod.billingCycle}
-            </span>
           </div>
 
           {/* Aviso Explícito de Ciberseguridad PCI-DSS */}
@@ -986,6 +1060,65 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     padding: "2px 8px",
     borderRadius: "var(--radius-pill)",
+  },
+  unlinkBtn: {
+    backgroundColor: "transparent",
+    color: "#EF4444",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(239, 68, 68, 0.3)",
+    padding: "3px 8px",
+    borderRadius: "var(--radius-xs, 6px)",
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 150ms ease",
+  },
+  emptyCardBox: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    padding: "24px 18px",
+    backgroundColor: "#F8FAFC",
+    borderRadius: "var(--radius-md, 12px)",
+    borderWidth: "1px",
+    borderStyle: "dashed",
+    borderColor: "#CBD5E1",
+    gap: "10px",
+    margin: "12px 0 18px",
+  },
+  emptyCardIcon: {
+    fontSize: "2.2rem",
+  },
+  emptyCardInfo: {
+    maxWidth: "400px",
+  },
+  emptyCardTitle: {
+    fontSize: "0.98rem",
+    fontWeight: 700,
+    color: "var(--color-text-title)",
+    margin: "0 0 6px",
+  },
+  emptyCardDesc: {
+    fontSize: "0.82rem",
+    color: "var(--color-text-muted)",
+    margin: 0,
+    lineHeight: 1.5,
+  },
+  emptyCardActionBtn: {
+    backgroundColor: "var(--color-sun-orange, #ea580c)",
+    color: "#FFFFFF",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--color-sun-orange, #ea580c)",
+    padding: "9px 20px",
+    borderRadius: "var(--radius-sm, 8px)",
+    fontSize: "0.84rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
+    transition: "all 150ms ease",
   },
   vaultTokenRow: {
     display: "flex",

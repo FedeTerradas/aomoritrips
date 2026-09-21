@@ -23,8 +23,8 @@ export interface TravelerProfile {
   tripsCount: number;
   countriesCount: number;
   kilometersCount: string;
-  paymentMethod: PaymentCardInfo;
-  paymentMethods?: PaymentCardInfo[];
+  paymentMethod: PaymentCardInfo | null;
+  paymentMethods: PaymentCardInfo[];
   currency: Currency;
   passport: {
     number: string;
@@ -41,23 +41,8 @@ export const DEFAULT_PROFILE: TravelerProfile = {
   tripsCount: 7,
   countriesCount: 4,
   kilometersCount: "23k km",
-  paymentMethod: {
-    cardBrand: "Visa",
-    last4: "4821",
-    billingCycle: "Mensual",
-    vaultToken: "tok_vault_visa_4821_default",
-    isDefault: true,
-  },
-  paymentMethods: [
-    {
-      id: "pm_default_1",
-      cardBrand: "Visa",
-      last4: "4821",
-      billingCycle: "Mensual",
-      vaultToken: "tok_vault_visa_4821_default",
-      isDefault: true,
-    },
-  ],
+  paymentMethod: null,
+  paymentMethods: [],
   currency: "USD",
   passport: {
     number: "ES · A4829311",
@@ -76,14 +61,31 @@ export function getStoredProfile(): TravelerProfile {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_PROFILE;
     const parsed = JSON.parse(raw);
+
+    // Sanitización de tarjetas mock históricas (Figma default)
+    let paymentMethod: PaymentCardInfo | null = parsed.paymentMethod || null;
+    let paymentMethods: PaymentCardInfo[] = Array.isArray(parsed.paymentMethods)
+      ? parsed.paymentMethods
+      : [];
+
+    if (
+      paymentMethod &&
+      (paymentMethod.vaultToken === "tok_vault_visa_4821_default" ||
+        paymentMethod.last4 === "4821")
+    ) {
+      paymentMethod = null;
+    }
+
+    paymentMethods = paymentMethods.filter(
+      (pm: PaymentCardInfo) =>
+        pm.vaultToken !== "tok_vault_visa_4821_default" && pm.last4 !== "4821"
+    );
+
     return {
       ...DEFAULT_PROFILE,
       ...parsed,
-      paymentMethod: {
-        ...DEFAULT_PROFILE.paymentMethod,
-        ...(parsed.paymentMethod || {}),
-      },
-      paymentMethods: parsed.paymentMethods || DEFAULT_PROFILE.paymentMethods,
+      paymentMethod,
+      paymentMethods,
       passport: {
         ...DEFAULT_PROFILE.passport,
         ...(parsed.passport || {}),
@@ -101,14 +103,23 @@ export function saveStoredProfile(
   if (typeof window === "undefined") return DEFAULT_PROFILE;
   try {
     const current = getStoredProfile();
+
+    let resolvedPaymentMethod: PaymentCardInfo | null = current.paymentMethod;
+    if ("paymentMethod" in updatedProfile) {
+      resolvedPaymentMethod = updatedProfile.paymentMethod ?? null;
+    }
+
+    const resolvedPaymentMethods: PaymentCardInfo[] =
+      "paymentMethods" in updatedProfile &&
+      Array.isArray(updatedProfile.paymentMethods)
+        ? updatedProfile.paymentMethods
+        : current.paymentMethods;
+
     const merged: TravelerProfile = {
       ...current,
       ...updatedProfile,
-      paymentMethod: {
-        ...current.paymentMethod,
-        ...(updatedProfile.paymentMethod || {}),
-      },
-      paymentMethods: updatedProfile.paymentMethods || current.paymentMethods,
+      paymentMethod: resolvedPaymentMethod,
+      paymentMethods: resolvedPaymentMethods,
       passport: {
         ...current.passport,
         ...(updatedProfile.passport || {}),
@@ -128,6 +139,10 @@ export function saveStoredProfile(
     console.error("Error al guardar perfil en LocalStorage:", err);
     return DEFAULT_PROFILE;
   }
+}
+
+export function clearStoredPaymentMethods(): TravelerProfile {
+  return saveStoredProfile({ paymentMethod: null, paymentMethods: [] });
 }
 
 export function resetStoredProfile(): TravelerProfile {

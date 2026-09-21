@@ -7,6 +7,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrencyPrice } from "@/lib/currency";
+import { AuthModal } from "./AuthModal";
 
 interface BookingModalProps {
   pack: TravelPackData | null;
@@ -31,6 +32,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Estado para autenticación y vinculación inline de tarjeta
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [showChangeCard, setShowChangeCard] = useState(false);
+  const [inlineCardNumber, setInlineCardNumber] = useState("");
+  const [inlineBillingCycle, setInlineBillingCycle] = useState<
+    "Mensual" | "Por Reserva"
+  >("Por Reserva");
+  const [isTokenizingInline, setIsTokenizingInline] = useState(false);
+  const [inlineCardError, setInlineCardError] = useState("");
+
   useEffect(() => {
     if (user) {
       if (!travelerName && user.name) setTravelerName(user.name);
@@ -43,9 +54,83 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   if (!pack) return null;
 
   // Guard: verificar si hay método de pago vinculado (industria estándar: Booking.com / AirBnb)
-  const hasPaymentMethod = Boolean(
-    profile?.paymentMethods?.length || profile?.paymentMethod?.vaultToken
-  );
+  const activeCard =
+    profile?.paymentMethod ||
+    (profile?.paymentMethods && profile.paymentMethods.length > 0
+      ? profile.paymentMethods[0]
+      : null);
+  const hasPaymentMethod = Boolean(activeCard?.vaultToken || activeCard?.last4);
+
+  const getDetectedBrand = (num: string) => {
+    const clean = num.replace(/\D/g, "");
+    if (/^4/.test(clean)) return "Visa";
+    if (/^5[1-5]/.test(clean) || /^2[2-7]/.test(clean)) return "Mastercard";
+    if (/^3[47]/.test(clean)) return "AMEX";
+    if (/^35/.test(clean)) return "JCB";
+    return "";
+  };
+
+  const detectedBrand = getDetectedBrand(inlineCardNumber);
+
+  const handleCardInputChange = (val: string) => {
+    const clean = val.replace(/\D/g, "").slice(0, 19);
+    const formatted = clean.replace(/(.{4})/g, "$1 ").trim();
+    setInlineCardNumber(formatted);
+    if (inlineCardError) setInlineCardError("");
+  };
+
+  const handleInlineTokenizeCard = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setInlineCardError("");
+    const cleaned = inlineCardNumber.replace(/\D/g, "");
+    if (cleaned.length < 13 || cleaned.length > 19) {
+      setInlineCardError(
+        "Por favor ingresá un número de tarjeta válido (entre 13 y 19 dígitos)."
+      );
+      return;
+    }
+
+    setIsTokenizingInline(true);
+    try {
+      const sessionToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("aomori_session_token") ||
+            "sess_default_traveler"
+          : "sess_default_traveler";
+
+      const res = await fetch("/api/profile/payment-methods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionToken,
+          cardNumber: cleaned,
+          billingCycle: inlineBillingCycle,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(
+          json.error || "No se pudo tokenizar la tarjeta en la bóveda segura."
+        );
+      }
+
+      const newCard = json.data;
+      updateProfile({
+        paymentMethod: newCard,
+        paymentMethods: [newCard],
+      });
+      notifyAuthChange();
+      setInlineCardNumber("");
+      setShowChangeCard(false);
+    } catch (err: unknown) {
+      setInlineCardError(
+        err instanceof Error ? err.message : "Error al vincular tarjeta."
+      );
+    } finally {
+      setIsTokenizingInline(false);
+    }
+  };
 
   // Cálculo en vivo
   const quote = toolCalculatePricing(
@@ -334,56 +419,185 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   />
                 </div>
 
-                {/* Guard de pago: requiere tarjeta vinculada antes de confirmar */}
-                {!hasPaymentMethod && (
-                  <div style={styles.paymentGuardAlert}>
-                    <span>💳</span>
-                    <div>
-                      <strong>Método de pago requerido</strong>
-                      <p style={{ margin: "2px 0 0", fontSize: "0.78rem" }}>
-                        Vinculá una tarjeta en tu Perfil para poder confirmar la
-                        reserva.
-                      </p>
+                {/* SECCIÓN 1: Si no está autenticado, solicitar Login / Registro */}
+                {!user && (
+                  <div style={styles.authRequiredBox}>
+                    <div style={styles.authRequiredHeader}>
+                      <span style={styles.authRequiredIcon}>🔐</span>
+                      <div>
+                        <strong style={styles.authRequiredTitle}>
+                          Iniciá sesión para reservar
+                        </strong>
+                        <p style={styles.authRequiredDesc}>
+                          Para emitir vouchers oficiales y vincular tu método de
+                          pago, ingresá con tu cuenta de viajero.
+                        </p>
+                      </div>
                     </div>
-                    {onGoToProfile && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onGoToProfile();
-                        }}
-                        style={styles.goToProfileBtn}
-                      >
-                        Ir a Perfil →
-                      </button>
+                    <button
+                      type="button"
+                      style={styles.authActionBtn}
+                      onClick={() => setIsAuthModalOpen(true)}
+                    >
+                      🌸 Iniciar Sesión / Registrarse →
+                    </button>
+                  </div>
+                )}
+
+                {/* SECCIÓN 2: Si está autenticado pero no tiene tarjeta (o desea cambiarla), Formulario Inline */}
+                {user && (!hasPaymentMethod || showChangeCard) && (
+                  <div style={styles.inlineCardBox}>
+                    <div style={styles.inlineCardHeader}>
+                      <div style={styles.inlineCardHeaderTitle}>
+                        <span>💳</span>
+                        <strong>Vincular Tarjeta (Bóveda PCI-DSS v4.0)</strong>
+                      </div>
+                      {hasPaymentMethod && (
+                        <button
+                          type="button"
+                          style={styles.cancelChangeBtn}
+                          onClick={() => setShowChangeCard(false)}
+                        >
+                          ✕ Cancelar
+                        </button>
+                      )}
+                    </div>
+
+                    <p style={styles.inlineCardNote}>
+                      Ingresá tu tarjeta para habilitar la reserva. El número
+                      viaja cifrado y se tokeniza en memoria sin almacenarse en
+                      texto plano.
+                    </p>
+
+                    {inlineCardError && (
+                      <div style={styles.inlineCardError}>
+                        {inlineCardError}
+                      </div>
                     )}
+
+                    <div style={styles.inlineCardInputRow}>
+                      <div style={styles.cardInputWrapper}>
+                        <input
+                          type="text"
+                          placeholder="Número de tarjeta (13-19 dígitos)"
+                          value={inlineCardNumber}
+                          onChange={(e) =>
+                            handleCardInputChange(e.target.value)
+                          }
+                          style={styles.inlineCardInput}
+                          maxLength={23}
+                        />
+                        {detectedBrand && (
+                          <span style={styles.cardBrandBadge}>
+                            {detectedBrand}
+                          </span>
+                        )}
+                      </div>
+
+                      <select
+                        value={inlineBillingCycle}
+                        onChange={(e) =>
+                          setInlineBillingCycle(
+                            e.target.value as "Mensual" | "Por Reserva"
+                          )
+                        }
+                        style={styles.inlineBillingSelect}
+                      >
+                        <option value="Por Reserva">Por Reserva</option>
+                        <option value="Mensual">Mensual</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={
+                        isTokenizingInline ||
+                        inlineCardNumber.replace(/\D/g, "").length < 13
+                      }
+                      onClick={handleInlineTokenizeCard}
+                      style={{
+                        ...styles.tokenizeBtn,
+                        ...(isTokenizingInline ||
+                        inlineCardNumber.replace(/\D/g, "").length < 13
+                          ? styles.tokenizeBtnDisabled
+                          : {}),
+                      }}
+                    >
+                      {isTokenizingInline
+                        ? "Tokenizando bajo PCI-DSS..."
+                        : "🛡️ Vincular y Habilitar Reserva"}
+                    </button>
+                  </div>
+                )}
+
+                {/* SECCIÓN 3: Si está autenticado y tiene tarjeta activa */}
+                {user && hasPaymentMethod && !showChangeCard && (
+                  <div style={styles.activePaymentBox}>
+                    <div style={styles.activePaymentLeft}>
+                      <span style={styles.activePaymentIcon}>💳</span>
+                      <div>
+                        <div style={styles.activePaymentTitle}>
+                          <strong>
+                            {activeCard?.cardBrand || "Tarjeta"} ••••{" "}
+                            {activeCard?.last4 || "••••"}
+                          </strong>
+                          <span style={styles.activePaymentTag}>
+                            🛡️ PCI-DSS Token
+                          </span>
+                        </div>
+                        <div style={styles.activePaymentSub}>
+                          Ciclo: {activeCard?.billingCycle || "Por Reserva"} ·
+                          Lista para emitir vouchers
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      style={styles.changeCardBtn}
+                      onClick={() => setShowChangeCard(true)}
+                    >
+                      Cambiar
+                    </button>
                   </div>
                 )}
 
                 <button
                   type="submit"
-                  disabled={isSubmitting || !hasPaymentMethod}
+                  disabled={isSubmitting || !user || !hasPaymentMethod}
                   style={{
                     ...styles.submitBtn,
-                    ...(!hasPaymentMethod ? styles.submitBtnDisabled : {}),
+                    ...(!user || !hasPaymentMethod
+                      ? styles.submitBtnDisabled
+                      : {}),
                     ...(isSubmitting ? { opacity: 0.6 } : {}),
                   }}
                   title={
-                    !hasPaymentMethod
-                      ? "Vinculá una tarjeta en tu Perfil para continuar"
-                      : undefined
+                    !user
+                      ? "Iniciá sesión para continuar con tu reserva"
+                      : !hasPaymentMethod
+                        ? "Vinculá una tarjeta para continuar"
+                        : undefined
                   }
                 >
                   {isSubmitting
                     ? "Generando Vouchers Offline..."
-                    : !hasPaymentMethod
-                      ? "Vinculá una tarjeta para continuar"
-                      : `Confirmar Reserva · $${quote.grandTotalUsd} USD`}
+                    : !user
+                      ? "Iniciá sesión para reservar"
+                      : !hasPaymentMethod
+                        ? "Vinculá una tarjeta para continuar"
+                        : `Confirmar Reserva · $${quote.grandTotalUsd} USD`}
                 </button>
               </form>
             </div>
           </div>
         </div>
+
+        {/* Modal de Autenticación integrado */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={() => setIsAuthModalOpen(false)}
+        />
       </div>
     </div>
   );
@@ -448,7 +662,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   modalFavBtn: {
     backgroundColor: "#F1F5F9",
-    border: "1px solid #E2E8F0",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#E2E8F0",
     borderRadius: "50%",
     width: "36px",
     height: "36px",
@@ -583,7 +799,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: "8px 6px",
     borderRadius: "8px",
-    border: "1px solid var(--border-light)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
     backgroundColor: "#FFFFFF",
     fontSize: "0.8rem",
     fontWeight: 600,
@@ -693,12 +911,231 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "none",
     cursor: "not-allowed",
   },
+  authRequiredBox: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#BFDBFE",
+    borderRadius: "12px",
+    padding: "14px 16px",
+    marginTop: "8px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  authRequiredHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+  },
+  authRequiredIcon: {
+    fontSize: "1.3rem",
+  },
+  authRequiredTitle: {
+    color: "#1E3A8A",
+    fontSize: "0.92rem",
+    fontWeight: 700,
+  },
+  authRequiredDesc: {
+    margin: "3px 0 0",
+    fontSize: "0.8rem",
+    color: "#3B82F6",
+    lineHeight: 1.4,
+  },
+  authActionBtn: {
+    backgroundColor: "var(--color-aomori-blue, #1c4f7c)",
+    color: "#FFFFFF",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--color-aomori-blue, #1c4f7c)",
+    padding: "9px 16px",
+    borderRadius: "8px",
+    fontSize: "0.84rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 150ms ease",
+    textAlign: "center",
+  },
+  inlineCardBox: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: "1px",
+    borderStyle: "dashed",
+    borderColor: "#CBD5E1",
+    borderRadius: "12px",
+    padding: "14px 16px",
+    marginTop: "8px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  inlineCardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  inlineCardHeaderTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "0.86rem",
+    color: "var(--color-text-title)",
+  },
+  cancelChangeBtn: {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "var(--color-text-muted)",
+    fontSize: "0.78rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    padding: "2px 6px",
+  },
+  inlineCardNote: {
+    fontSize: "0.76rem",
+    color: "var(--color-text-muted)",
+    margin: 0,
+    lineHeight: 1.35,
+  },
+  inlineCardError: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#FECACA",
+    color: "#DC2626",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    fontSize: "0.78rem",
+  },
+  inlineCardInputRow: {
+    display: "flex",
+    gap: "8px",
+  },
+  cardInputWrapper: {
+    position: "relative",
+    flex: 1,
+  },
+  inlineCardInput: {
+    width: "100%",
+    padding: "9px 12px",
+    fontSize: "0.86rem",
+    borderRadius: "8px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
+    backgroundColor: "#FFFFFF",
+    outline: "none",
+    letterSpacing: "0.5px",
+    fontWeight: 600,
+    boxSizing: "border-box",
+  },
+  cardBrandBadge: {
+    position: "absolute",
+    right: "10px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    backgroundColor: "#E0F2FE",
+    color: "#0369A1",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    padding: "2px 6px",
+    borderRadius: "4px",
+  },
+  inlineBillingSelect: {
+    width: "120px",
+    padding: "9px 8px",
+    fontSize: "0.82rem",
+    borderRadius: "8px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
+    backgroundColor: "#FFFFFF",
+    color: "var(--color-text-title)",
+    fontWeight: 600,
+    cursor: "pointer",
+    outline: "none",
+  },
+  tokenizeBtn: {
+    backgroundColor: "var(--color-aomori-blue, #1c4f7c)",
+    color: "#FFFFFF",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--color-aomori-blue, #1c4f7c)",
+    padding: "9px 14px",
+    borderRadius: "8px",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 150ms ease",
+    width: "100%",
+    boxShadow: "0 2px 6px rgba(28, 79, 124, 0.2)",
+  },
+  tokenizeBtnDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed",
+    boxShadow: "none",
+  },
+  activePaymentBox: {
+    backgroundColor: "#F0FDF4",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#BBF7D0",
+    borderRadius: "10px",
+    padding: "10px 14px",
+    marginTop: "8px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+  },
+  activePaymentLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  activePaymentIcon: {
+    fontSize: "1.4rem",
+  },
+  activePaymentTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "0.88rem",
+    color: "#166534",
+  },
+  activePaymentTag: {
+    backgroundColor: "#DCFCE7",
+    color: "#15803D",
+    fontSize: "0.7rem",
+    fontWeight: 700,
+    padding: "1px 6px",
+    borderRadius: "4px",
+  },
+  activePaymentSub: {
+    fontSize: "0.75rem",
+    color: "#15803D",
+    opacity: 0.9,
+    marginTop: "2px",
+  },
+  changeCardBtn: {
+    backgroundColor: "transparent",
+    color: "#15803D",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgba(21, 128, 61, 0.4)",
+    borderRadius: "6px",
+    padding: "4px 10px",
+    fontSize: "0.76rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    flexShrink: 0,
+  },
   paymentGuardAlert: {
     display: "flex",
     alignItems: "flex-start",
     gap: "10px",
     backgroundColor: "#FFFBEB",
-    border: "1px solid #FCD34D",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#FCD34D",
     borderRadius: "10px",
     padding: "12px 14px",
     marginTop: "10px",

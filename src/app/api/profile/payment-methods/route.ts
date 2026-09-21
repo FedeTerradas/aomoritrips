@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthSession } from "@/lib/auth/session";
 import {
   AddPaymentMethodSchema,
   tokenizePaymentCard,
@@ -27,19 +28,54 @@ export async function POST(request: Request) {
     // El PAN se destruye en memoria y solo se devuelve el vaultToken y last4
     const tokenized = tokenizePaymentCard(cardNumber, billingCycle);
 
-    // 2. Localizar o asegurar perfil
-    let profile = await prisma.travelerProfile.findUnique({
-      where: { sessionToken },
-    });
+    // 2. Localizar o asegurar perfil vinculado al usuario autenticado o sesión
+    const authSession = await getAuthSession();
+    let profile = null;
+
+    if (authSession?.userId) {
+      profile = await prisma.travelerProfile.findFirst({
+        where: { userId: authSession.userId },
+      });
+      if (!profile) {
+        const user = await prisma.user.findUnique({
+          where: { id: authSession.userId },
+        });
+        profile = await prisma.travelerProfile.create({
+          data: {
+            sessionToken:
+              sessionToken ||
+              "usr_" + Math.random().toString(36).substring(2, 10),
+            userId: authSession.userId,
+            fullName: user?.name || "Viajero",
+            avatarKanji: user?.name ? user.name.charAt(0).toUpperCase() : "旅",
+            statusLevel: "🌸 Viajero Sakura · Nv. 1",
+          },
+        });
+      }
+    } else if (sessionToken) {
+      profile = await prisma.travelerProfile.findUnique({
+        where: { sessionToken },
+      });
+
+      if (!profile) {
+        profile = await prisma.travelerProfile.create({
+          data: {
+            sessionToken,
+            fullName: "Viajero Invitado",
+            passportNumberMasked: "",
+          },
+        });
+      }
+    }
 
     if (!profile) {
-      profile = await prisma.travelerProfile.create({
-        data: {
-          sessionToken,
-          fullName: "Hana Yamamoto",
-          passportNumberMasked: "ES · A4829311",
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No se pudo identificar el perfil de usuario",
         },
-      });
+        { status: 400 }
+      );
     }
 
     // 3. Desactivar defaults anteriores
@@ -82,6 +118,33 @@ export async function POST(request: Request) {
             ? error.message
             : "Falla en el servicio de tokenización segura.",
       },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE() {
+  try {
+    const authSession = await getAuthSession();
+    if (authSession?.userId) {
+      const profile = await prisma.travelerProfile.findFirst({
+        where: { userId: authSession.userId },
+      });
+      if (profile) {
+        await prisma.paymentMethodToken.deleteMany({
+          where: { profileId: profile.id },
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Métodos de pago desvinculados correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al desvincular tarjetas:", error);
+    return NextResponse.json(
+      { success: false, error: "Error al desvincular tarjeta" },
       { status: 500 }
     );
   }
