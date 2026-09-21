@@ -1,71 +1,73 @@
-@import url("https://fonts.googleapis.com/css2?family=Huninn&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Huninn&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@500;600;700;800&display=swap");
 
 :root {
   /* ==========================================================================
-     PALETA OFICIAL AOMORITRIPS (Unidad 4 - Figma Make & Leonardo.ai)
+     PALETA OFICIAL AOMORITRIPS (Elevada con identidad artesanal japonesa)
      ========================================================================== */
 
-  /* Azules de Aomori: Mar de Japón, Montañas Hakkoda e índigo traditional Aizome */
-  --color-aomori-blue: #1c4f7c;
-  --color-aomori-dark: #0f2d48;
-  --color-aomori-light: #2a689f;
-  --color-aomori-subtle: #edf5fa;
+  /* Azules de Aomori: Mar de Japón, Montañas Hakkoda e índigo tradicional Aizome (藍染) */
+  --color-aomori-blue: #173e65;
+  --color-aomori-dark: #0d2740;
+  --color-aomori-light: #255a8a;
+  --color-aomori-subtle: #f0f5fa;
 
-  /* Naranja Sol Naciente: Amanecer, linternas Nebuta Matsuri y follaje Koyo */
-  --color-sun-orange: #f97316;
-  --color-sun-orange-dark: #ea580c;
-  --color-sun-orange-light: #ffedd5;
+  /* Bermellón Shu-iro (朱色): Templos de montaña, linternas Nebuta Matsuri y laca Tsugaru */
+  --color-sun-orange: #d44d22;
+  --color-sun-orange-dark: #b83a14;
+  --color-sun-orange-light: #faede7;
 
-  /* Fondos Washi & Light Mode */
-  --color-washi-cream: #fdf8f2;
+  /* Fondos Washi & Neutros Cálidos (Unificados para eliminar choques térmicos) */
+  --color-washi-cream: #faf7f2;
   --color-surface-pure: #ffffff;
   --color-surface-elevated: #ffffff;
-  --color-surface-subtle: #f8fafc;
+  --color-surface-subtle: #f4efe6;
 
   /* Aguas del Lago Towada / Nieve Hakkoda */
-  --color-ice-blue: #e0f2fe;
-  --color-ice-border: #bae6fd;
-  --color-ice-text: #0369a1;
+  --color-ice-blue: #edf6fb;
+  --color-ice-border: #cde4f5;
+  --color-ice-text: #174d75;
 
-  /* Tipografía y Textos - Contraste WCAG AA */
+  /* Tipografía y Textos - Contraste WCAG AA & Editorial */
   --font-japanese: "Huninn", "Noto Sans JP", sans-serif;
+  --font-serif: "Shippori Mincho", "Noto Serif JP", serif;
   --font-sans:
     "Outfit", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
 
-  --color-text-title: #0f172a;
-  --color-text-body: #334155;
-  --color-text-muted: #64748b;
-  --color-text-light: #94a3b8;
+  --color-text-title: #0e1726;
+  --color-text-body: #2c3746;
+  --color-text-muted: #687484;
+  --color-text-light: #9ba4b2;
 
-  /* Bordes sutiles y divisores */
-  --border-light: #e2e8f0;
-  --border-focus: #1c4f7c;
+  /* Bordes sutiles y divisores cálidos */
+  --border-light: #e6dfd3;
+  --border-focus: #173e65;
 
-  /* Elevaciones y Sombras Cálidas (UI/UX Pro Max Multi-layer) */
+  /* Elevaciones y Sombras Tintadas en Índigo Profundo */
   --shadow-card:
-    0 2px 4px rgba(28, 79, 124, 0.04), 0 8px 24px -2px rgba(28, 79, 124, 0.07);
+    0 2px 4px rgba(20, 48, 77, 0.04), 0 8px 24px -2px rgba(20, 48, 77, 0.06);
   --shadow-card-hover:
-    0 8px 16px -4px rgba(28, 79, 124, 0.08),
-    0 20px 36px -6px rgba(28, 79, 124, 0.14);
+    0 10px 24px -4px rgba(20, 48, 77, 0.1),
+    0 24px 44px -8px rgba(20, 48, 77, 0.14);
   --shadow-floating:
-    0 16px 36px -8px rgba(15, 45, 72, 0.2), 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-button-orange: 0 6px 20px rgba(249, 115, 22, 0.35);
-  --shadow-glow-orange: 0 0 24px rgba(249, 115, 22, 0.45);
+    0 16px 36px -8px rgba(13, 39, 64, 0.2), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-button-orange: 0 4px 16px rgba(212, 77, 34, 0.28);
+  --shadow-glow-orange: 0 0 16px rgba(212, 77, 34, 0.22);
 
-  /* Glassmorphism & Frosted Glass */
-  --glass-nav-bg: rgba(15, 45, 72, 0.85);
-  --glass-card-bg: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.16);
-  --glass-blur: blur(16px) saturate(180%);
+  /* Glassmorphism & Frosted Glass Refinado */
+  --glass-nav-bg: rgba(13, 39, 64, 0.9);
+  --glass-card-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-blur: blur(18px) saturate(180%);
 
   /* Foco y Accesibilidad WCAG AAA */
-  --focus-ring: 0 0 0 3px rgba(249, 115, 22, 0.45);
+  --focus-ring: 0 0 0 3px rgba(212, 77, 34, 0.35);
 
-  /* Radios de curvatura */
+  /* Radios de curvatura artesanales */
+  --radius-xs: 4px;
   --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --radius-pill: 9999px;
 
   /* Aliases y compatibilidad de tokens en componentes */
@@ -92,16 +94,50 @@
   padding: 0;
 }
 
-html,
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   max-width: 100vw;
   min-height: 100vh;
   background-color: var(--color-washi-cream);
+  background-image:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(212, 77, 34, 0.02) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(23, 62, 101, 0.025) 0%,
+      transparent 45%
+    );
   color: var(--color-text-body);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.tabular-nums,
+.price-val,
+.pack-price-val-mobile {
+  font-variant-numeric: tabular-nums;
 }
 
 a {
@@ -114,6 +150,14 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  transition:
+    transform 120ms ease,
+    background-color 150ms ease,
+    opacity 150ms ease;
+}
+
+button:active {
+  transform: scale(0.98);
 }
 
 input,
@@ -144,51 +188,72 @@ textarea {
   animation: fadeIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Skeletons de Carga Shimmer (Sustituto de Spinners Genéricos de IA) */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-block {
+  background: linear-gradient(90deg, #ece5da 25%, #f6f2ea 50%, #ece5da 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.6s infinite ease-in-out;
+  border-radius: var(--radius-sm);
+}
+
 .pack-card-interactive {
   transition:
-    transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pack-card-interactive:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
   box-shadow: var(--shadow-card-hover) !important;
+  border-color: rgba(23, 62, 101, 0.28) !important;
 }
 
-/* Badges de Temporadas Japonesas */
+/* Badges de Temporadas Japonesas Estilo Sello Artesanal (Inkan / Tanzaku) */
 .season-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  font-size: 0.78rem;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .season-sakura {
-  background-color: #fdf2f8;
-  color: #be185d;
-  border: 1px solid #fbcfe8;
+  background-color: #fdf2f7;
+  color: #9d174d;
+  border: 1px solid #f9a8d4;
 }
 
 .season-nebuta {
-  background-color: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
-}
-
-.season-koyo {
-  background-color: #fff7ed;
-  color: #c2410c;
+  background-color: #fef7ee;
+  color: #a83f12;
   border: 1px solid #fed7aa;
 }
 
+.season-koyo {
+  background-color: #fef5ee;
+  color: #a33910;
+  border: 1px solid #fbcfe8;
+}
+
 .season-snow {
-  background-color: #f0f9ff;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
+  background-color: #f0f7fc;
+  color: #175480;
+  border: 1px solid #bde0f7;
 }
 
 .season-label-mobile {

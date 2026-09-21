@@ -171,15 +171,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             onClick={onOpenSensei}
             type="button"
           >
-            <span style={styles.agentSparkle}>✨</span>
+            <span style={styles.agentSparkle}>⛩️</span>
             <span>
-              ¿Buscás una ruta personalizada?{" "}
-              <strong>Consultar al Sensei IA →</strong>
+              Rutas a medida y consejos de expedición con el{" "}
+              <strong>Sensei de Tohoku →</strong>
             </span>
           </button>
         </div>
 
-        {/* Selector de Categorías Estacionales */}
+        {/* Selector de Categorías Estacionales Estilo Sello Artesanal */}
         <div style={styles.seasonRow} className="season-row-scroll">
           {seasons.map((s) => {
             const isActive = selectedSeason === s.id;
@@ -206,9 +206,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 const styles: Record<string, React.CSSProperties> = {
   heroSection: {
     position: "relative",
-    backgroundColor: "var(--color-aomori-blue)",
+    backgroundColor: "var(--color-aomori-dark)",
     backgroundImage:
-      "linear-gradient(180deg, rgba(15, 37, 60, 0.76) 0%, rgba(20, 56, 88, 0.84) 45%, rgba(15, 45, 72, 0.98) 100%), url('/aomori_montanas.jpg')",
+      "linear-gradient(180deg, rgba(13, 39, 64, 0.78) 0%, rgba(20, 56, 88, 0.85) 45%, rgba(13, 39, 64, 0.98) 100%), url('/aomori_montanas.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center 32%",
     backgroundRepeat: "no-repeat",
@@ -224,40 +224,40 @@ const styles: Record<string, React.CSSProperties> = {
   },
   regionTag: {
     fontFamily: "var(--font-japanese)",
-    fontSize: "0.82rem",
-    fontWeight: 600,
-    color: "#BAE6FD",
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    fontSize: "0.8rem",
+    fontWeight: 700,
+    color: "#cde4f5",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
-    border: "1px solid rgba(255, 255, 255, 0.22)",
-    padding: "5px 16px",
-    borderRadius: "var(--radius-pill)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    padding: "5px 14px",
+    borderRadius: "var(--radius-xs)",
     marginBottom: "18px",
-    letterSpacing: "0.6px",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.15)",
+    letterSpacing: "0.8px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
   },
   title: {
     fontSize: "clamp(2.1rem, 4vw, 3.25rem)",
     fontWeight: 800,
-    lineHeight: 1.16,
+    lineHeight: 1.18,
     maxWidth: "920px",
     marginBottom: "18px",
-    letterSpacing: "-0.6px",
+    letterSpacing: "-0.03em",
   },
   highlightText: {
-    background:
-      "linear-gradient(135deg, #FDBA74 0%, #F97316 50%, #EA580C 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "#f87a53",
     display: "inline-block",
+    position: "relative",
+    fontWeight: 800,
+    textShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
   },
   subtitle: {
     fontSize: "clamp(0.96rem, 1.6vw, 1.08rem)",
-    color: "#F1F5F9",
+    color: "#e8eff5",
     maxWidth: "760px",
     lineHeight: 1.65,
-    marginBottom: "36px",
+    marginBottom: "34px",
     fontWeight: 400,
     textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
   },
@@ -265,12 +265,12 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: "var(--radius-pill)",
-    padding: "8px 10px 8px 24px",
+    borderRadius: "var(--radius-md)",
+    padding: "8px 10px 8px 22px",
     width: "100%",
     maxWidth: "880px",
     boxShadow:
-      "0 16px 38px -6px rgba(15, 45, 72, 0.32), 0 4px 12px rgba(0, 0, 0, 0.08)",
+      "0 18px 40px -8px rgba(13, 39, 64, 0.35), 0 3px 10px rgba(0, 0, 0, 0.06)",
     border: "1px solid rgba(255, 255, 255, 0.9)",
     marginBottom: "16px",
     gap: "8px",
@@ -288,9 +288,10 @@ const styles: Record<string, React.CSSProperties> = {
   segmentLabel: {
     fontSize: "0.72rem",
     fontWeight: 700,
-    color: "#64748B",
+    color: "var(--color-text-muted)",
     marginBottom: "2px",
-    letterSpacing: "0.2px",
+    letterSpacing: "0.3px",
+    textTransform: "uppercase",
   },
   segmentInput: {
     border: "none",
@@ -315,20 +316,21 @@ const styles: Record<string, React.CSSProperties> = {
   segmentDivider: {
     width: "1px",
     height: "36px",
-    backgroundColor: "#E2E8F0",
+    backgroundColor: "var(--border-light)",
     flexShrink: 0,
   },
   searchSubmitBtn: {
-    background: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
+    backgroundColor: "var(--color-sun-orange)",
     color: "#FFFFFF",
-    padding: "14px 34px",
-    borderRadius: "var(--radius-pill)",
+    padding: "13px 32px",
+    borderRadius: "var(--radius-sm)",
     fontWeight: 700,
-    fontSize: "1rem",
+    fontSize: "0.96rem",
+    letterSpacing: "0.2px",
     border: "none",
     cursor: "pointer",
-    boxShadow: "0 4px 14px rgba(249, 115, 22, 0.4)",
-    transition: "all 180ms ease",
+    boxShadow: "0 3px 12px rgba(212, 77, 34, 0.32)",
+    transition: "all 160ms ease",
     whiteSpace: "nowrap",
     flexShrink: 0,
   },
@@ -341,17 +343,17 @@ const styles: Record<string, React.CSSProperties> = {
     display: "inline-flex",
     alignItems: "center",
     gap: "8px",
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
     padding: "7px 18px",
-    borderRadius: "var(--radius-pill)",
+    borderRadius: "var(--radius-xs)",
     color: "#F0F9FF",
     fontSize: "0.82rem",
     fontWeight: 500,
     cursor: "pointer",
-    transition: "all 200ms ease",
+    transition: "all 180ms ease",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
   },
   agentSparkle: {
@@ -367,24 +369,25 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: "6px",
-    padding: "8px 18px",
-    borderRadius: "var(--radius-pill)",
-    fontSize: "0.82rem",
+    padding: "7px 16px",
+    borderRadius: "var(--radius-xs)",
+    fontSize: "0.8rem",
     fontWeight: 600,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     color: "#FFFFFF",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
+    transition: "all 180ms cubic-bezier(0.16, 1, 0.3, 1)",
     cursor: "pointer",
   },
   seasonPillActive: {
     backgroundColor: "#FFFFFF",
     color: "var(--color-aomori-blue)",
     borderColor: "#FFFFFF",
-    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
+    boxShadow: "0 3px 12px rgba(0, 0, 0, 0.15)",
     transform: "translateY(-1px)",
+    fontWeight: 700,
   },
   sakuraWrapper: {
     position: "absolute",

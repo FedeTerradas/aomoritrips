@@ -244,9 +244,53 @@ function HomePageInner() {
             </div>
 
             {isLoading ? (
-              <div style={styles.loadingBox}>
-                <div style={styles.spinner}></div>
-                <span>Cargando experiencias del norte de Japón...</span>
+              <div style={styles.packsGrid} className="catalog-grid-responsive">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} style={styles.skeletonCard}>
+                    <div
+                      style={styles.skeletonImg}
+                      className="skeleton-block"
+                    />
+                    <div style={styles.skeletonBody}>
+                      <div
+                        style={{ ...styles.skeletonLine, width: "35%" }}
+                        className="skeleton-block"
+                      />
+                      <div
+                        style={{
+                          ...styles.skeletonLine,
+                          width: "90%",
+                          height: "22px",
+                          margin: "10px 0 6px",
+                        }}
+                        className="skeleton-block"
+                      />
+                      <div
+                        style={{ ...styles.skeletonLine, width: "60%" }}
+                        className="skeleton-block"
+                      />
+                      <div style={styles.skeletonFooter}>
+                        <div
+                          style={{
+                            ...styles.skeletonLine,
+                            width: "45%",
+                            height: "26px",
+                          }}
+                          className="skeleton-block"
+                        />
+                        <div
+                          style={{
+                            ...styles.skeletonLine,
+                            width: "80px",
+                            height: "32px",
+                            borderRadius: "var(--radius-xs)",
+                          }}
+                          className="skeleton-block"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : displayedPacks.length === 0 ? (
               <div style={styles.noResultsBox}>
@@ -309,7 +353,7 @@ function HomePageInner() {
             )}
           </section>
 
-          {/* Sección CTA de Quiz */}
+          {/* Sección CTA de Quiz Cultural */}
           <section style={styles.quizSection} className="container">
             <style>
               {`
@@ -327,12 +371,17 @@ function HomePageInner() {
               />
             </div>
             <div style={styles.quizContent} className="quiz-flex">
-              <h2 style={styles.quizTitle}>¿Cuál es tu Japón?</h2>
+              <span style={styles.quizBadge}>
+                診断 · Test de Afinidad Cultural
+              </span>
+              <h2 style={styles.quizTitle}>¿Cuál es tu Japón profundo?</h2>
               <p style={styles.quizSubtitle}>
-                Encuentra el viaje perfecto según tu estilo y preferencias.
+                Descubre qué rincón de Tohoku conecta mejor con tus gustos:
+                posadas termales aisladas, festivales ancestrales o senderos
+                sagrados.
               </p>
               <a href="/quiz" style={styles.quizBtn}>
-                Hacer el test →
+                Comenzar el Test →
               </a>
             </div>
             <div style={styles.quizSakura} className="hide-on-mobile-quiz">
@@ -605,40 +654,60 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
     gap: "24px",
   },
-  loadingBox: {
+  skeletonCard: {
+    backgroundColor: "var(--color-surface-pure)",
+    borderRadius: "var(--radius-md)",
+    border: "1px solid var(--border-light)",
+    overflow: "hidden",
+    boxShadow: "var(--shadow-card)",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "60px 0",
-    gap: "12px",
-    color: "var(--color-text-muted)",
+    minHeight: "380px",
   },
-  spinner: {
-    width: "32px",
-    height: "32px",
-    border: "3px solid #CBD5E1",
-    borderTopColor: "var(--color-sun-orange)",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
+  skeletonImg: {
+    width: "100%",
+    height: "190px",
+    borderRadius: 0,
+  },
+  skeletonBody: {
+    padding: "18px",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+  },
+  skeletonLine: {
+    height: "14px",
+    borderRadius: "var(--radius-xs)",
+    marginBottom: "8px",
+  },
+  skeletonFooter: {
+    marginTop: "auto",
+    paddingTop: "14px",
+    borderTop: "1px solid var(--border-light)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   noResultsBox: {
     backgroundColor: "var(--color-surface-pure)",
-    borderRadius: "var(--radius-lg)",
-    padding: "40px",
+    borderRadius: "var(--radius-md)",
+    padding: "48px 24px",
     textAlign: "center",
     border: "1px solid var(--border-light)",
     color: "var(--color-text-muted)",
+    boxShadow: "var(--shadow-card)",
   },
   resetFiltersBtn: {
-    marginTop: "12px",
+    marginTop: "14px",
     backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
-    padding: "8px 20px",
-    borderRadius: "var(--radius-pill)",
+    padding: "8px 22px",
+    borderRadius: "var(--radius-xs)",
     fontSize: "0.85rem",
     fontWeight: 600,
     cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(23, 62, 101, 0.2)",
+    transition: "all 160ms ease",
   },
   footer: {
     marginTop: "auto",
@@ -719,16 +788,17 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   quizSection: {
-    backgroundColor: "var(--color-washi-cream)",
-    borderRadius: "var(--radius-lg)",
-    padding: "48px",
+    backgroundColor: "var(--color-surface-pure)",
+    borderRadius: "var(--radius-md)",
+    padding: "42px 36px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: "48px",
     gap: "24px",
     flexWrap: "wrap",
-    border: "1px solid #EADDCF",
+    border: "1px solid var(--border-light)",
+    boxShadow: "var(--shadow-card)",
     position: "relative",
     overflow: "hidden",
   },
@@ -740,31 +810,44 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     alignItems: "center",
   },
+  quizBadge: {
+    fontFamily: "var(--font-japanese)",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color: "var(--color-sun-orange)",
+    marginBottom: "8px",
+    textTransform: "uppercase",
+    letterSpacing: "0.6px",
+  },
   quizTitle: {
-    fontSize: "2rem",
+    fontSize: "1.9rem",
     fontWeight: 800,
-    color: "var(--color-aomori-blue)",
-    marginBottom: "12px",
+    color: "var(--color-text-title)",
+    marginBottom: "10px",
+    letterSpacing: "-0.02em",
   },
   quizSubtitle: {
-    fontSize: "1.1rem",
-    color: "var(--color-text-body)",
-    marginBottom: "24px",
+    fontSize: "0.98rem",
+    color: "var(--color-text-muted)",
+    marginBottom: "22px",
+    maxWidth: "580px",
+    lineHeight: 1.6,
   },
   quizBtn: {
     backgroundColor: "var(--color-sun-orange)",
     color: "#fff",
-    padding: "14px 32px",
-    borderRadius: "var(--radius-pill)",
-    fontSize: "1.05rem",
+    padding: "12px 28px",
+    borderRadius: "var(--radius-xs)",
+    fontSize: "0.95rem",
     fontWeight: 700,
     border: "none",
     cursor: "pointer",
     display: "inline-flex",
     alignItems: "center",
     textDecoration: "none",
-    boxShadow: "0 6px 16px rgba(249, 115, 22, 0.3)",
-    transition: "all 200ms ease",
+    boxShadow: "0 3px 12px rgba(212, 77, 34, 0.28)",
+    transition: "all 160ms ease",
+    letterSpacing: "0.2px",
   },
   quizHaruto: {
     display: "flex",

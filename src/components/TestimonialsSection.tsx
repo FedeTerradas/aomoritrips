@@ -64,14 +64,15 @@ export const TestimonialsSection: React.FC = () => {
         {/* Encabezado de la Sección */}
         <div style={styles.header}>
           <span style={styles.badgeKanjis}>
-            お客様の声 · Experiencias Reales
+            お客様の声 · Notas de Campo de Viajeros
           </span>
           <h2 id="testimonials-heading" style={styles.title}>
             Historias de quienes exploraron los secretos del norte
           </h2>
           <p style={styles.subtitle}>
-            Testimonios de viajeros que confiaron en la logística privada, los
-            salvoconductos culturales y la asistencia del Aomori Sensei.
+            Relatos auténticos de expedicionarios que confiaron en la logística
+            privada, los salvoconductos culturales y la asistencia del Aomori
+            Sensei.
           </p>
         </div>
 
@@ -81,7 +82,7 @@ export const TestimonialsSection: React.FC = () => {
             <article
               key={t.id}
               style={styles.card}
-              className="testimonial-card"
+              className="testimonial-card pack-card-interactive"
             >
               {/* Top: Calificación y Badge de Expedición */}
               <div style={styles.cardTop}>
@@ -89,7 +90,8 @@ export const TestimonialsSection: React.FC = () => {
                   style={styles.starsContainer}
                   aria-label={`${t.rating} de 5 estrellas`}
                 >
-                  {"★".repeat(t.rating)}
+                  <span style={styles.starIcon}>★</span>
+                  <span style={styles.ratingVal}>{t.rating}.0</span>
                 </div>
                 <span style={styles.badgeExpedition}>{t.highlightBadge}</span>
               </div>
@@ -138,17 +140,17 @@ export const TestimonialsSection: React.FC = () => {
         {/* Cita de Confianza / Trust Signal */}
         <div style={styles.trustBanner}>
           <div style={styles.trustItem}>
-            <span style={styles.trustIcon}>🛡️</span>
+            <span style={styles.trustIcon}>⛩️</span>
             <div>
               <strong>100% Salidas Confirmadas</strong>
               <p style={styles.trustDesc}>
-                Sin cancelaciones por falta de cupo
+                Sin cancelaciones imprevistas por cupo mínimo
               </p>
             </div>
           </div>
           <div style={styles.trustDivider}></div>
           <div style={styles.trustItem}>
-            <span style={styles.trustIcon}>⛩️</span>
+            <span style={styles.trustIcon}>🧭</span>
             <div>
               <strong>Guías y Choferes Locales</strong>
               <p style={styles.trustDesc}>Nativos de la prefectura de Aomori</p>
@@ -156,11 +158,11 @@ export const TestimonialsSection: React.FC = () => {
           </div>
           <div style={styles.trustDivider}></div>
           <div style={styles.trustItem}>
-            <span style={styles.trustIcon}>📱</span>
+            <span style={styles.trustIcon}>📶</span>
             <div>
-              <strong>Aomori Sensei 24/7</strong>
+              <strong>Vouchers con QR Offline</strong>
               <p style={styles.trustDesc}>
-                Asistencia IA y vouchers con QR offline
+                Validación criptográfica sin depender de red celular
               </p>
             </div>
           </div>
@@ -172,7 +174,7 @@ export const TestimonialsSection: React.FC = () => {
 
 const styles: Record<string, React.CSSProperties> = {
   section: {
-    padding: "60px 24px",
+    padding: "64px 24px",
     backgroundColor: "var(--color-surface-subtle)",
     borderTop: "1px solid var(--border-light)",
     borderBottom: "1px solid var(--border-light)",
@@ -189,20 +191,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
   badgeKanjis: {
     fontFamily: "var(--font-japanese)",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     fontWeight: 700,
     color: "var(--color-sun-orange)",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
+    letterSpacing: "0.5px",
     display: "inline-block",
     marginBottom: "8px",
+    textTransform: "uppercase",
   },
   title: {
-    fontSize: "1.9rem",
+    fontSize: "1.95rem",
     fontWeight: 800,
     color: "var(--color-text-title)",
     lineHeight: 1.25,
     marginBottom: "12px",
+    letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: "0.96rem",
@@ -222,7 +225,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     boxShadow: "var(--shadow-card)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    transition: "all 220ms cubic-bezier(0.16, 1, 0.3, 1)",
   },
   cardTop: {
     display: "flex",
@@ -231,24 +234,34 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: "14px",
   },
   starsContainer: {
-    color: "#F59E0B",
-    fontSize: "1.1rem",
-    letterSpacing: "2px",
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  },
+  starIcon: {
+    color: "#D97706",
+    fontSize: "0.95rem",
+  },
+  ratingVal: {
+    color: "var(--color-text-title)",
+    fontWeight: 700,
+    fontSize: "0.82rem",
+    fontVariantNumeric: "tabular-nums",
   },
   badgeExpedition: {
-    fontSize: "0.74rem",
+    fontSize: "0.72rem",
     fontWeight: 700,
     backgroundColor: "var(--color-aomori-subtle)",
     color: "var(--color-aomori-blue)",
-    padding: "4px 10px",
-    borderRadius: "var(--radius-pill)",
-    border: "1px solid rgba(28, 79, 124, 0.12)",
+    padding: "3px 8px",
+    borderRadius: "var(--radius-xs)",
+    border: "1px solid rgba(23, 62, 101, 0.12)",
+    letterSpacing: "0.2px",
   },
   comment: {
     fontSize: "0.92rem",
     lineHeight: 1.65,
     color: "var(--color-text-body)",
-    fontStyle: "italic",
     marginBottom: "18px",
     flexGrow: 1,
   },
@@ -257,7 +270,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "var(--color-text-muted)",
     marginBottom: "18px",
     paddingTop: "12px",
-    borderTop: "1px dashed var(--border-light)",
+    borderTop: "1px solid var(--border-light)",
     display: "flex",
     gap: "6px",
     flexWrap: "wrap",
@@ -277,17 +290,18 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: "auto",
   },
   avatar: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
+    width: "38px",
+    height: "38px",
+    borderRadius: "var(--radius-xs)",
     color: "#FFFFFF",
     fontWeight: 700,
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
     letterSpacing: "0.5px",
+    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
   },
   authorInfo: {
     display: "flex",
@@ -300,22 +314,22 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "8px",
   },
   authorName: {
-    fontSize: "0.9rem",
+    fontSize: "0.88rem",
     fontWeight: 700,
     color: "var(--color-text-title)",
     margin: 0,
   },
   verifiedBadge: {
-    fontSize: "0.68rem",
+    fontSize: "0.66rem",
     fontWeight: 700,
     color: "#059669",
     backgroundColor: "#ECFDF5",
     padding: "2px 6px",
-    borderRadius: "var(--radius-pill)",
+    borderRadius: "var(--radius-xs)",
     border: "1px solid #A7F3D0",
   },
   authorOrigin: {
-    fontSize: "0.76rem",
+    fontSize: "0.74rem",
     color: "var(--color-text-muted)",
   },
   trustBanner: {
@@ -324,11 +338,12 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     backgroundColor: "var(--color-surface-pure)",
     border: "1px solid var(--border-light)",
-    borderRadius: "var(--radius-lg)",
+    borderRadius: "var(--radius-md)",
     padding: "20px 24px",
     flexWrap: "wrap",
     gap: "20px",
     marginTop: "8px",
+    boxShadow: "var(--shadow-card)",
   },
   trustItem: {
     display: "flex",
@@ -336,7 +351,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "12px",
   },
   trustIcon: {
-    fontSize: "1.5rem",
+    fontSize: "1.4rem",
   },
   trustDesc: {
     fontSize: "0.8rem",

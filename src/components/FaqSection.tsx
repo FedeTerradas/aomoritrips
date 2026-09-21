@@ -92,9 +92,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenSensei }) => {
                   borderColor: isOpen
                     ? "var(--color-aomori-blue)"
                     : "var(--border-light)",
-                  backgroundColor: isOpen
-                    ? "var(--color-surface-pure)"
-                    : "var(--color-surface-pure)",
+                  backgroundColor: "var(--color-surface-pure)",
                 }}
               >
                 <button
@@ -145,9 +143,9 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenSensei }) => {
                 ¿Tenés una duda específica sobre fechas o equipamiento?
               </h3>
               <p style={styles.agentHelpSubtitle}>
-                El <strong>Aomori Sensei</strong> puede analizar tu mes de
-                viaje, el clima previsto y proponerte recomendaciones exactas al
-                instante.
+                El <strong>Aomori Sensei</strong> analiza la época de tu viaje,
+                el clima previsto y te entrega recomendaciones precisas en
+                tiempo real.
               </p>
             </div>
           </div>
@@ -166,7 +164,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ onOpenSensei }) => {
 
 const styles: Record<string, React.CSSProperties> = {
   section: {
-    padding: "60px 24px 80px",
+    padding: "64px 24px 84px",
     backgroundColor: "var(--color-washi-cream)",
   },
   container: {
@@ -183,20 +181,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
   badgeKanjis: {
     fontFamily: "var(--font-japanese)",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     fontWeight: 700,
-    color: "var(--color-aomori-light)",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
+    color: "var(--color-sun-orange)",
+    letterSpacing: "0.5px",
     display: "inline-block",
     marginBottom: "8px",
+    textTransform: "uppercase",
   },
   title: {
-    fontSize: "1.9rem",
+    fontSize: "1.95rem",
     fontWeight: 800,
     color: "var(--color-text-title)",
     lineHeight: 1.25,
     marginBottom: "12px",
+    letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: "0.96rem",
@@ -229,14 +228,13 @@ const styles: Record<string, React.CSSProperties> = {
   questionTextCol: {
     display: "flex",
     flexDirection: "column",
-    gap: "6px",
+    gap: "5px",
   },
   categoryBadge: {
     fontSize: "0.72rem",
-    fontWeight: 700,
-    color: "var(--color-sun-orange)",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
+    fontWeight: 600,
+    color: "var(--color-aomori-light)",
+    letterSpacing: "0.4px",
   },
   questionText: {
     fontSize: "1.02rem",
@@ -245,32 +243,33 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.4,
   },
   chevron: {
-    fontSize: "0.75rem",
+    fontSize: "0.72rem",
     transition: "transform 0.2s ease",
     flexShrink: 0,
     padding: "4px",
   },
   answerBox: {
     padding: "0 22px 20px",
-    borderTop: "1px solid rgba(0, 0, 0, 0.04)",
+    borderTop: "1px solid var(--border-light)",
   },
   answerText: {
     fontSize: "0.93rem",
     lineHeight: 1.7,
     color: "var(--color-text-body)",
-    paddingTop: "12px",
+    paddingTop: "14px",
   },
   agentHelpCard: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "var(--color-aomori-subtle)",
-    border: "1px solid rgba(28, 79, 124, 0.15)",
-    borderRadius: "var(--radius-lg)",
+    backgroundColor: "var(--color-surface-pure)",
+    border: "1px solid var(--border-light)",
+    borderRadius: "var(--radius-md)",
     padding: "24px 28px",
     gap: "24px",
     flexWrap: "wrap",
     marginTop: "12px",
+    boxShadow: "var(--shadow-card)",
   },
   agentHelpContent: {
     display: "flex",
@@ -279,39 +278,39 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: "520px",
   },
   agentAvatar: {
-    fontSize: "2rem",
-    backgroundColor: "#FFFFFF",
-    width: "48px",
-    height: "48px",
-    borderRadius: "50%",
+    fontSize: "1.8rem",
+    backgroundColor: "var(--color-surface-subtle)",
+    border: "1px solid var(--border-light)",
+    width: "44px",
+    height: "44px",
+    borderRadius: "var(--radius-xs)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "var(--shadow-card)",
     flexShrink: 0,
   },
   agentHelpTitle: {
-    fontSize: "1rem",
+    fontSize: "0.98rem",
     fontWeight: 800,
-    color: "var(--color-aomori-dark)",
+    color: "var(--color-text-title)",
     margin: "0 0 4px 0",
   },
   agentHelpSubtitle: {
     fontSize: "0.85rem",
     color: "var(--color-text-body)",
-    lineHeight: 1.5,
+    lineHeight: 1.55,
     margin: 0,
   },
   agentHelpBtn: {
     backgroundColor: "var(--color-aomori-blue)",
     color: "#FFFFFF",
     fontWeight: 700,
-    fontSize: "0.88rem",
-    padding: "12px 22px",
-    borderRadius: "var(--radius-pill)",
-    boxShadow: "0 4px 12px rgba(28, 79, 124, 0.2)",
+    fontSize: "0.85rem",
+    padding: "10px 20px",
+    borderRadius: "var(--radius-xs)",
+    boxShadow: "0 2px 8px rgba(23, 62, 101, 0.2)",
     cursor: "pointer",
     whiteSpace: "nowrap",
-    transition: "background-color 0.2s ease",
+    transition: "all 160ms ease",
   },
 };
