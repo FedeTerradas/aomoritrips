@@ -175,7 +175,48 @@ export class DeterministicFallbackAdapter implements InferenceProvider {
       );
     }
 
-    // 8. Preguntas abiertas de recomendación ("¿qué me recomendás?", "no sé qué elegir", etc.)
+    // 8. Costos cotidianos / Máquinas expendedoras / Bebidas en Japón
+    if (
+      q.includes("coca") ||
+      q.includes("coca-cola") ||
+      q.includes("gaseosa") ||
+      q.includes("refresco") ||
+      q.includes("bebida") ||
+      q.includes("maquina expendedora") ||
+      q.includes("máquina expendedora") ||
+      q.includes("vending")
+    ) {
+      return (
+        "🥫 **Costos Cotidianos en Japón (Máquinas Expendedoras & Konbini)**:\n\n" +
+        "En Japón, una Coca-Cola, té verde frío o café en lata en las ubicuas máquinas expendedoras (*Jidōhanbaiki* 自動販売機) que verás en cada rincón de Aomori cuesta habitualmente entre **160 y 180 yenes** (aproximadamente **$1.10 – $1.20 USD**).\n\n" +
+        "En las tiendas de conveniencia (*Konbini* como Lawson, 7-Eleven o FamilyMart) podés encontrar botellas de 500ml por unos **140 a 160 yenes**.\n\n" +
+        "💡 *Como **Aomori Sensei**, mi misión principal es guiarte en expediciones por el norte de Japón: aguas termales milenarias, castillos feudales y el festival Nebuta. Si querés conocer nuestros paquetes o hacer el [Test Cultural 'Mi Japón'](/quiz), ¡aquí estoy para ayudarte!*"
+      );
+    }
+
+    // 9. Consultas de fútbol o deportes ajenos a Japón (ej. clubes de Córdoba o Argentina)
+    if (
+      q.includes("club") ||
+      q.includes("futbol") ||
+      q.includes("fútbol") ||
+      q.includes("cordoba") ||
+      q.includes("córdoba") ||
+      q.includes("argentina") ||
+      q.includes("boca") ||
+      q.includes("river") ||
+      q.includes("talleres") ||
+      q.includes("belgrano") ||
+      q.includes("instituto")
+    ) {
+      return (
+        "⚽ **Fuera de Dominio: El Sensei en Tohoku** ⛩️\n\n" +
+        "¡Konnichiwa! Como **Aomori Sensei**, debo confesarte que en las montañas del norte de Japón somos mucho más apasionados por los torneos de **Sumo** en el Ryōgoku Kokugikan y los tambores gigantes Taiko del festival Nebuta que por la Liga Argentina.\n\n" +
+        "En Córdoba sé que la pasión se divide entre **Talleres**, **Belgrano** e **Instituto**, ¡pero para un sabio de Aomori el verdadero clásico es entre los guerreros de Hirosaki y los navegantes del Estrecho de Tsugaru!\n\n" +
+        "Si alguna vez querés cambiar la cancha por aguas termales en la nieve o bosques samurái, acá estoy para armar tu expedición. ¿Te gustaría conocer nuestras opciones de viaje o hacer el [Test Cultural 'Mi Japón'](/quiz)?"
+      );
+    }
+
+    // 10. Preguntas abiertas de recomendación ("¿qué me recomendás?", "no sé qué elegir", etc.)
     if (
       q.includes("recomiend") ||
       q.includes("qué elegir") ||
@@ -211,7 +252,7 @@ export class DeterministicFallbackAdapter implements InferenceProvider {
       );
     }
 
-    // 9. Mensaje de bienvenida general (primera interacción)
+    // 11. Mensaje de bienvenida y guardián de dominio general
     return (
       "¡Konnichiwa! Soy tu **Sensei de viajes de AomoriTrips** (青森の先生) ⛩️.\n\n" +
       "Estoy aquí para guiarte por los secretos más profundos y auténticos del norte de Japón (Tohoku).\n\n" +

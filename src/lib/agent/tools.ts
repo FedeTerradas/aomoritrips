@@ -943,13 +943,14 @@ export function toolAnswerCulturalQuestion(topic: string): {
       category: "Etiqueta de Onsen",
       emoji: "♨️",
       answer: `**Reglas del Onsen en Japón:**
-• **Sin ropa**: Todos entran completamente desnudos al baño gemeinsam. Es la norma cultural.
+• **Sin ropa**: Todos entran completamente desnudos al baño tradicional comunitario (separado por género). Es la norma cultural.
 • **Ducharse antes**: Siempre ducharse y enjabonarse en las duchas del vestuario ANTES de entrar al onsen.
 • **Toalla pequeña**: La toalla no va al agua — se deja en el borde o en la cabeza.
 • **Tatuajes**: Muchos onsen tradicionales (onsens públicos / *sento*) no permiten tatuajes. Consultar antes.
 • **Cabello largo**: Atarse el cabello para que no toque el agua.
 • **Silencio y calma**: El onsen es un espacio de meditación. Conversaciones en voz baja.
 • **Temperatura progresiva**: Empezar por las piletas más tibias (38°C) antes de las calientes (42°C+).
+
 En Aomori, el **Sukayu Onsen** es el más famoso: mezcla de 1000 personas en un baño de hinoki (ciprés) de estilo edo-period.`,
     };
   }

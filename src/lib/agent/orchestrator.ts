@@ -438,20 +438,27 @@ export async function executeTravelAgent(
     lower.includes("verano") ||
     lower.includes("invierno");
 
+  const isConsumerItemQuery =
+    lower.includes("coca") ||
+    lower.includes("coca-cola") ||
+    lower.includes("gaseosa") ||
+    lower.includes("refresco");
+
   const asksForPricing =
-    lower.includes("precio") ||
-    lower.includes("cuanto cuesta") ||
-    lower.includes("cuánto cuesta") ||
-    lower.includes("cuanto sale") ||
-    lower.includes("cuánto sale") ||
-    lower.includes("cotizar") ||
-    lower.includes("personas") ||
-    lower.includes("descuento") ||
-    lower.includes("presupuesto") ||
-    lower.includes("tarifa") ||
-    lower.includes("costaría") ||
-    lower.includes("costaria") ||
-    Boolean(detectedTravelersCount && detectedTravelersCount > 1);
+    !isConsumerItemQuery &&
+    (lower.includes("precio") ||
+      lower.includes("cuanto cuesta") ||
+      lower.includes("cuánto cuesta") ||
+      lower.includes("cuanto sale") ||
+      lower.includes("cuánto sale") ||
+      lower.includes("cotizar") ||
+      lower.includes("personas") ||
+      lower.includes("descuento") ||
+      lower.includes("presupuesto") ||
+      lower.includes("tarifa") ||
+      lower.includes("costaría") ||
+      lower.includes("costaria") ||
+      Boolean(detectedTravelersCount && detectedTravelersCount > 1));
 
   const asksForItinerary =
     lower.includes("itinerario") ||
@@ -468,7 +475,9 @@ export async function executeTravelAgent(
     lower.includes("vocabulario") ||
     lower.includes("japonés") ||
     lower.includes("cultura") ||
-    lower.includes("costumbre");
+    lower.includes("costumbre") ||
+    lower.includes("tatuaje") ||
+    lower.includes("tatuajes");
 
   const asksForPacks =
     lower.includes("paquete") ||
@@ -811,10 +820,16 @@ Herramientas disponibles:
 - 🎫 Vouchers offline con QR firmado criptográficamente con HMAC.
 
 Instrucciones de estilo:
-- Habla en español con calidez, respeto y entusiasmo por Tohoku.
+- Habla en español con calidez, respeto y hospitalidad japonesa (omotenashi).
 - Usa emojis sutiles y evocadores (⛩️, 🌸, 🏮, 🍁, ❄️, 🍱, 🍵).
 - Cuando sugieras viajes, menciona al menos 2 o 3 opciones del catálogo con sus precios y diferenciales.
-- Invita siempre al viajero a descubrir su perfil en el Quiz (/quiz) si aún no tiene definida su época de viaje.`,
+- Invita siempre al viajero a descubrir su perfil en el Quiz (/quiz) si aún no tiene definida su época de viaje.
+
+Límites de Dominio:
+- Tu único ámbito de conocimiento es el turismo en Aomori y la región de Tohoku (Japón).
+- Si te consultan por fútbol, clubes deportivos, política o temas ajenos (ej. clubes de fútbol de Argentina o Córdoba), responde con simpatía diciendo que en Tohoku son más de disfrutar del Sumo y los tambores del festival Nebuta que del fútbol, y reorienta cortésmente hacia los viajes a Japón.
+- Si te preguntan por bebidas cotidianas (ej. Coca-Cola), menciona las máquinas expendedoras jidōhanbaiki (~160 yenes) y reorienta al viaje.
+- NUNCA inventes acusaciones, negativas de seguridad desmedidas ni menciones temas ilícitos ante preguntas inofensivas.`,
       },
     ];
 

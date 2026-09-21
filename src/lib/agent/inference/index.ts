@@ -13,6 +13,20 @@ export { LocalSLMAdapter } from "./local-slm";
 export { CloudLLMAdapter } from "./cloud-llm";
 export { DeterministicFallbackAdapter } from "./fallback";
 
+function isHallucinatedRefusal(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("encuentro íntimo") ||
+    lower.includes("encuentros íntimos") ||
+    lower.includes("consecuencias legales") ||
+    lower.includes("con un menor") ||
+    lower.includes("con menores") ||
+    lower.includes("explotación sexual") ||
+    (lower.includes("no puedo ayudarte") &&
+      (lower.includes("menor") || lower.includes("legal")))
+  );
+}
+
 export class InferenceOrchestrator {
   private localAdapter = new LocalSLMAdapter();
   private cloudAdapter = new CloudLLMAdapter();
@@ -85,7 +99,18 @@ export class InferenceOrchestrator {
     try {
       const available = await provider.isAvailable();
       if (!available) return null;
-      return await provider.generate(messages, options);
+      const res = await provider.generate(messages, options);
+      if (!res || !res.text) return null;
+
+      // OWASP LLM02: Output Sanitization - Neutralizar falsos positivos / alucinaciones de SLMs locales
+      if (isHallucinatedRefusal(res.text)) {
+        console.warn(
+          `[InferenceOrchestrator] Filtro de salida activado: rechazada negativa alucinada de ${provider.displayName}`
+        );
+        return null;
+      }
+
+      return res;
     } catch (err) {
       console.warn(
         `[InferenceOrchestrator] Falló proveedor ${provider.displayName}:`,
