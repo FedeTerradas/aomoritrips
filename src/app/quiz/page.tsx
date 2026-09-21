@@ -144,11 +144,32 @@ export default function QuizPage() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const seasonLabels: Record<string, string> = {
+    sakura: "Primavera · Cerezos en Flor (Sakura) 🌸",
+    nebuta: "Verano · Festival Nebuta Matsuri 🏮",
+    koyo: "Otoño · Follaje Momiji (Koyo) 🍁",
+    snow: "Invierno · Nieve & Onsen Tradicional ❄️",
+  };
+
+  const seasonShortLabels: Record<string, string> = {
+    sakura: "Sakura 🌸",
+    nebuta: "Nebuta 🏮",
+    koyo: "Koyo 🍁",
+    snow: "Nieve & Onsen ❄️",
+  };
+
   if (result) {
+    const seasonKey = result.season ? result.season.toLowerCase() : "";
+    const seasonLabel = seasonLabels[seasonKey] || result.season;
+    const seasonShort = seasonShortLabels[seasonKey] || result.season;
+    const catalogUrl = seasonKey
+      ? `/?season=${encodeURIComponent(seasonKey)}&from=quiz#catalog-section`
+      : "/#catalog-section";
+
     return (
       <div style={styles.pageWrapper}>
         <div style={styles.topNavigation}>
-          <Link href="/" style={styles.backLink}>
+          <Link href={catalogUrl} style={styles.backLink}>
             ← Volver al catálogo
           </Link>
           <span style={styles.stepCounter}>Diagnóstico completado</span>
@@ -175,7 +196,7 @@ export default function QuizPage() {
                   📍 Región: <strong>{result.region}</strong>
                 </span>
                 <span style={styles.resultMetaTag}>
-                  🗓️ Temporada: <strong>{result.season}</strong>
+                  🗓️ Temporada: <strong>{seasonLabel}</strong>
                 </span>
               </div>
 
@@ -184,8 +205,8 @@ export default function QuizPage() {
               </div>
 
               <div style={styles.resultActions}>
-                <Link href="/" style={styles.btnPrimary}>
-                  Ver packs recomendados →
+                <Link href={catalogUrl} style={styles.btnPrimary}>
+                  Ver packs recomendados ({seasonShort}) →
                 </Link>
                 <button onClick={handleRestart} style={styles.btnSecondary}>
                   🔄 Repetir test

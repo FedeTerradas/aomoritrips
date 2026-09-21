@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { HeroBanner, BudgetFilter } from "@/components/HeroBanner";
 import { PackCard, TravelPackData } from "@/components/PackCard";
@@ -18,10 +19,21 @@ import { CharacterDisplay } from "@/components/CharacterDisplay";
 import { AdminPacksView } from "@/components/AdminPacksView";
 import { BookingsProvider, useBookings } from "@/lib/bookings-context";
 
+const validSeasons = ["sakura", "nebuta", "koyo", "snow"];
+
+const seasonDisplayNames: Record<string, string> = {
+  sakura: "🌸 Cerezos en Flor (Sakura)",
+  nebuta: "🏮 Festival Nebuta Matsuri",
+  koyo: "🍁 Follaje de Otoño (Koyo)",
+  snow: "❄️ Nieve & Onsen Tradicional",
+};
+
 export default function HomePage() {
   return (
     <BookingsProvider>
-      <HomePageInner />
+      <Suspense fallback={null}>
+        <HomePageInner />
+      </Suspense>
     </BookingsProvider>
   );
 }
@@ -29,11 +41,20 @@ export default function HomePage() {
 function HomePageInner() {
   const { user } = useAuth();
   const { confirmedCount, refresh: refreshBookings } = useBookings();
+  const searchParams = useSearchParams();
+  const seasonParam = searchParams.get("season");
+  const fromQuiz = searchParams.get("from") === "quiz";
+
   const [activeTab, setActiveTab] = useState<
     "explore" | "agent" | "wallet" | "profile" | "quiz" | "admin"
   >("explore");
   const [packs, setPacks] = useState<TravelPackData[]>([]);
-  const [selectedSeason, setSelectedSeason] = useState<string>("all");
+  const [selectedSeason, setSelectedSeason] = useState<string>(() => {
+    if (seasonParam && validSeasons.includes(seasonParam.toLowerCase())) {
+      return seasonParam.toLowerCase();
+    }
+    return "all";
+  });
   const [selectedBudget, setSelectedBudget] = useState<BudgetFilter>("all");
   const [travelers, setTravelers] = useState<string>("2 adultos");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -41,6 +62,21 @@ function HomePageInner() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { favorites, favoritesCount } = useFavorites();
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
+
+  // Sincronizar parámetro de temporada desde la URL (ej: al volver del quiz cultural)
+  useEffect(() => {
+    const s = searchParams.get("season");
+    if (s && validSeasons.includes(s.toLowerCase())) {
+      setSelectedSeason(s.toLowerCase());
+      setActiveTab("explore");
+      setTimeout(() => {
+        const catalogEl = document.getElementById("catalog-section");
+        if (catalogEl) {
+          catalogEl.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  }, [searchParams]);
 
   const fetchPacks = async () => {
     setIsLoading(true);
@@ -145,6 +181,41 @@ function HomePageInner() {
             className="container"
             style={styles.catalogSection}
           >
+            {fromQuiz && selectedSeason !== "all" && (
+              <div style={styles.quizBanner}>
+                <div style={styles.quizBannerContent}>
+                  <span style={styles.quizBannerIcon}>🌸</span>
+                  <div>
+                    <strong
+                      style={{ color: "var(--color-aomori-blue, #1c4f7c)" }}
+                    >
+                      Recomendación según tu Test Cultural &apos;Mi Japón&apos;:
+                    </strong>
+                    <span
+                      style={{
+                        marginLeft: "6px",
+                        color: "var(--color-text-body, #334155)",
+                      }}
+                    >
+                      Mostrando expediciones recomendadas para la temporada{" "}
+                      <strong>
+                        {seasonDisplayNames[selectedSeason] || selectedSeason}
+                      </strong>
+                      .
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSeason("all")}
+                  style={styles.quizBannerResetBtn}
+                  title="Ver catálogo completo"
+                >
+                  Ver todos los destinos ✕
+                </button>
+              </div>
+            )}
+
             <div style={styles.catalogHeader}>
               <div>
                 <span style={styles.sectionSubtitleJP}>
@@ -155,7 +226,7 @@ function HomePageInner() {
                     ? "Expediciones a Rincones Secretos e Inexplorados"
                     : selectedSeason === "favorites"
                       ? "❤️ Mis Expediciones Guardadas en Favoritos"
-                      : `Expediciones de Temporada: ${selectedSeason.toUpperCase()}`}
+                      : `Expediciones de Temporada: ${seasonDisplayNames[selectedSeason] || selectedSeason.toUpperCase()}`}
                 </h2>
                 <p style={styles.sectionSubtitle}>
                   {selectedSeason === "favorites"
@@ -459,6 +530,38 @@ const styles: Record<string, React.CSSProperties> = {
   },
   catalogSection: {
     padding: "48px 24px 80px",
+  },
+  quizBanner: {
+    backgroundColor: "rgba(249, 115, 22, 0.08)",
+    border: "1.5px solid rgba(249, 115, 22, 0.3)",
+    borderRadius: "14px",
+    padding: "14px 20px",
+    marginBottom: "24px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    flexWrap: "wrap",
+  },
+  quizBannerContent: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    fontSize: "0.92rem",
+  },
+  quizBannerIcon: {
+    fontSize: "1.4rem",
+  },
+  quizBannerResetBtn: {
+    backgroundColor: "#ffffff",
+    border: "1px solid rgba(28, 79, 124, 0.25)",
+    color: "var(--color-aomori-blue, #1c4f7c)",
+    padding: "6px 14px",
+    borderRadius: "var(--radius-pill, 9999px)",
+    fontSize: "0.82rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 150ms ease",
   },
   catalogHeader: {
     display: "flex",
