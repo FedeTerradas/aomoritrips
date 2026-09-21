@@ -56,7 +56,7 @@ Ya tenés creado el archivo `Modelfile.sensei` en esta carpeta con la personalid
 
 ```powershell
 # Compilar el modelo con el System Prompt de Sensei:
-ollama create aomori-sensei -f ./Modelfile.senseiw
+ollama create aomori-sensei -f ./Modelfile.sensei
 
 # Ejecutar tu modelo personalizado:
 ollama run aomori-sensei
@@ -87,7 +87,46 @@ Cuando te toque mostrar la parte técnica / local en el video:
    >>> ¿Qué visitar en Aomori en invierno?
    ```
 3. **Comentario a decir mientras responde**:
-   > _"Como explicamos en la Parte 2 del informe, AomoriTrips cuenta con una Costura de Inferencia (Inference Seam). Si el viajero está en una zona montañosa sin internet o necesitamos privacidad total de datos sensibles, la IA corre 100% en local con Ollama a costo cero por token y respuesta inmediata."_
+   > _"A nivel de infraestructura implementamos una Costura de Inferencia (Inference Seam): desacoplamos la IA de la lógica de negocio para operar en la nube con Groq o conmutar al instante a un SLM local en Ollama (`llama3.2:1b`), garantizando soberanía total de datos, costo cero y resiliencia determinística offline."_
+
+---
+
+## 🧠 Arquitectura Técnica: ¿Cómo Funciona el Agente por Detrás?
+
+El asistente **Aomori Sensei** opera bajo el patrón de arquitectura agéntica **ReAct (Reasoning + Acting)**. No es un chatbot pasivo con un prompt estático; ante cada mensaje atraviesa 5 capas coordinadas:
+
+### 1. Gateway y Ciberseguridad (Perímetro)
+
+- **Rate Limiting**: En `/api/agent/chat` se limita a **15 requests/minuto por IP** para evitar saturación de inferencia y ataques DoS.
+- **Input Guardrails**: `validateAndSanitizeInput()` escanea la entrada buscando inyecciones de prompt, ataques de jailbreak (`"Ignore previous instructions"`, `"DAN mode"`) o caracteres de control maliciosos. Si detecta riesgo, bloquea la consulta de inmediato (`BLOCK_INPUT`).
+
+### 2. Memoria Persistente y Resiliente (Multi-Turn)
+
+- `getOrCreateResilientSession()` recupera de SQLite los últimos 10 mensajes y las preferencias inferidas del viajero (temporada, tamaño del grupo).
+- **Mecanismo de Resiliencia**: Si el sistema de archivos estuviera en modo solo lectura o la base de datos no respondiera, conmuta automáticamente a una memoria en RAM (`memorySessionStore`) para no interrumpir al usuario.
+
+### 3. Loop Cognitivo ReAct Gobernado (O-R-E-V)
+
+1. **Observar (Observe)**: Analiza el texto del usuario y extrae entidades implícitas (ej. _"viajo con mi pareja"_ → 2 personas; _"quiero ver cerezos"_ → Sakura en Hirosaki).
+2. **Razonar (Thought)**: Determina qué información falta y qué herramientas de backend deben invocarse.
+3. **Ejecutar Herramienta (Act)**: Invoca funciones de código tipadas en TypeScript nativo:
+   - `toolSearchPacks`: Consulta paquetes turísticos en la base de datos relacional.
+   - `toolCalculatePricing`: Aplica la fórmula estacional y descuentos de grupo con precisión matemática.
+   - `toolGetSeasonalForecast`: Obtiene clima auténtico, temperatura media y recomendaciones de vestimenta de Tohoku.
+   - `toolCreateItineraryDraft`: Genera itinerarios estructurados día por día.
+4. **Verificar (Verify & Circuit Breaker)**: Posee un límite estricto de **3 iteraciones máximas (`MAX_ITERATIONS = 3`)** para prevenir bucles infinitos de auto-invocación.
+
+### 4. Cero Alucinación en Datos Críticos
+
+El modelo de lenguaje **nunca calcula precios, fechas ni disponibilidad por su cuenta**. Las herramientas determinísticas de backend ejecutan la matemática exacta, garantizando que el viajero reciba un desglose veraz y transparente sin cargos ocultos.
+
+### 5. Costura de Inferencia (_Inference Seam_)
+
+En `src/lib/agent/inference/index.ts`, el orquestador desacopla la inferencia de la lógica de negocio mediante un router adaptativo:
+
+- **Cloud LLM (Groq / LLaMA 3.3 70B)**: Máxima velocidad y fluidez conversacional en la nube.
+- **Local SLM (Ollama / LLaMA 3.2 1B / 3B)**: Inferencia en la máquina local (`localhost:11434`), con costo $0 y máxima privacidad.
+- **Fallback Determinístico**: Si se corta internet y Ollama no está activo, un motor de contingencia garantiza que la aplicación **nunca arroje un error 500**.
 
 ---
 
