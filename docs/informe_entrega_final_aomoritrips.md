@@ -21,11 +21,11 @@
 
 > **Nota para el evaluador**: Conforme a la consigna oficial, este informe académico actúa como guía estructurada e índice técnico del trabajo real publicado y comprobable en los siguientes enlaces:
 
-| Recurso                          | URL Directa                                                                                        | Estado / Observación                                                                          |
-| :------------------------------- | :------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
-| **Repositorio GitHub**           | [https://github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Repositorio público con historial de commits progresivos y hooks de Husky                     |
-| **Aplicación Web en Producción** | [https://aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en vivo en Vercel con SSR Next.js                                                  |
-| **Video de Demostración**        | _(pendiente de grabación — disponible para presentación en vivo)_                                  | Recorrido del flujo completo: Home → Chat con Aomori Sensei → Checkout → Billetera QR Offline |
+| Recurso                          | URL Directa                                                                                        | Estado / Observación                                                                                                |
+| :------------------------------- | :------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| **Repositorio GitHub**           | [https://github.com/federicoterradas/aomoritrips](https://github.com/federicoterradas/aomoritrips) | Repositorio público con historial de commits progresivos y hooks de Husky                                           |
+| **Aplicación Web en Producción** | [https://aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                   | Despliegue en vivo en Vercel con SSR Next.js                                                                        |
+| **Video de Demostración**        | [https://youtu.be/B51qa_Ni-n0](https://youtu.be/B51qa_Ni-n0)                                       | Demostración técnica del flujo completo (Home → Quiz → Sensei ReAct → Checkout PCI-DSS → QR Offline → Ollama Local) |
 
 ---
 

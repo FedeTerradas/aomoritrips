@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.19.3-2D3748?logo=prisma)](https://www.prisma.io/)
 [![SQLite](https://img.shields.io/badge/SQLite-WAL_Mode-003B57?logo=sqlite)](https://www.sqlite.org/)
-[![Tests](https://img.shields.io/badge/Tests-16%20Passed-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-50%20Passed-brightgreen)](tests/)
 [![Security](https://img.shields.io/badge/OWASP%20LLM01-Protected-orange)](src/lib/agent/guardrails.ts)
 [![PCI--DSS](https://img.shields.io/badge/PCI--DSS%20v4.0-Tokenized-green)](src/lib/security/tokenization.ts)
 
@@ -22,7 +22,7 @@
 | :------------------------- | :--------------------------------------------------------------------------------------- | :---------------------------------------------------- |
 | **Repositorio GitHub**     | [github.com/FedeTerradas/aomoritrips](https://github.com/FedeTerradas/aomoritrips)       | Código fuente, historial de commits y suite de tests  |
 | **Aplicación Web en Vivo** | [aomoritrips.vercel.app](https://aomoritrips.vercel.app)                                 | Despliegue en producción en Vercel con SSR            |
-| **Video de Demostración**  | [youtu.be/placeholder-aomoritrips-demo](https://youtu.be/placeholder-aomoritrips-demo)   | Video demostrativo del ciclo completo (3 min)         |
+| **Video de Demostración**  | [youtu.be/B51qa_Ni-n0](https://youtu.be/B51qa_Ni-n0)                                     | Video demostrativo del ciclo completo (3:45 min)      |
 | **Informe Académico**      | [`docs/informe_entrega_final_aomoritrips.md`](docs/informe_entrega_final_aomoritrips.md) | Informe técnico según la rúbrica oficial de la UTN.BA |
 
 ---
