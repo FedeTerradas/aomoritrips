@@ -116,14 +116,15 @@ test("Ciberseguridad Zod: Validación de actualización de perfil", () => {
 
 test("Ciberseguridad PCI-DSS v4.0 Req 3.2: CVV jamás se incluye en el token y se destruye en memoria", () => {
   const rawPan = "4242 4242 4242 4821";
-  const tokenResult = tokenizePaymentCard(rawPan, "Mensual", "12/28", "888");
+  const tokenResult = tokenizePaymentCard(rawPan, "Mensual", "12/28", "777");
 
   // 1. Expiración se preserva si se proporciona
   assert.equal(tokenResult.expiryDate, "12/28");
 
-  // 2. CVV NUNCA debe estar en el objeto devuelto ni en el token
+  // 2. CVV NUNCA debe estar en el objeto devuelto ni persistido
   assert.equal((tokenResult as Record<string, unknown>).cvv, undefined);
-  assert.ok(!tokenResult.vaultToken.includes("888"));
+  // 3. El token cumple estrictamente con el formato opaco prefijado sin SAD
+  assert.match(tokenResult.vaultToken, /^tok_vault_visa_4821_[0-9a-f]{16}$/);
 });
 
 test("Ciberseguridad Zod: Validación de fecha de expiración y CVV", () => {

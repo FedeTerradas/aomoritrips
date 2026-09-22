@@ -89,19 +89,44 @@ export async function POST(request: Request) {
       sessionToken,
     } = parsed.data;
 
+    // ——— Resolución de Usuario (Sesión activa o correo) ———
+    const session = await getAuthSession();
+    let resolvedUserId = session?.userId;
+    if (!resolvedUserId && travelerEmail) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: travelerEmail },
+      });
+      if (existingUser) resolvedUserId = existingUser.id;
+    }
+
     // ——— Guardia de Método de Pago (Backend) ———
     // Verificar que exista un PaymentMethodToken registrado antes de emitir voucher.
-    // Esta validación cierra el bypass posible saltando la UI.
-    // Pendiente producción: integrar con pasarela de cobro real (Stripe / MercadoPago)
-    // para transicionar de "reserva" a "pago capturado".
+    // 1. Buscar en el perfil del usuario autenticado o registrado
+    // 2. Si no se encuentra, buscar por sessionToken (invitados / anónimos)
     const effectiveSessionToken = sessionToken || "sess_default_traveler";
-    const profileWithPayment = await prisma.travelerProfile.findUnique({
-      where: { sessionToken: effectiveSessionToken },
-      include: { paymentMethods: { where: { isDefault: true }, take: 1 } },
-    });
 
-    const hasPaymentMethod =
-      profileWithPayment && profileWithPayment.paymentMethods.length > 0;
+    let profileWithPayment = null;
+
+    if (resolvedUserId) {
+      profileWithPayment = await prisma.travelerProfile.findFirst({
+        where: { userId: resolvedUserId },
+        include: { paymentMethods: { orderBy: { createdAt: "desc" } } },
+      });
+    }
+
+    if (!profileWithPayment || profileWithPayment.paymentMethods.length === 0) {
+      const profileByToken = await prisma.travelerProfile.findUnique({
+        where: { sessionToken: effectiveSessionToken },
+        include: { paymentMethods: { orderBy: { createdAt: "desc" } } },
+      });
+      if (profileByToken && profileByToken.paymentMethods.length > 0) {
+        profileWithPayment = profileByToken;
+      }
+    }
+
+    const hasPaymentMethod = Boolean(
+      profileWithPayment && profileWithPayment.paymentMethods.length > 0
+    );
 
     if (!hasPaymentMethod) {
       return NextResponse.json(
@@ -151,16 +176,6 @@ export async function POST(request: Request) {
         light: "#FFFFFF",
       },
     });
-
-    // Asociar con usuario registrado si existe sesión o coincidencia de correo
-    const session = await getAuthSession();
-    let resolvedUserId = session?.userId;
-    if (!resolvedUserId && travelerEmail) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: travelerEmail },
-      });
-      if (existingUser) resolvedUserId = existingUser.id;
-    }
 
     const newBooking = await prisma.bookingOrder.create({
       data: {

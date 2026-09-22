@@ -24,7 +24,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { profile, updateProfile } = useProfile();
-  const { user, notifyAuthChange } = useAuth();
+  const { user, profile: authProfile, notifyAuthChange } = useAuth();
   const [travelersCount, setTravelersCount] = useState(2);
   const [travelDate, setTravelDate] = useState("2026-10-15");
   const [travelerName, setTravelerName] = useState("");
@@ -53,6 +53,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     }
   }, [user, profile]);
 
+  useEffect(() => {
+    if (authProfile?.paymentMethods && authProfile.paymentMethods.length > 0) {
+      const defaultCard =
+        authProfile.paymentMethods.find((m) => m.isDefault) ||
+        authProfile.paymentMethods[0];
+      if (defaultCard) {
+        updateProfile({
+          paymentMethod: defaultCard,
+          paymentMethods: authProfile.paymentMethods,
+        });
+      }
+    }
+  }, [authProfile, updateProfile]);
+
   if (!pack) return null;
 
   // Guard: verificar si hay método de pago vinculado (industria estándar: Booking.com / AirBnb)
@@ -60,6 +74,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     profile?.paymentMethod ||
     (profile?.paymentMethods && profile.paymentMethods.length > 0
       ? profile.paymentMethods[0]
+      : null) ||
+    (authProfile?.paymentMethods && authProfile.paymentMethods.length > 0
+      ? authProfile.paymentMethods.find((m) => m.isDefault) ||
+        authProfile.paymentMethods[0]
       : null);
   const hasPaymentMethod = Boolean(activeCard?.vaultToken || activeCard?.last4);
 
@@ -202,10 +220,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setIsSubmitting(true);
     try {
       const sessionToken =
-        typeof window !== "undefined"
+        authProfile?.sessionToken ||
+        (typeof window !== "undefined"
           ? localStorage.getItem("aomori_session_token") ||
             "sess_default_traveler"
-          : "sess_default_traveler";
+          : "sess_default_traveler");
 
       const res = await fetch("/api/bookings", {
         method: "POST",

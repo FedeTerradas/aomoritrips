@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import type { PaymentCardInfo } from "@/lib/profile";
 
 export interface UserSession {
   id: string;
@@ -25,14 +26,8 @@ export interface AuthProfile {
   nationality: string;
   preferredCurrency: string;
   preferredLanguage: string;
-  paymentMethods?: Array<{
-    id: string;
-    cardBrand: string;
-    last4: string;
-    billingCycle: string;
-    vaultToken: string;
-    isDefault: boolean;
-  }>;
+  sessionToken?: string;
+  paymentMethods?: PaymentCardInfo[];
 }
 
 const AUTH_EVENT_NAME = "aomori-auth-changed";
@@ -54,6 +49,12 @@ export function useAuth() {
       if (data.success && data.user) {
         setUser(data.user);
         setProfile(data.profile);
+        if (data.profile?.sessionToken && typeof window !== "undefined") {
+          localStorage.setItem(
+            "aomori_session_token",
+            data.profile.sessionToken
+          );
+        }
         if (data.stats) setStats(data.stats);
       } else {
         setUser(null);
@@ -98,6 +99,9 @@ export function useAuth() {
     }
     setUser(data.user);
     setProfile(data.profile);
+    if (data.profile?.sessionToken && typeof window !== "undefined") {
+      localStorage.setItem("aomori_session_token", data.profile.sessionToken);
+    }
     notifyAuthChange();
     return data;
   };
@@ -114,6 +118,9 @@ export function useAuth() {
     }
     setUser(data.user);
     setProfile(data.profile);
+    if (data.profile?.sessionToken && typeof window !== "undefined") {
+      localStorage.setItem("aomori_session_token", data.profile.sessionToken);
+    }
     notifyAuthChange();
     return data;
   };
