@@ -14,6 +14,7 @@ export interface PaymentCardInfo {
   billingCycle: BillingCycle;
   vaultToken?: string;
   isDefault?: boolean;
+  expiryDate?: string;
 }
 
 export interface TravelerProfile {

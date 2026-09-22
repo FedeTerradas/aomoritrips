@@ -36,6 +36,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showChangeCard, setShowChangeCard] = useState(false);
   const [inlineCardNumber, setInlineCardNumber] = useState("");
+  const [inlineCardExpiry, setInlineCardExpiry] = useState("");
+  const [inlineCardCvv, setInlineCardCvv] = useState("");
   const [inlineBillingCycle, setInlineBillingCycle] = useState<
     "Mensual" | "Por Reserva"
   >("Por Reserva");
@@ -79,6 +81,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     if (inlineCardError) setInlineCardError("");
   };
 
+  const handleExpiryChange = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 4);
+    if (digits.length >= 3) {
+      setInlineCardExpiry(`${digits.slice(0, 2)}/${digits.slice(2)}`);
+    } else {
+      setInlineCardExpiry(digits);
+    }
+    if (inlineCardError) setInlineCardError("");
+  };
+
+  const handleCvvChange = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 4);
+    setInlineCardCvv(digits);
+    if (inlineCardError) setInlineCardError("");
+  };
+
   const handleInlineTokenizeCard = async (e: React.MouseEvent) => {
     e.preventDefault();
     setInlineCardError("");
@@ -86,6 +104,35 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     if (cleaned.length < 13 || cleaned.length > 19) {
       setInlineCardError(
         "Por favor ingresá un número de tarjeta válido (entre 13 y 19 dígitos)."
+      );
+      return;
+    }
+
+    if (inlineCardExpiry.trim()) {
+      const parts = inlineCardExpiry.split("/");
+      if (
+        parts.length !== 2 ||
+        parts[0].length !== 2 ||
+        parts[1].length !== 2
+      ) {
+        setInlineCardError(
+          "Fecha de expiración inválida. Formato esperado: MM/AA"
+        );
+        return;
+      }
+      const month = parseInt(parts[0], 10);
+      if (month < 1 || month > 12) {
+        setInlineCardError("Mes de vencimiento inválido (01 al 12).");
+        return;
+      }
+    }
+
+    if (
+      inlineCardCvv.trim() &&
+      (inlineCardCvv.length < 3 || inlineCardCvv.length > 4)
+    ) {
+      setInlineCardError(
+        "El código de seguridad (CVV) debe tener 3 o 4 dígitos."
       );
       return;
     }
@@ -105,6 +152,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           sessionToken,
           cardNumber: cleaned,
           billingCycle: inlineBillingCycle,
+          expiryDate: inlineCardExpiry.trim() || undefined,
+          cvv: inlineCardCvv.trim() || undefined,
         }),
       });
 
@@ -122,6 +171,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       });
       notifyAuthChange();
       setInlineCardNumber("");
+      setInlineCardExpiry("");
+      setInlineCardCvv("");
       setShowChangeCard(false);
     } catch (err: unknown) {
       setInlineCardError(
@@ -493,7 +544,27 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           </span>
                         )}
                       </div>
+                    </div>
 
+                    <div style={styles.inlineCardSubRow}>
+                      <input
+                        type="text"
+                        placeholder="MM/AA"
+                        value={inlineCardExpiry}
+                        onChange={(e) => handleExpiryChange(e.target.value)}
+                        style={styles.inlineCardSmallInput}
+                        maxLength={5}
+                        title="Fecha de expiración (MM/AA)"
+                      />
+                      <input
+                        type="password"
+                        placeholder="CVV"
+                        value={inlineCardCvv}
+                        onChange={(e) => handleCvvChange(e.target.value)}
+                        style={styles.inlineCardSmallInput}
+                        maxLength={4}
+                        title="Código de seguridad (3 o 4 dígitos)"
+                      />
                       <select
                         value={inlineBillingCycle}
                         onChange={(e) =>
@@ -501,11 +572,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             e.target.value as "Mensual" | "Por Reserva"
                           )
                         }
-                        style={styles.inlineBillingSelect}
+                        style={styles.inlineBillingSelectSub}
                       >
                         <option value="Por Reserva">Por Reserva</option>
                         <option value="Mensual">Mensual</option>
                       </select>
+                    </div>
+
+                    <div style={styles.inlineCardPciNotice}>
+                      <span>
+                        🛡️ <strong>PCI-DSS v4.0 (Req 3.2):</strong> El CVV se
+                        destruye de inmediato en memoria volátil; jamás se
+                        almacena en base de datos.
+                      </span>
                     </div>
 
                     <button
@@ -540,6 +619,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           <strong>
                             {activeCard?.cardBrand || "Tarjeta"} ••••{" "}
                             {activeCard?.last4 || "••••"}
+                            {activeCard?.expiryDate
+                              ? ` (${activeCard.expiryDate})`
+                              : ""}
                           </strong>
                           <span style={styles.activePaymentTag}>
                             🛡️ PCI-DSS Token
@@ -1052,6 +1134,50 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     outline: "none",
+  },
+  inlineCardSubRow: {
+    display: "flex",
+    gap: "8px",
+    marginTop: "8px",
+  },
+  inlineCardSmallInput: {
+    width: "80px",
+    padding: "8px 10px",
+    fontSize: "0.85rem",
+    borderRadius: "8px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
+    backgroundColor: "#FFFFFF",
+    outline: "none",
+    fontWeight: 600,
+    textAlign: "center" as const,
+    boxSizing: "border-box" as const,
+  },
+  inlineBillingSelectSub: {
+    flex: 1,
+    padding: "8px 8px",
+    fontSize: "0.82rem",
+    borderRadius: "8px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border-light)",
+    backgroundColor: "#FFFFFF",
+    color: "var(--color-text-title)",
+    fontWeight: 600,
+    cursor: "pointer",
+    outline: "none",
+  },
+  inlineCardPciNotice: {
+    fontSize: "0.72rem",
+    color: "#64748B",
+    marginTop: "8px",
+    marginBottom: "10px",
+    lineHeight: 1.4,
+    backgroundColor: "#F8FAFC",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    border: "1px solid #E2E8F0",
   },
   tokenizeBtn: {
     backgroundColor: "var(--color-aomori-blue, #1c4f7c)",

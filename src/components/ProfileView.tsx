@@ -46,11 +46,36 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // Estado para modal de vinculación de tarjeta segura (PCI-DSS)
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [cardNumberInput, setCardNumberInput] = useState("");
+  const [cardExpiryInput, setCardExpiryInput] = useState("");
+  const [cardCvvInput, setCardCvvInput] = useState("");
   const [billingCycleInput, setBillingCycleInput] = useState<
     "Mensual" | "Por Reserva"
   >("Mensual");
   const [isTokenizing, setIsTokenizing] = useState(false);
   const [cardError, setCardError] = useState("");
+
+  const handleCardNumberChange = (val: string) => {
+    const clean = val.replace(/\D/g, "").slice(0, 19);
+    const formatted = clean.replace(/(.{4})/g, "$1 ").trim();
+    setCardNumberInput(formatted);
+    if (cardError) setCardError("");
+  };
+
+  const handleExpiryChange = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 4);
+    if (digits.length >= 3) {
+      setCardExpiryInput(`${digits.slice(0, 2)}/${digits.slice(2)}`);
+    } else {
+      setCardExpiryInput(digits);
+    }
+    if (cardError) setCardError("");
+  };
+
+  const handleCvvChange = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 4);
+    setCardCvvInput(digits);
+    if (cardError) setCardError("");
+  };
 
   // Estado para abrir el form de tarjeta post-login
   const [pendingOpenCard, setPendingOpenCard] = useState(false);
@@ -213,6 +238,31 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       return;
     }
 
+    if (cardExpiryInput.trim()) {
+      const parts = cardExpiryInput.split("/");
+      if (
+        parts.length !== 2 ||
+        parts[0].length !== 2 ||
+        parts[1].length !== 2
+      ) {
+        setCardError("Fecha de expiración inválida. Formato esperado: MM/AA");
+        return;
+      }
+      const month = parseInt(parts[0], 10);
+      if (month < 1 || month > 12) {
+        setCardError("Mes de vencimiento inválido (01 al 12).");
+        return;
+      }
+    }
+
+    if (
+      cardCvvInput.trim() &&
+      (cardCvvInput.length < 3 || cardCvvInput.length > 4)
+    ) {
+      setCardError("El código de seguridad (CVV) debe tener 3 o 4 dígitos.");
+      return;
+    }
+
     setIsTokenizing(true);
     try {
       const sessionToken =
@@ -224,6 +274,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           sessionToken,
           cardNumber: cardNumberInput,
           billingCycle: billingCycleInput,
+          expiryDate: cardExpiryInput.trim() || undefined,
+          cvv: cardCvvInput.trim() || undefined,
         }),
       });
 
@@ -251,6 +303,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       setIsAddCardOpen(false);
       setCardNumberInput("");
+      setCardExpiryInput("");
+      setCardCvvInput("");
       showFeedback(
         `✓ Tarjeta ${newCard.cardBrand} (•••• ${newCard.last4}) tokenizada en bóveda PCI-DSS`
       );
@@ -431,6 +485,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <span style={styles.settingValue}>
                     {profile.paymentMethod.cardBrand} ••••{" "}
                     {profile.paymentMethod.last4}
+                    {profile.paymentMethod.expiryDate
+                      ? ` · Vence ${profile.paymentMethod.expiryDate}`
+                      : ""}
                   </span>
                   <span
                     style={styles.pciTag}
@@ -660,7 +717,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <p style={styles.modalExplainer}>
                 Simulador didáctico de tokenización de pagos: ingresa el número
                 de tarjeta. El servidor extraerá los últimos 4 dígitos y
-                descartará el PAN inmediatamente generando un token opaco.
+                descartará el PAN y el CVV inmediatamente generando un token
+                opaco.
               </p>
 
               {cardError && <div style={styles.errorAlert}>{cardError}</div>}
@@ -671,39 +729,66 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </label>
                 <input
                   type="text"
-                  placeholder="Ej: 4532 1111 2222 4821 (o tu tarjeta)"
+                  placeholder="Ej: 4242 4242 4242 4242 (o tu tarjeta)"
                   value={cardNumberInput}
-                  onChange={(e) => setCardNumberInput(e.target.value)}
+                  onChange={(e) => handleCardNumberChange(e.target.value)}
                   style={styles.modalInput}
                   autoFocus
                   required
                 />
                 <span style={styles.modalHint}>
-                  Sugerencia de prueba: <code>4532 9876 5432 1098</code> (Visa)
-                  o <code>5412 7534 8901 2345</code> (Mastercard)
+                  Sugerencia de prueba: <code>4242 4242 4242 4242</code> (Visa)
+                  o <code>5555 5555 5555 4444</code> (Mastercard)
                 </span>
               </div>
 
-              <div style={styles.modalField}>
-                <label style={styles.modalLabel}>Ciclo de Facturación:</label>
-                <select
-                  value={billingCycleInput}
-                  onChange={(e) =>
-                    setBillingCycleInput(
-                      e.target.value as "Mensual" | "Por Reserva"
-                    )
-                  }
-                  style={styles.modalSelect}
-                >
-                  <option value="Mensual">Mensual (Recomendado)</option>
-                  <option value="Por Reserva">Por Reserva Individual</option>
-                </select>
+              <div style={styles.modalSubRow}>
+                <div style={styles.modalField}>
+                  <label style={styles.modalLabel}>Vencimiento:</label>
+                  <input
+                    type="text"
+                    placeholder="MM/AA"
+                    value={cardExpiryInput}
+                    onChange={(e) => handleExpiryChange(e.target.value)}
+                    style={styles.modalInputSmall}
+                    maxLength={5}
+                  />
+                </div>
+
+                <div style={styles.modalField}>
+                  <label style={styles.modalLabel}>CVV / CVC:</label>
+                  <input
+                    type="password"
+                    placeholder="•••"
+                    value={cardCvvInput}
+                    onChange={(e) => handleCvvChange(e.target.value)}
+                    style={styles.modalInputSmall}
+                    maxLength={4}
+                  />
+                </div>
+
+                <div style={{ ...styles.modalField, flex: 1.5 }}>
+                  <label style={styles.modalLabel}>Ciclo Facturación:</label>
+                  <select
+                    value={billingCycleInput}
+                    onChange={(e) =>
+                      setBillingCycleInput(
+                        e.target.value as "Mensual" | "Por Reserva"
+                      )
+                    }
+                    style={styles.modalSelect}
+                  >
+                    <option value="Mensual">Mensual (Recomendado)</option>
+                    <option value="Por Reserva">Por Reserva Individual</option>
+                  </select>
+                </div>
               </div>
 
               <div style={styles.modalSecurityBadge}>
-                <span>🛡️ Cumplimiento PCI-DSS Requisito 3.5</span>
+                <span>🛡️ Cumplimiento PCI-DSS Requisitos 3.2 y 3.5</span>
                 <span style={styles.modalSecuritySub}>
-                  Cero almacenamiento de PAN y destrucción inmediata en memoria
+                  El CVV se destruye de inmediato en memoria y el PAN se
+                  convierte en token de bóveda
                 </span>
               </div>
 
@@ -1349,6 +1434,22 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "0.95rem",
     outline: "none",
     backgroundColor: "#F8FAFC",
+  },
+  modalSubRow: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-start",
+  },
+  modalInputSmall: {
+    padding: "10px 10px",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--border-light)",
+    fontSize: "0.92rem",
+    outline: "none",
+    backgroundColor: "#F8FAFC",
+    textAlign: "center" as const,
+    width: "100%",
+    boxSizing: "border-box" as const,
   },
   modalHint: {
     fontSize: "0.72rem",

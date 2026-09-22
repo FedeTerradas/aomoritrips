@@ -113,3 +113,47 @@ test("Ciberseguridad Zod: Validación de actualización de perfil", () => {
   const badResult = UpdateProfileSchema.safeParse(badCurrency);
   assert.equal(badResult.success, false);
 });
+
+test("Ciberseguridad PCI-DSS v4.0 Req 3.2: CVV jamás se incluye en el token y se destruye en memoria", () => {
+  const rawPan = "4242 4242 4242 4821";
+  const tokenResult = tokenizePaymentCard(rawPan, "Mensual", "12/28", "888");
+
+  // 1. Expiración se preserva si se proporciona
+  assert.equal(tokenResult.expiryDate, "12/28");
+
+  // 2. CVV NUNCA debe estar en el objeto devuelto ni en el token
+  assert.equal((tokenResult as Record<string, unknown>).cvv, undefined);
+  assert.ok(!tokenResult.vaultToken.includes("888"));
+});
+
+test("Ciberseguridad Zod: Validación de fecha de expiración y CVV", () => {
+  const validWithDetails = {
+    sessionToken: "sess_hana_yamamoto_2026_prod",
+    cardNumber: "4242 4242 4242 4821",
+    billingCycle: "Mensual",
+    expiryDate: "12/28",
+    cvv: "123",
+  };
+  const validRes = AddPaymentMethodSchema.safeParse(validWithDetails);
+  assert.equal(validRes.success, true);
+
+  // Formato inválido de fecha (mes 15 no existe)
+  const badExpiry = {
+    sessionToken: "sess_hana_yamamoto_2026_prod",
+    cardNumber: "4242 4242 4242 4821",
+    billingCycle: "Mensual",
+    expiryDate: "15/99",
+    cvv: "123",
+  };
+  assert.equal(AddPaymentMethodSchema.safeParse(badExpiry).success, false);
+
+  // CVV con letras
+  const badCvv = {
+    sessionToken: "sess_hana_yamamoto_2026_prod",
+    cardNumber: "4242 4242 4242 4821",
+    billingCycle: "Mensual",
+    expiryDate: "12/28",
+    cvv: "abc",
+  };
+  assert.equal(AddPaymentMethodSchema.safeParse(badCvv).success, false);
+});

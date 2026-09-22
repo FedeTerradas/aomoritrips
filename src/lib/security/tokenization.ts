@@ -49,16 +49,22 @@ export function validateLuhn(cardNumber: string): boolean {
 
 /**
  * Servicio de Bóveda de Tokenización (PCI-DSS Tokenization Vault)
- * Convierte un número de tarjeta en un Vault Token opaco, descartando el PAN de memoria.
+ * Convierte un número de tarjeta en un Vault Token opaco, descartando el PAN y el CVV de memoria.
+ *
+ * PCI-DSS Req 3.2: El CVV (Sensitive Authentication Data) NUNCA se persiste ni se retorna en el token.
+ * PCI-DSS Req 3.3: Solo los últimos 4 dígitos son visibles para el usuario.
  */
 export function tokenizePaymentCard(
   rawCardNumber: string,
-  billingCycle: string = "Mensual"
+  billingCycle: string = "Mensual",
+  expiryDate?: string,
+  _cvv?: string
 ): {
   vaultToken: string;
   cardBrand: string;
   last4: string;
   billingCycle: string;
+  expiryDate?: string;
 } {
   const sanitized = rawCardNumber.replace(/\D/g, "");
 
@@ -75,12 +81,13 @@ export function tokenizePaymentCard(
   const randomSuffix = crypto.randomBytes(8).toString("hex");
   const vaultToken = `tok_vault_${cardBrand.toLowerCase().replace(/\s+/g, "")}_${last4}_${randomSuffix}`;
 
-  // El string rawCardNumber / sanitized se libera del scope sin persistirse
+  // El string rawCardNumber / sanitized y el CVV se liberan del scope sin persistirse (PCI-DSS Req 3.2)
   return {
     vaultToken,
     cardBrand,
     last4,
     billingCycle: billingCycle === "Por Reserva" ? "Por Reserva" : "Mensual",
+    ...(expiryDate ? { expiryDate: expiryDate.trim() } : {}),
   };
 }
 
@@ -111,6 +118,19 @@ export const AddPaymentMethodSchema = z.object({
       "El número de tarjeta solo debe contener dígitos, espacios o guiones"
     ),
   billingCycle: z.enum(["Mensual", "Por Reserva"]).default("Mensual"),
+  expiryDate: z
+    .string()
+    .regex(
+      /^(0[1-9]|1[0-2])\/?([0-9]{2})$/,
+      "Fecha de expiración inválida (formato MM/AA)"
+    )
+    .optional()
+    .or(z.literal("")),
+  cvv: z
+    .string()
+    .regex(/^[0-9]{3,4}$/, "CVV debe tener 3 o 4 dígitos")
+    .optional()
+    .or(z.literal("")),
 });
 
 /**

@@ -22,11 +22,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const { sessionToken, cardNumber, billingCycle } = parsed.data;
+    const { sessionToken, cardNumber, billingCycle, expiryDate, cvv } =
+      parsed.data;
 
     // 1. Ejecución de la Bóveda de Tokenización PCI-DSS v4.0
-    // El PAN se destruye en memoria y solo se devuelve el vaultToken y last4
-    const tokenized = tokenizePaymentCard(cardNumber, billingCycle);
+    // El PAN y el CVV se destruyen en memoria y solo se devuelve el vaultToken y last4 (PCI-DSS Req 3.2 y 3.3)
+    const tokenized = tokenizePaymentCard(
+      cardNumber,
+      billingCycle,
+      expiryDate,
+      cvv
+    );
 
     // 2. Localizar o asegurar perfil vinculado al usuario autenticado o sesión
     const authSession = await getAuthSession();
@@ -106,6 +112,7 @@ export async function POST(request: Request) {
         billingCycle: newPaymentMethod.billingCycle,
         vaultToken: newPaymentMethod.vaultToken,
         isDefault: newPaymentMethod.isDefault,
+        ...(tokenized.expiryDate ? { expiryDate: tokenized.expiryDate } : {}),
       },
     });
   } catch (error: unknown) {
