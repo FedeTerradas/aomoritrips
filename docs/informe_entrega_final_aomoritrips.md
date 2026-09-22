@@ -564,6 +564,8 @@ Al usuario final le brinda tres ventajas claras:
 
 Se verificó el funcionamiento local en el entorno del proyecto utilizando el motor **Ollama** con el modelo **`llama3.2:1b`**, consultando recomendaciones específicas sobre Aomori:
 
+![Evidencia de Terminal con Ollama Local (LLaMA 3.2 1B)](./screenshots/captura_terminal.png)
+
 ```text
 $ ollama run llama3.2:1b
 >>> ¿Qué lugares recomiendas visitar en Aomori durante el invierno y por qué?
