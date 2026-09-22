@@ -787,22 +787,7 @@ export async function executeTravelAgent(
   // 4. Síntesis y Redacción de Respuesta mediante el Inference Seam
   let inferenceSource: AgentExecutionResult["inferenceSource"] = undefined;
 
-  if (responseSections.length > 0) {
-    responseText = responseSections.join("\n\n---\n\n");
-    inferenceSource = {
-      provider: "fallback-rules",
-      model: "aomori-tools-v1",
-      latencyMs: 10,
-    };
-  } else {
-    // Consulta abierta o conversacional: delegar al Inference Orchestrator
-    const promptMessages: Array<{
-      role: "system" | "user" | "assistant";
-      content: string;
-    }> = [
-      {
-        role: "system",
-        content: `Eres Aomori Sensei (青森の先生), el sabio, hospitalario y experto guía de viajes de AomoriTrips.
+  const baseSenseiPersona = `Eres Aomori Sensei (青森の先生), el sabio, hospitalario y experto guía de viajes de AomoriTrips.
 Tu misión es asesorar a los viajeros sobre la prefectura de Aomori y la región de Tohoku (Japón) con la máxima calidez y hospitalidad japonesa (omotenashi).
 Proporciona respuestas detalladas, completas, bien estructuradas e inspiradoras (nunca escuetas ni monosilábicas).
 
@@ -829,43 +814,74 @@ Límites de Dominio:
 - Tu único ámbito de conocimiento es el turismo en Aomori y la región de Tohoku (Japón).
 - Si te consultan por fútbol, clubes deportivos, política o temas ajenos (ej. clubes de fútbol de Argentina o Córdoba), responde con simpatía diciendo que en Tohoku son más de disfrutar del Sumo y los tambores del festival Nebuta que del fútbol, y reorienta cortésmente hacia los viajes a Japón.
 - Si te preguntan por bebidas cotidianas (ej. Coca-Cola), menciona las máquinas expendedoras jidōhanbaiki (~160 yenes) y reorienta al viaje.
-- NUNCA inventes acusaciones, negativas de seguridad desmedidas ni menciones temas ilícitos ante preguntas inofensivas.`,
-      },
-    ];
+- NUNCA inventes acusaciones, negativas de seguridad desmedidas ni menciones temas ilícitos ante preguntas inofensivas.`;
 
-    for (const msg of session.messages.slice(-5)) {
-      if (msg.role === "user" || msg.role === "assistant") {
-        promptMessages.push({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        });
-      }
-    }
-    promptMessages.push({ role: "user", content: cleanMessage });
+  const promptMessages: Array<{
+    role: "system" | "user" | "assistant";
+    content: string;
+  }> = [];
 
-    const inferenceResult = await inferenceOrchestrator.runInference(
-      promptMessages,
-      { temperature: 0.4, maxTokens: 800 }
-    );
-
-    responseText = inferenceResult.text;
-    inferenceSource = {
-      provider: inferenceResult.provider,
-      model: inferenceResult.model,
-      latencyMs: inferenceResult.latencyMs,
-    };
-
-    decisionSteps.push({
-      observation: `Respuesta sintetizada con éxito mediante motor: ${inferenceResult.provider} (${inferenceResult.model}).`,
-      thought: `Inferencia ejecutada en ${inferenceResult.latencyMs}ms con el contrato InferenceProvider.`,
-      action: "INFERENCE_SYNTHESIS",
-      actionInput: {
-        provider: inferenceResult.provider,
-        model: inferenceResult.model,
-      },
-      actionOutput: { latencyMs: inferenceResult.latencyMs },
+  if (responseSections.length > 0) {
+    promptMessages.push({
+      role: "system",
+      content: `${baseSenseiPersona}\n\n[Instrucción de Síntesis Agéntica]:\nEl sistema ya ejecutó las herramientas de backend para la consulta del viajero. Escribe una bienvenida cálida y personalizada (máximo 1 o 2 párrafos) invitando al viajero a descubrir la información y cotizaciones oficiales preparadas.`,
+    });
+  } else {
+    promptMessages.push({
+      role: "system",
+      content: baseSenseiPersona,
     });
   }
+
+  for (const msg of session.messages.slice(-5)) {
+    if (msg.role === "user" || msg.role === "assistant") {
+      promptMessages.push({
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      });
+    }
+  }
+  promptMessages.push({ role: "user", content: cleanMessage });
+
+  const inferenceResult = await inferenceOrchestrator.runInference(
+    promptMessages,
+    {
+      temperature: 0.3,
+      maxTokens: responseSections.length > 0 ? 250 : 800,
+    }
+  );
+
+  inferenceSource = {
+    provider: inferenceResult.provider,
+    model: inferenceResult.model,
+    latencyMs: inferenceResult.latencyMs,
+  };
+
+  if (responseSections.length > 0) {
+    if (
+      inferenceResult.provider === "fallback-rules" ||
+      !inferenceResult.text
+    ) {
+      // Fallback puro: sólo plantillas determinísticas de herramientas
+      responseText = responseSections.join("\n\n---\n\n");
+    } else {
+      // Síntesis agéntica con SLM local / Cloud + desglose exacto de herramientas sin alucinación
+      responseText = `${inferenceResult.text.trim()}\n\n---\n\n${responseSections.join("\n\n---\n\n")}`;
+    }
+  } else {
+    responseText = inferenceResult.text;
+  }
+
+  decisionSteps.push({
+    observation: `Respuesta sintetizada con éxito mediante motor: ${inferenceResult.provider} (${inferenceResult.model}).`,
+    thought: `Inferencia ejecutada en ${inferenceResult.latencyMs}ms con el contrato InferenceProvider.`,
+    action: "INFERENCE_SYNTHESIS",
+    actionInput: {
+      provider: inferenceResult.provider,
+      model: inferenceResult.model,
+    },
+    actionOutput: { latencyMs: inferenceResult.latencyMs },
+  });
 
   // 5. Actualizar la Memoria Persistente (Tolerante a fallos de filesystem en Vercel)
   await recordResilientMessage(
