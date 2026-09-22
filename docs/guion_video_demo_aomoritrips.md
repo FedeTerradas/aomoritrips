@@ -8,14 +8,14 @@
 
 ## ⏱️ Cronograma General (3:45 min)
 
-| Bloque       | Tiempo              | Escenario / Pantalla         | Tema Principal                                                |
-| :----------- | :------------------ | :--------------------------- | :------------------------------------------------------------ |
-| **Bloque 1** | `0:00 – 0:30` (30s) | Inicio (`localhost:3000`)    | Hero, Catálogo Estacional y Favoritos Reactivos               |
-| **Bloque 2** | `0:30 – 1:00` (30s) | Ruta `/quiz` (🌸 Mi Japón)   | **Diagnóstico Cultural Interactivo (Quiz) y Personaje Anime** |
-| **Bloque 3** | `1:00 – 1:30` (30s) | Tarjeta Paquete Nebuta       | Cotizador Dinámico en Vivo y Desglose sin Costos Ocultos      |
-| **Bloque 4** | `1:30 – 2:35` (65s) | Pestaña **Sensei IA**        | Agente Autónomo, Loop Cognitivo, Múltiples Paquetes y Clima   |
-| **Bloque 5** | `2:35 – 3:10` (35s) | Checkout y **Mis Viajes**    | Bóveda PCI-DSS, **Nombre Real en Navbar** y Voucher QR HMAC   |
-| **Bloque 6** | `3:10 – 3:45` (35s) | Terminal PowerShell + Cierre | **Inference Seam con Ollama Local** y Cierre del Proyecto     |
+| Bloque       | Tiempo              | Escenario / Pantalla         | Tema Principal                                                           |
+| :----------- | :------------------ | :--------------------------- | :----------------------------------------------------------------------- |
+| **Bloque 1** | `0:00 – 0:30` (30s) | Inicio (`localhost:3000`)    | Hero, Catálogo Estacional y Favoritos Reactivos                          |
+| **Bloque 2** | `0:30 – 1:00` (30s) | Ruta `/quiz` (🌸 Mi Japón)   | **Diagnóstico Cultural Interactivo (Quiz) y Personaje Anime**            |
+| **Bloque 3** | `1:00 – 1:30` (30s) | Tarjeta Paquete Nebuta       | Cotizador Dinámico en Vivo y Desglose sin Costos Ocultos                 |
+| **Bloque 4** | `1:30 – 2:35` (65s) | Pestaña **Sensei IA**        | Agente Autónomo, Loop Cognitivo, Múltiples Paquetes y Clima              |
+| **Bloque 5** | `2:35 – 3:10` (35s) | Checkout y **Mis Viajes**    | Flujo Completo: Guardia de Seguridad, Login, Bóveda PCI-DSS y Voucher QR |
+| **Bloque 6** | `3:10 – 3:45` (35s) | Terminal PowerShell + Cierre | **Inference Seam con Ollama Local** y Cierre del Proyecto                |
 
 ---
 
@@ -73,15 +73,16 @@
 
 ---
 
-### 🟣 BLOQUE 5: Checkout Seguro (PCI-DSS) y Voucher Offline HMAC
+### 🟣 BLOQUE 5: Flujo Completo de Usuario (Guardia de Pago, Bóveda PCI-DSS y Voucher QR)
 
 ⏱️ **Tiempo:** `2:35 – 3:10` (35 segundos)  
-🖥️ **Pantalla:** Modal de reserva → Pestaña **Mis Viajes**.
+🖥️ **Pantalla:** Home → Modal de Reserva de Paquete → Modal Auth → Voucher Emitido / **Mis Viajes**.
 
-| Tiempo        | Acción con el Mouse                                                                                                                                          | 🗣️ Lo que decís (Locución)                                                                                                                                                                         |
-| :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `2:35 - 2:55` | Abrís el modal de reserva. Ingresás tu nombre (ej. **Federico**) y confirmás. <br>_(Mostrás el Navbar actualizando de inmediato tu nombre real en el chip)_. | _"El checkout cumple con normativas PCI-DSS mediante tokenización en bóveda. Al confirmar, el Navbar sincroniza de inmediato el nombre real del viajero en toda la app, sin fallbacks estáticos."_ |
-| `2:55 - 3:10` | Vas a la pestaña **"Mis Viajes"**. Mostrás el voucher con el código QR azul Aomori.                                                                          | _"En 'Mis Viajes' se emite el voucher digital con un código QR firmado con HMAC-SHA256, verificable 100% offline en refugios de montaña o estaciones sin internet."_                               |
+| Tiempo        | Acción con el Mouse                                                                                                                                                                                                                                           | 🗣️ Lo que decís (Locución)                                                                                                                                                                                                            |
+| :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `2:35 - 2:47` | Desde el catálogo abrís **"Ver Detalles e Itinerario"** de un paquete (ej. Nebuta). Hacés scroll a _"Datos para Emisión de Vouchers"_ y mostrás el recuadro de seguridad: `🔐 Iniciá sesión para reservar`.                                                   | _"Al intentar emitir los vouchers, la plataforma aplica una guardia estricta: bloquea la reserva si no hay una sesión activa ni un método de pago válido vinculado, previniendo reservas fraudulentas."_                              |
+| `2:47 - 2:58` | Hacés clic en **"🌸 Iniciar Sesión / Registrarse"** y te autenticás (ej. con el botón rápido de Demo o cuenta de Hana). <br>_Al cerrar el login, el modal se desbloquea en vivo reconociendo la tarjeta tokenizada **Visa •••• 4242 (Bóveda PCI-DSS v4.0)**_. | _"Iniciamos sesión con la cuenta de viajero. El sistema actualiza en tiempo real y reconoce automáticamente la tarjeta protegida bajo normativa PCI-DSS v4.0 mediante tokenización en memoria sin almacenar datos sensibles."_        |
+| `2:58 - 3:10` | Clickeás en **"Confirmar Reserva"**. <br>Se procesa la orden y se despliega el voucher oficial con código `AOM-2026-JP...`, firma HMAC-SHA256 y código QR offline (también visible en **Mis Viajes**).                                                        | _"Confirmamos la reserva: el backend valida la tarjeta en bóveda y emite de inmediato el voucher oficial con firma criptográfica HMAC-SHA256 y código QR verificable 100% offline en refugios de montaña o estaciones sin internet."_ |
 
 ---
 
